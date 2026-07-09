@@ -62,6 +62,8 @@ SEED = [
     ("TESB",  "TESB.BR", "Tessenderlo",         "EBR", "EUR", "BE", "small"),
     # --- The benchmark (Lesson 1: the score to beat) ---
     ("IWDA",  "IWDA.AS", "iShares MSCI World (acc)", "AMS", "EUR", "IE", "etf"),
+    # --- FX: the double bet must be priced, not ignored (Lesson 2 §6) ---
+    ("EURUSD", "EURUSD=X", "EUR/USD", "FX", "USD", "FX", "fx"),
 ]
 
 COLUMNS = ["symbol", "yahoo", "name", "exchange", "currency", "country", "tier"]

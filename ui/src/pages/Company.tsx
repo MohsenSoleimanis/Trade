@@ -6,11 +6,12 @@ import { Why } from "../components/Why";
 export function Company({ symbol }: { symbol: string }) {
   const [d, setD] = useState<CompanyDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [range, setRange] = useState("5y");
 
   useEffect(() => {
-    setD(null); setErr(null);
-    get<CompanyDetail>(`/api/company/${symbol}`).then(setD).catch((e) => setErr(String(e)));
-  }, [symbol]);
+    setErr(null);
+    get<CompanyDetail>(`/api/company/${symbol}?range=${range}`).then(setD).catch((e) => setErr(String(e)));
+  }, [symbol, range]);
 
   if (err) return <div className="loading">could not load {symbol}: {err}</div>;
   if (!d) return <div className="loading">weighing {symbol}…</div>;
@@ -18,6 +19,7 @@ export function Company({ symbol }: { symbol: string }) {
   const sign = d.currency === "USD" ? "$" : "€";
   const crit = d.quality.filter((q) => q.level === "CRITICAL");
   const warns = d.quality.filter((q) => q.level === "WARN");
+  const day = d.day_change ?? 0;
 
   return (
     <>
@@ -26,9 +28,18 @@ export function Company({ symbol }: { symbol: string }) {
         <h1>{d.profile.name}</h1>
         <span className="mono s">{d.symbol} · {d.profile.exchange}</span>
         <span className="badge tier">{d.profile.tier}</span>
-        <span style={{ marginLeft: "auto" }} className="v">{sign}{d.last_price.toFixed(2)}</span>
+        <span style={{ marginLeft: "auto", textAlign: "right" }}>
+          <span className="v">{sign}{d.last_price.toFixed(2)}</span>{" "}
+          <span className={`mono ${day >= 0 ? "up" : "down"}`} style={{ fontWeight: 700 }}>
+            {day >= 0 ? "+" : ""}{(day * 100).toFixed(2)}%
+          </span>
+        </span>
+        <a className="btn" href={`#/desk/${d.symbol}`} style={{ textDecoration: "none" }}>Trade →</a>
       </div>
-      <p className="pagesub">last trade {d.last_date} · market cap {fmtMoney(d.valuation.market_cap, d.currency)}</p>
+      <p className="pagesub">
+        last trade {d.last_date} · market cap {fmtMoney(d.valuation.market_cap, d.currency)} ·
+        52w range <span className="mono">{sign}{d.low_52w} – {sign}{d.high_52w}</span>
+      </p>
 
       {crit.length > 0 && (
         <div className="qbanner crit"><b>QUARANTINED:</b> {crit.map((q) => `${q.check}: ${q.detail}`).join(" · ")} — numbers below may be unreliable.</div>
@@ -38,7 +49,14 @@ export function Company({ symbol }: { symbol: string }) {
       )}
 
       <div className="card">
-        <span className="k">the weighing machine — price</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <span className="k">the weighing machine — price</span>
+          <span className="range-toggle">
+            {["1y", "3y", "5y", "max"].map((r) => (
+              <button key={r} className={range === r ? "on" : ""} onClick={() => setRange(r)}>{r.toUpperCase()}</button>
+            ))}
+          </span>
+        </div>
         <PriceChart data={d.chart} currency={d.currency} />
         <Why lesson="Lessons 1 & 5">
           This line is mostly noise day-to-day and mostly business results over years. It is drawn from

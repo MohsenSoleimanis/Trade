@@ -72,7 +72,7 @@ export function PriceChart({ data, currency }: { data: Point[]; currency: string
         </div>
       )}
       <div className="s" style={{ marginTop: 6 }}>
-        5 years, adjusted for dividends · total return{" "}
+        adjusted for dividends · total return over shown period{" "}
         <span className={`mono ${ret >= 0 ? "up" : "down"}`}>{(ret * 100).toFixed(0)}%</span>
       </div>
     </div>

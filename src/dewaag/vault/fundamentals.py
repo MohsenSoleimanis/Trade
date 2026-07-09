@@ -96,8 +96,8 @@ def ingest_universe_fundamentals() -> dict:
     universe = store.load_universe()
     ok, failed = [], []
     for _, row in universe.iterrows():
-        if row["tier"] == "etf":
-            continue  # ETFs have no statements — they're baskets (Lesson 1)
+        if row["tier"] in ("etf", "fx"):
+            continue  # baskets and rates have no statements (Lesson 1)
         try:
             n = ingest_symbol_fundamentals(row["symbol"], row["yahoo"])
             ok.append(row["symbol"])

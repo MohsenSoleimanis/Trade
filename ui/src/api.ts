@@ -3,7 +3,28 @@
 
 export interface Company {
   symbol: string; name: string; exchange: string; currency: string;
-  country: string; tier: string; price: number | null; last_date: string | null;
+  country: string; tier: string; price: number | null;
+  day_change: number | null; ret_1y: number | null;
+  market_cap: number | null; spark: number[];
+}
+
+export interface Position {
+  symbol: string; name: string; tier: string; currency: string;
+  shares: number; last: number; value_eur: number; pnl_eur: number;
+  pnl_pct: number; wrong_price: number | null; thesis: string; opened_at: string | null;
+}
+
+export interface Trade {
+  at: string; symbol: string; side: string; shares: number; fill: number;
+  currency: string; costs_eur: number; total_eur: number; thesis: string;
+}
+
+export interface Portfolio {
+  currency: string; cash: number; invested: number; equity: number;
+  pnl_since_start: number; positions: Position[]; open_risk_eur: number;
+  drawdown_eur: number; drawdown_limit_eur: number;
+  equity_history: { date: string; equity: number }[];
+  trades: Trade[]; constitution_signed: boolean;
 }
 
 export interface YearRatios {
@@ -17,6 +38,7 @@ export interface CompanyDetail {
   symbol: string;
   profile: { name: string; exchange: string; currency: string; country: string; tier: string };
   last_price: number; last_date: string; currency: string;
+  day_change: number | null; high_52w: number; low_52w: number; range: string;
   chart: { date: string; value: number }[];
   toolkit: { years: YearRatios[]; latest: YearRatios | null };
   valuation: {

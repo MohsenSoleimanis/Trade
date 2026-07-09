@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
+import { TopBar } from "./components/TopBar";
 import { Company } from "./pages/Company";
 import { Dashboard } from "./pages/Dashboard";
 import { Research } from "./pages/Research";
-
-// Hash-based routing, zero dependencies: #/research, #/company/LOTB …
-// The FastAPI static mount serves index.html for "/", the hash does the rest.
+import { RiskConsole } from "./pages/RiskConsole";
+import { TradingDesk } from "./pages/TradingDesk";
 
 function useRoute(): string {
   const [hash, setHash] = useState(window.location.hash);
@@ -17,12 +17,11 @@ function useRoute(): string {
 }
 
 const MODULES: [string, string, string][] = [
-  // [label, route ("" = not built yet), phase]
-  ["Dashboard", "/", "now"],
-  ["Research", "/research", "now"],
+  ["Dashboard", "/", ""],
+  ["Research", "/research", ""],
   ["Screener", "", "ph 5"],
-  ["Risk Console", "", "ph 3"],
-  ["Trading Desk", "", "ph 3"],
+  ["Risk Console", "/risk", ""],
+  ["Trading Desk", "/desk", ""],
   ["Backtest Lab", "", "ph 4"],
   ["Agent Floor", "", "ph 6"],
 ];
@@ -33,6 +32,8 @@ export function App() {
   let page: JSX.Element;
   if (route.startsWith("/company/")) page = <Company symbol={route.split("/")[2]} />;
   else if (route === "/research") page = <Research />;
+  else if (route === "/risk") page = <RiskConsole />;
+  else if (route.startsWith("/desk")) page = <TradingDesk route={route} />;
   else page = <Dashboard />;
 
   return (
@@ -51,7 +52,10 @@ export function App() {
           )
         )}
       </nav>
-      <main className="main">{page}</main>
+      <div className="content">
+        <TopBar />
+        <main className="main">{page}</main>
+      </div>
     </div>
   );
 }
