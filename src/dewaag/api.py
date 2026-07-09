@@ -180,6 +180,33 @@ def brief() -> list[dict]:
     return briefing()
 
 
+# ------------------------------------------------------ backtest lab
+
+class BacktestIn(BaseModel):
+    strategy: str = "mom_12_1"   # mom_12_1 | equal_weight
+    top_n: int = 8
+    start_year: int = 2006
+    capital: float = 10_000.0
+
+
+@app.post("/api/backtest")
+def backtest(cfg: BacktestIn) -> dict:
+    from dewaag.engine.backtest import run_from_vault
+
+    if cfg.strategy not in ("mom_12_1", "equal_weight"):
+        raise HTTPException(400, "unknown strategy")
+    if not (2 <= cfg.top_n <= 20):
+        raise HTTPException(400, "top_n must be 2..20")
+    return run_from_vault(cfg.strategy, cfg.top_n, cfg.start_year, cfg.capital)
+
+
+@app.get("/api/backtest/ledger")
+def backtest_ledger() -> list[dict]:
+    from dewaag.engine.backtest import ledger
+
+    return ledger()
+
+
 # ------------------------------------------------- portfolio & trading
 
 class OrderIn(BaseModel):

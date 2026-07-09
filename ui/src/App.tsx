@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "./components/TopBar";
+import { BacktestLab } from "./pages/BacktestLab";
 import { Company } from "./pages/Company";
 import { Dashboard } from "./pages/Dashboard";
 import { Research } from "./pages/Research";
@@ -23,7 +24,7 @@ const MODULES: [string, string, string][] = [
   ["Screener", "/screener", ""],
   ["Risk Console", "/risk", ""],
   ["Trading Desk", "/desk", ""],
-  ["Backtest Lab", "", "ph 4"],
+  ["Backtest Lab", "/lab", ""],
   ["Agent Floor", "", "ph 6"],
 ];
 
@@ -35,6 +36,7 @@ export function App() {
   else if (route === "/research") page = <Research />;
   else if (route === "/screener") page = <Screener />;
   else if (route === "/risk") page = <RiskConsole />;
+  else if (route === "/lab") page = <BacktestLab />;
   else if (route.startsWith("/desk")) page = <TradingDesk route={route} />;
   else page = <Dashboard />;
 
