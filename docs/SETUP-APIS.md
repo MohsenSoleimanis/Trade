@@ -46,6 +46,23 @@ What you do (~30–45 min, free):
 **Cost: €0.** Live trading stays locked in software until the governance
 criteria (Phase 7) are met — regardless of what IBKR would allow.
 
+### Taxes — what actually happens (Belgian resident)
+
+- **Now (paper trading):** nothing. Fake money creates no taxes, no
+  declarations, no contact with any authority. The signup's tax questions
+  (TIN, residency) feed CRS — the automatic yearly report every regulated
+  broker on Earth files ("account exists, balance €X"). With €0 real money
+  it says nothing.
+- **Only if you later fund with real money** (foreign broker): three small
+  duties — declare the foreign account (NBB form + a checkbox on the tax
+  return), self-file TOB per trading period, declare dividends. De Waag's
+  governance module (Phase 7) computes and tracks these from your own
+  trade log. Alternative at that moment: a Belgian broker (zero admin,
+  everything withheld — but no API). Decide then, not now.
+- Rules changed in 2026 (capital gains tax) — verify current details when
+  real money enters. Never skip declarations: CRS means Belgium already
+  knows the account exists; the filings are small, fines are not.
+
 ---
 
 ## 3. Anthropic API (Claude) — needed: Phase 6 (Agent Floor), OPTIONAL
