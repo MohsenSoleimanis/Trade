@@ -180,6 +180,28 @@ def brief() -> list[dict]:
     return briefing()
 
 
+# ------------------------------------------------------ risk engine
+
+@app.get("/api/risk")
+def risk_report() -> dict:
+    """Portfolio risk analytics: vol, VaR/ES, contributions, exposure,
+    historical stress replays — the Risk Navigator/PORT layer."""
+    from dewaag.engine.risk import portfolio_report
+
+    return portfolio_report()
+
+
+@app.get("/api/risk/whatif")
+def risk_whatif(symbol: str, side: str, shares: int) -> dict:
+    """Pre-trade what-if: how this order changes portfolio risk."""
+    from dewaag.engine.risk import what_if
+
+    try:
+        return what_if(symbol, side.upper(), shares)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
 # ------------------------------------------------------ backtest lab
 
 class BacktestIn(BaseModel):

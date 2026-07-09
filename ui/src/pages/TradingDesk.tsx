@@ -10,6 +10,10 @@ interface Preview {
 }
 interface OrderResult { ok: boolean; blocks?: string[]; trade?: unknown; portfolio?: Portfolio }
 interface SizeResult { ok: boolean; shares?: number }
+interface WhatIf {
+  before: { vol: number; var95_eur: number | null; top_risk: string | null };
+  after: { vol: number; var95_eur: number | null; top_risk: string | null };
+}
 
 export function TradingDesk({ route }: { route: string }) {
   // #/desk/LOTB pre-selects a symbol (the Company page's Trade button)
@@ -44,12 +48,15 @@ export function TradingDesk({ route }: { route: string }) {
       .then((r) => setSuggest(r.ok ? r.shares ?? null : null)).catch(() => setSuggest(null));
   }, [wrong, sel?.price, side]);
 
-  // live cost preview
+  // live cost preview + the OMS what-if (portfolio risk impact)
+  const [whatif, setWhatif] = useState<WhatIf | null>(null);
   useEffect(() => {
     const n = parseInt(shares);
-    if (!symbol || !isFinite(n) || n <= 0) { setPreview(null); return; }
+    if (!symbol || !isFinite(n) || n <= 0) { setPreview(null); setWhatif(null); return; }
     get<Preview>(`/api/order/preview?symbol=${symbol}&side=${side}&shares=${n}`)
       .then(setPreview).catch(() => setPreview(null));
+    get<WhatIf>(`/api/risk/whatif?symbol=${symbol}&side=${side}&shares=${n}`)
+      .then(setWhatif).catch(() => setWhatif(null));
   }, [symbol, side, shares]);
 
   async function submit() {
@@ -112,6 +119,18 @@ export function TradingDesk({ route }: { route: string }) {
                 <span className="mono">{preview.costs.commission.toFixed(2)} + {preview.costs.half_spread.toFixed(2)} + {preview.costs.tob.toFixed(2)} = {fmtMoney(preview.costs.total, "EUR")} ({(preview.costs.total_pct * 100).toFixed(2)}%)</span></div>
               <div className="costline"><span>{side === "BUY" ? "total cash out" : "net cash in"}</span>
                 <span className="mono">{fmtMoney(preview.total_eur, "EUR")}</span></div>
+              {whatif && (
+                <>
+                  <div className="costline"><span>portfolio volatility impact</span>
+                    <span className="mono">{(whatif.before.vol * 100).toFixed(1)}% → <b>{(whatif.after.vol * 100).toFixed(1)}%</b></span></div>
+                  <div className="costline"><span>VaR95 / month impact</span>
+                    <span className="mono">€{whatif.before.var95_eur?.toLocaleString() ?? "0"} → <b>€{whatif.after.var95_eur?.toLocaleString() ?? "—"}</b></span></div>
+                  {whatif.after.top_risk && (
+                    <div className="costline"><span>biggest risk after this trade</span>
+                      <span className="mono">{whatif.after.top_risk}</span></div>
+                  )}
+                </>
+              )}
             </>
           )}
 
