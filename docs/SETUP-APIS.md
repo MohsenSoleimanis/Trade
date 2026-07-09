@@ -25,6 +25,13 @@ What you do (~30–45 min, free):
 
 1. Go to <https://www.interactivebrokers.ie> → **Open account** (individual).
    Complete the identity verification (ID + proof of address).
+   - **TIN question:** for a Belgian resident, your TIN = your **national
+     register number** (rijksregisternummer / numéro national), 11 digits,
+     format `YY.MM.DD-XXX.XX`. It's on the back of your eID or residence
+     permit card, on any Belgian tax letter, or in MyMinfin.be / itsme.
+     Tick "I have a Tax Identification Number" and enter it (digits only
+     if the form rejects punctuation). Never pick a "no TIN" reason —
+     that stalls the review with compliance questions.
 2. While reviewing your profile, complete the **W-8BEN** form inside Account
    Management (this is what cuts US dividend tax from 30% to 15% — Lesson 2).
 3. Once approved, in the IBKR portal: **Settings → Paper Trading Account** →
