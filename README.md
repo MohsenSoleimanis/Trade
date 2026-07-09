@@ -41,8 +41,14 @@ The curriculum that explains every decision lives in [`docs/curriculum/`](docs/c
 # one-time setup
 python -m venv .venv
 .venv\Scripts\pip install -e ".[dev]"
+cd ui; npm install; npm run build; cd ..
 
-# run the tests (the constitution's laws have unit tests)
+# fill the vault (free data, ~3 min)
+.venv\Scripts\python -m dewaag.vault ingest
+.venv\Scripts\python -m dewaag.vault fundamentals
+.venv\Scripts\python -m dewaag.vault check
+
+# run the tests
 .venv\Scripts\pytest
 
 # start the app
@@ -50,13 +56,15 @@ python -m venv .venv
 # → open http://localhost:8420
 ```
 
+UI development with hot reload: `cd ui && npm run dev` (proxies to the API on 8420).
+
 ## Build phases
 
 | Phase | Scope | Status |
 |-------|-------|--------|
 | 0 | Foundation: repo, config system, constitution, boot page | ✅ this commit |
-| 1 | Data Vault (Layers 0–1): universe, prices, point-in-time schema | ⏳ next |
-| 2 | Research Workbench: statements, ratios, valuation decoder | — |
+| 1 | Data Vault (Layers 0–1): universe, prices, point-in-time schema | ✅ |
+| 2 | Research Workbench: React UI, ratios toolkit, valuation decoder | ✅ |
 | 3 | Risk Console + Trading Desk (IBKR paper) | — |
 | 4 | Backtest Lab: honest engine + experiment ledger | — |
 | 5 | Screener + Book A signals | — |

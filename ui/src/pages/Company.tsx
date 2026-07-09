@@ -1,0 +1,186 @@
+import { useEffect, useState } from "react";
+import { CompanyDetail, fmtMoney, fmtNum, fmtPct, get } from "../api";
+import { PriceChart } from "../components/PriceChart";
+import { Why } from "../components/Why";
+
+export function Company({ symbol }: { symbol: string }) {
+  const [d, setD] = useState<CompanyDetail | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setD(null); setErr(null);
+    get<CompanyDetail>(`/api/company/${symbol}`).then(setD).catch((e) => setErr(String(e)));
+  }, [symbol]);
+
+  if (err) return <div className="loading">could not load {symbol}: {err}</div>;
+  if (!d) return <div className="loading">weighing {symbol}…</div>;
+
+  const sign = d.currency === "USD" ? "$" : "€";
+  const crit = d.quality.filter((q) => q.level === "CRITICAL");
+  const warns = d.quality.filter((q) => q.level === "WARN");
+
+  return (
+    <>
+      <a href="#/research" className="s">← research</a>
+      <div className="pagehead" style={{ marginTop: 6 }}>
+        <h1>{d.profile.name}</h1>
+        <span className="mono s">{d.symbol} · {d.profile.exchange}</span>
+        <span className="badge tier">{d.profile.tier}</span>
+        <span style={{ marginLeft: "auto" }} className="v">{sign}{d.last_price.toFixed(2)}</span>
+      </div>
+      <p className="pagesub">last trade {d.last_date} · market cap {fmtMoney(d.valuation.market_cap, d.currency)}</p>
+
+      {crit.length > 0 && (
+        <div className="qbanner crit"><b>QUARANTINED:</b> {crit.map((q) => `${q.check}: ${q.detail}`).join(" · ")} — numbers below may be unreliable.</div>
+      )}
+      {crit.length === 0 && warns.length > 0 && (
+        <div className="qbanner warn"><b>Data notes:</b> {warns.map((q) => `${q.check}: ${q.detail}`).join(" · ")} — verified real history, kept on purpose.</div>
+      )}
+
+      <div className="card">
+        <span className="k">the weighing machine — price</span>
+        <PriceChart data={d.chart} currency={d.currency} />
+        <Why lesson="Lessons 1 & 5">
+          This line is mostly noise day-to-day and mostly business results over years. It is drawn from
+          adjusted prices (our own dividend adjustment — the vault computes it, sources proved unreliable),
+          so long-period returns include dividends.
+        </Why>
+      </div>
+
+      <div className="grid2" style={{ marginTop: 14 }}>
+        <ToolkitCard d={d} />
+        <ValuationCard d={d} />
+      </div>
+
+      <div className="honesty">
+        source: {d.meta.source} · prices ingested {d.meta.ingested_at} · {d.meta.note}
+      </div>
+    </>
+  );
+}
+
+/* ---------------- Lesson 3: the five-number toolkit ---------------- */
+
+const METRICS: [keyof import("../api").YearRatios, string, string, string][] = [
+  // key, label, lesson, why-text
+  ["rev_growth", "Revenue growth", "Lesson 3 §6", "Is the business getting bigger? Steady beats spectacular — and one year means little."],
+  ["net_margin", "Net margin", "Lesson 3 §2", "How many cents of each €1 of sales survive all costs. Compare only within the sector and to the company's own history."],
+  ["roe", "Return on equity", "Lesson 3 §3", "How fast the owners' money grows inside the business. Above ~15% sustained is a good business — but always read it together with debt: leverage inflates ROE."],
+  ["debt_to_equity", "Debt / equity", "Lesson 3 §3", "Who really owns this company's future? Below ~1 is comfortable; above ~2 the bank is the boss. Lenders get paid before you, always."],
+  ["cash_conversion", "Cash conversion", "Lesson 3 §4", "Operating cash flow ÷ net profit — the lie detector. Around 1 or above, sustained: the profit is real. Profit growing while this shrinks is the loudest warning in accounting (Wirecard)."],
+];
+
+function ToolkitCard({ d }: { d: CompanyDetail }) {
+  const years = d.toolkit.years;
+  if (!years.length) {
+    return <div className="card"><span className="k">the five numbers</span><div className="loading">no fundamentals ingested for this name yet</div></div>;
+  }
+  const shown = years.slice(-4);
+  return (
+    <div className="card">
+      <span className="k">the five numbers — annual statements</span>
+      <table className="data" style={{ marginTop: 8 }}>
+        <thead>
+          <tr>
+            <th>metric</th>
+            {shown.map((y) => <th key={y.period} className="num">{y.period.slice(0, 4)}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td className="s">Revenue</td>
+            {shown.map((y) => <td key={y.period} className="num">{fmtMoney(y.revenue, d.currency)}</td>)}
+          </tr>
+          {METRICS.map(([key, label]) => (
+            <tr key={key}>
+              <td className="s">{label}</td>
+              {shown.map((y) => {
+                const v = y[key] as number | null;
+                const txt = key === "debt_to_equity" || key === "cash_conversion" ? fmtNum(v) : fmtPct(v);
+                return <td key={y.period} className="num">{txt}</td>;
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {METRICS.map(([key, label, lesson, why]) => (
+        <Why key={key} lesson={lesson}><b>{label}:</b> {why}</Why>
+      ))}
+    </div>
+  );
+}
+
+/* ---------------- Lesson 4: decoder + value machine ---------------- */
+
+function ValuationCard({ d }: { d: CompanyDetail }) {
+  const v = d.valuation;
+  const [g, setG] = useState(() =>
+    v.implied_growth != null ? Math.round(Math.min(Math.max(v.implied_growth, 0), 0.07) * 200) / 2 : 3);
+  const [r, setR] = useState(8);
+  const sign = d.currency === "USD" ? "$" : "€";
+
+  const gap = r / 100 - g / 100;
+  const broken = gap < 0.005 || v.eps == null || v.eps <= 0;
+  const fair = broken ? null : (v.eps! * (1 + g / 100)) / gap;
+  const upside = fair != null ? fair / d.last_price - 1 : null;
+
+  return (
+    <div className="card">
+      <span className="k">valuation — the promise inside the price</span>
+
+      <div className="cards" style={{ margin: "10px 0 4px" }}>
+        <div><span className="k">eps</span><span className="v" style={{ fontSize: 17 }}>{v.eps != null ? sign + v.eps.toFixed(2) : "—"}</span></div>
+        <div><span className="k">p/e</span><span className="v" style={{ fontSize: 17 }}>{fmtNum(v.pe, 1)}</span></div>
+        <div><span className="k">implied growth</span><span className="v" style={{ fontSize: 17 }}>{fmtPct(v.implied_growth)}</span></div>
+      </div>
+
+      {v.implied_growth != null ? (
+        <p className="s" style={{ margin: "4px 0 12px" }}>
+          Decoded: at today's price, the market believes profits grow ≈ <b>{fmtPct(v.implied_growth)}</b> per
+          year, forever (at {fmtPct(v.rate, 0)} demanded return). Your question is never "is the P/E high?" —
+          it is "is <i>that promise</i> believable for this business?"
+        </p>
+      ) : (
+        <p className="s" style={{ margin: "4px 0 12px" }}>
+          No positive earnings — P/E and the decoder are meaningless here (Lesson 4's multiples table: wrong ruler for this company).
+        </p>
+      )}
+
+      <span className="k">the value machine</span>
+      <div className="slider-row">
+        <span>growth of profits</span>
+        <input type="range" min={0} max={7} step={0.5} value={g} onChange={(e) => setG(Number(e.target.value))} aria-label="growth" />
+        <span className="mono">{g.toFixed(1)}%</span>
+      </div>
+      <div className="slider-row">
+        <span>return you demand</span>
+        <input type="range" min={5} max={12} step={0.5} value={r} onChange={(e) => setR(Number(e.target.value))} aria-label="rate" />
+        <span className="mono">{r.toFixed(1)}%</span>
+      </div>
+
+      {broken ? (
+        <div className="warnbox">
+          {v.eps == null || v.eps <= 0
+            ? "No positive earnings to feed the formula."
+            : "Growth ≈ demanded return — the formula explodes toward infinity. No company grows faster than its discount rate forever. If a valuation needs these settings, someone is dreaming."}
+        </div>
+      ) : (
+        <div className="cards" style={{ marginTop: 8 }}>
+          <div><span className="k">fair value / share</span><span className="v" style={{ fontSize: 17 }}>{sign}{fair!.toFixed(2)}</span></div>
+          <div><span className="k">vs price</span>
+            <span className={`v ${upside! >= 0 ? "up" : "down"}`} style={{ fontSize: 17 }}>
+              {upside! >= 0 ? "+" : ""}{(upside! * 100).toFixed(0)}%
+            </span>
+            <div className="s">{Math.abs(upside!) < 0.3 ? "inside honest-range noise → the correct action is usually nothing" : "large gap — check your assumptions before believing it"}</div>
+          </div>
+        </div>
+      )}
+
+      <Why lesson="Lesson 4">
+        value = profit × (1+g) ÷ (rate − growth). Move each slider one step and watch the value swing —
+        that violence is why valuations are <b>ranges with reasons, never points</b>, and why you demand a
+        margin of safety before acting. The fair value uses last-year EPS; garbage in, gospel out.
+      </Why>
+    </div>
+  );
+}

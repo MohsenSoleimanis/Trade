@@ -1,0 +1,88 @@
+/* De Waag design tokens — same system as the curriculum lessons,
+   so the app and its education read as one product. */
+:root {
+  --bg: #f6f8f6; --surface: #ffffff; --ink: #1b2420; --muted: #5a6963;
+  --line: #dce3de; --grid: #e4e9e5; --accent: #1e6b52; --accent-soft: #e3efe9;
+  --warn: #9c4a3c; --warn-soft: #f6e9e6; --code-bg: #eef2ef;
+  --blue: #2a78d6; --green: #1baf7a; --red: #d03b3b;
+  --shadow: 0 1px 3px rgba(27, 36, 32, 0.07);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121815; --surface: #1a211d; --ink: #e7edea; --muted: #96a49d;
+    --line: #2b342f; --grid: #27302b; --accent: #5cbb95; --accent-soft: #1e3229;
+    --warn: #ce8478; --warn-soft: #33211d; --code-bg: #232c27;
+    --blue: #3987e5; --green: #199e70; --red: #e66767;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+}
+
+* { box-sizing: border-box; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 15px/1.6 "Segoe UI", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.mono { font-family: Consolas, "Cascadia Mono", monospace; font-variant-numeric: tabular-nums; }
+h1, h2, h3 { font-family: Cambria, Georgia, serif; line-height: 1.25; margin: 0; }
+a { color: var(--accent); text-decoration: none; }
+
+/* ---------- shell ---------- */
+.shell { display: grid; grid-template-columns: 190px 1fr; min-height: 100vh; }
+.sidenav { background: var(--code-bg); border-right: 1px solid var(--line); padding: 18px 0; position: sticky; top: 0; height: 100vh; }
+.brand { font-family: Cambria, Georgia, serif; font-weight: 700; font-size: 18px; padding: 0 18px 16px; display: block; color: var(--ink); }
+.brand .v { font: 11px Consolas, monospace; color: var(--muted); margin-left: 6px; }
+.sidenav a.nav { display: block; padding: 9px 18px; color: var(--muted); font-size: 14px; border-left: 3px solid transparent; }
+.sidenav a.nav.on { color: var(--ink); background: var(--surface); border-left-color: var(--accent); font-weight: 600; }
+.sidenav a.nav.off { opacity: 0.45; cursor: default; }
+.sidenav .phase { font: 10px Consolas, monospace; color: var(--muted); float: right; margin-top: 3px; }
+.main { padding: 26px 32px 60px; max-width: 1060px; }
+.pagehead { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+.pagehead h1 { font-size: 26px; }
+.pagesub { color: var(--muted); font-size: 13.5px; margin: 2px 0 20px; }
+
+/* ---------- primitives ---------- */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); padding: 18px 20px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 900px) { .grid2 { grid-template-columns: 1fr; } }
+.k { font: 600 10.5px Consolas, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); display: block; }
+.v { font: 700 22px Consolas, monospace; font-variant-numeric: tabular-nums; }
+.s { font-size: 12px; color: var(--muted); }
+.badge { display: inline-block; font: 700 10.5px Consolas, monospace; padding: 2px 9px; border-radius: 10px; vertical-align: middle; }
+.badge.ok { background: var(--accent-soft); color: var(--accent); }
+.badge.warn { background: var(--warn-soft); color: var(--warn); }
+.badge.tier { background: var(--code-bg); color: var(--muted); }
+.up { color: var(--green); } .down { color: var(--red); }
+
+table.data { border-collapse: collapse; width: 100%; font-size: 14px; }
+table.data th { text-align: left; font: 600 10.5px Consolas, monospace; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); padding: 9px 12px; border-bottom: 2px solid var(--line); }
+table.data td { padding: 9px 12px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+table.data tr.click { cursor: pointer; }
+table.data tr.click:hover td { background: var(--code-bg); }
+td.num, th.num { text-align: right; font-family: Consolas, monospace; white-space: nowrap; }
+
+.chips { display: flex; gap: 8px; margin: 0 0 14px; flex-wrap: wrap; }
+.chip { font: 600 12.5px "Segoe UI", system-ui, sans-serif; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 14px; padding: 4px 13px; cursor: pointer; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+/* why-drawer: the teaching layer */
+details.why { margin-top: 10px; border-top: 1px dashed var(--line); }
+details.why summary { cursor: pointer; list-style: none; font: 600 11px Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); padding: 8px 0 2px; }
+details.why summary::-webkit-details-marker { display: none; }
+details.why summary::before { content: "ⓘ "; }
+details.why .body { font-size: 13px; color: var(--muted); padding: 4px 0 6px; }
+details.why .lesson { font: 600 10.5px Consolas, monospace; color: var(--accent); }
+
+/* sliders (value machine) */
+.slider-row { display: grid; grid-template-columns: 150px 1fr 62px; gap: 12px; align-items: center; margin: 8px 0; font-size: 13.5px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.warnbox { background: var(--warn-soft); border-radius: 6px; padding: 9px 13px; font-size: 13px; margin-top: 8px; }
+
+.qbanner { border-radius: 6px; padding: 10px 14px; font-size: 13.5px; margin-bottom: 14px; }
+.qbanner.warn { background: var(--warn-soft); }
+.qbanner.crit { background: var(--warn-soft); border: 1px solid var(--warn); }
+
+.honesty { font-size: 12px; color: var(--muted); border-top: 1px dashed var(--line); margin-top: 16px; padding-top: 10px; }
+.loading { color: var(--muted); padding: 40px 0; }

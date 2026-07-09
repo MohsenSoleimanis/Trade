@@ -36,6 +36,18 @@ def main() -> int:
                 print(f"  {sym}: {err}")
         return 1 if result["failed"] else 0
 
+    if cmd == "fundamentals":
+        from dewaag.vault.fundamentals import ingest_universe_fundamentals
+
+        print("ingesting annual statements (free data, ~4y per company)...")
+        result = ingest_universe_fundamentals()
+        print(f"\nok: {result['ok']} symbols")
+        if result["failed"]:
+            print("FAILED:")
+            for sym, err in result["failed"]:
+                print(f"  {sym}: {err}")
+        return 1 if result["failed"] else 0
+
     if cmd == "check":
         from dewaag.vault.quality import gate, run_checks
 

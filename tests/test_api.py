@@ -13,11 +13,19 @@ def test_health():
     assert "constitution_signed" in body
 
 
-def test_home_page_boots_and_shows_constitution():
+def test_root_serves_something_that_boots():
+    # Phase 0: a plain status page. Phase 2+: the built React app.
+    # Either way "/" must never 404 — the front door always opens.
     r = client.get("/")
     assert r.status_code == 200
+    assert ("root" in r.text) or ("De Waag" in r.text)
+
+
+def test_status_page_shows_constitution():
+    r = client.get("/status")
+    assert r.status_code == 200
     assert "De Waag" in r.text
-    assert "Risk per idea" in r.text
+    assert "constitution" in r.text.lower()
 
 
 def test_constitution_endpoint():
