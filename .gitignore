@@ -1,0 +1,23 @@
+# python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# node (from Phase 2 on)
+node_modules/
+dist/
+
+# data vault — market data is fetched, never committed
+data/
+*.parquet
+*.duckdb
+
+# secrets & local overrides
+.env
+config/*.local.yaml
+
+# OS noise
+Thumbs.db
+.DS_Store

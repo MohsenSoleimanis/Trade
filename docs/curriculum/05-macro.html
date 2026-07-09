@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 5 — Macro: Rates, Inflation, and Why Everything Moves Together</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-up: #1baf7a; --c-down: #d03b3b; --c-econ: #2a78d6; --c-mkt: #1baf7a;
+    --up-soft: rgba(27,175,122,.14); --down-soft: rgba(208,59,59,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-up: #199e70; --c-down: #e66767; --c-econ: #3987e5; --c-mkt: #199e70;
+      --up-soft: rgba(25,158,112,.18); --down-soft: rgba(230,103,103,.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-up: #199e70; --c-down: #e66767; --c-econ: #3987e5; --c-mkt: #199e70;
+    --up-soft: rgba(25,158,112,.18); --down-soft: rgba(230,103,103,.15);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-up: #1baf7a; --c-down: #d03b3b; --c-econ: #2a78d6; --c-mkt: #1baf7a;
+    --up-soft: rgba(27,175,122,.14); --down-soft: rgba(208,59,59,.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.75; margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 52px 0 30px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 60ch; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 30px 0 4px; }
+  p { margin: 12px 0; font-size: 16px; }
+  li { font-size: 16px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .idea { background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px; font-size: 16px; }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .steps { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 22px; margin: 20px 0; box-shadow: var(--shadow); }
+  .steps .s-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .steps ol { margin: 6px 0 0; padding-left: 22px; }
+  .steps li { font-size: 15px; margin: 9px 0; }
+  .steps .m { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  figure.viz { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); margin: 26px 0; padding: 20px 22px 16px; }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .chartbox { position: relative; }
+  .chartbox svg { display: block; width: 100%; height: auto; }
+
+  .hbar-row { display: grid; grid-template-columns: 160px 1fr; align-items: center; gap: 12px; margin: 9px 0; }
+  .hbar-row .lab { font-size: 13px; color: var(--ink); text-align: right; line-height: 1.3; }
+  .hbar-row .lab small { color: var(--muted); display: block; font-size: 11.5px; }
+  .hbar-track { position: relative; height: 22px; }
+  .hbar { height: 22px; border-radius: 0 4px 4px 0; min-width: 2px; display: inline-flex; align-items: center; }
+  .hbar-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; color: var(--ink); margin-left: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .baseline { border-left: 2px solid var(--line); }
+
+  /* rate simulator */
+  .sim-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  button.viz-btn { font: 600 13.5px "Segoe UI", system-ui, sans-serif; color: var(--bg); background: var(--accent); border: none; border-radius: 6px; padding: 9px 16px; cursor: pointer; }
+  button.viz-btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.viz-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.viz-btn[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .fx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  .fx-card { background: var(--code-bg); border-radius: 6px; padding: 12px 15px; }
+  .fx-card .f-name { font-size: 13px; font-weight: 600; }
+  .fx-card .f-delta { font-family: Consolas, "Cascadia Mono", monospace; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin: 2px 0; }
+  .fx-card .f-why { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .up { color: var(--c-up); } .down { color: var(--c-down); } .flat { color: var(--muted); }
+
+  .example { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 18px 22px; margin: 22px 0; box-shadow: var(--shadow); }
+  .example .ex-label, .trap .ex-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px; }
+  .example .ex-label { color: var(--accent); }
+  .example p, .example li { font-size: 15px; }
+  .trap { background: var(--trap-soft); border: 1px solid var(--line); border-left: 3px solid var(--trap); border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 22px 0; }
+  .trap .ex-label { color: var(--trap); }
+  .trap p { font-size: 15px; margin: 8px 0 0; }
+  .trap p:first-of-type { margin-top: 0; }
+
+  .tablebox { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; }
+
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .quiz summary { padding: 13px 18px; cursor: pointer; font-size: 15px; font-weight: 600; list-style: none; }
+  .quiz summary::-webkit-details-marker { display: none; }
+  .quiz summary::before { content: "Q · "; font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); font-weight: 700; }
+  .quiz summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .quiz .answer { padding: 12px 18px 15px; font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); margin: 0; }
+
+  .keyterms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 18px; }
+  .keyterms > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; font-size: 14px; }
+  .keyterms b { color: var(--accent); }
+
+  .homework { background: var(--accent-soft); border-radius: 8px; padding: 22px 26px; margin-top: 24px; }
+  .homework h3 { margin-top: 0; }
+  .homework p, .homework li { font-size: 15px; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 · Understanding Trading · Lesson 5 of 8</div>
+  <h1>Macro: Rates, Inflation, and Why Everything Moves Together</h1>
+  <p class="subtitle">Lesson 4 ended with a mystery: interest rates rose, and every stock on Earth fell — the good ones too. This lesson explains the tide that lifts and drops all boats: central banks, inflation, bonds, and the economic seasons. And it ends with the honest answer to "so how do I profit from macro?" — which is not what the internet tells you.</p>
+  <div class="lesson-meta"><span>reading: ~45 min</span><span>homework: ~45 min</span><span>prerequisite: Lesson 4</span><span>interactive: yes — you become the central bank</span></div>
+</header>
+
+<h2>1. Your stock is a boat. Macro is the tide.</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Even a perfectly chosen stock swims in a tide that moves all stocks together — and that tide has exactly two engines: interest rates and the economic cycle.</div>
+
+<p>Remember the horizon chart from Lesson 1: a big part of every stock's movement is not about the company at all. When the tide comes in, bad companies rise too. When it goes out, great companies sink too. The <span class="mono">beta</span> number you saw in the quote table measures exactly this: how strongly a stock follows the tide.</p>
+<p>Macro ("macroeconomics") is the study of that tide. You need enough of it to never be confused by your portfolio again — not to predict the future. Two engines drive nearly everything: the <strong>price of money</strong> (this section and the next) and the <strong>economic seasons</strong> (section 5).</p>
+
+<h2>2. Central banks — the thermostat of the economy</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>A central bank sets the price of borrowing money, and it moves that price up or down to keep inflation near 2% — like a thermostat.</div>
+
+<p>Every currency has a central bank: the <dfn>ECB</dfn> for the euro (Frankfurt), the <dfn>Fed</dfn> for the dollar (Washington). They are not normal banks — they are the banks <em>of the banks</em>, and they set one crucial number: the <dfn>policy rate</dfn> — the interest rate at which banks themselves borrow. That one number ripples outward into everything: your mortgage, a company's loan, government bond yields, and — through Lesson 4's formula — the value of every stock.</p>
+<p>Why do they move it? Their job (their "mandate") is to keep <dfn>inflation</dfn> — the speed at which prices rise — close to <strong>2% per year</strong>. The mechanism is a loop:</p>
+
+<figure class="viz" aria-label="Circular diagram of the central bank thermostat loop">
+  <p class="fig-title">The thermostat loop</p>
+  <div class="chartbox">
+    <svg viewBox="0 0 700 300" role="img" aria-label="A cycle: economy runs hot, inflation rises above 2 percent, the central bank raises rates, borrowing becomes expensive and spending slows, inflation cools, the bank cuts rates, cheap money heats the economy again">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L7 4 L0 8 z" fill="var(--muted)"/></marker>
+      </defs>
+      <!-- nodes -->
+      <g font-family="'Segoe UI', system-ui, sans-serif" font-size="13" fill="var(--ink)" text-anchor="middle" font-weight="600">
+        <rect x="255" y="18"  width="190" height="44" rx="8" fill="var(--up-soft)"/>
+        <text x="350" y="37">Economy runs hot</text>
+        <text x="350" y="53" font-size="11.5" font-weight="400" fill="var(--muted)">spending strong, jobs full</text>
+
+        <rect x="490" y="90" width="190" height="44" rx="8" fill="var(--down-soft)"/>
+        <text x="585" y="109">Inflation rises above 2%</text>
+        <text x="585" y="125" font-size="11.5" font-weight="400" fill="var(--muted)">prices climbing too fast</text>
+
+        <rect x="490" y="200" width="190" height="44" rx="8" fill="var(--code-bg)"/>
+        <text x="585" y="219">Central bank RAISES rates</text>
+        <text x="585" y="235" font-size="11.5" font-weight="400" fill="var(--muted)">borrowing gets expensive</text>
+
+        <rect x="255" y="248" width="190" height="44" rx="8" fill="var(--down-soft)"/>
+        <text x="350" y="267">Spending &amp; investing slow</text>
+        <text x="350" y="283" font-size="11.5" font-weight="400" fill="var(--muted)">inflation cools… maybe too much</text>
+
+        <rect x="20" y="200" width="190" height="44" rx="8" fill="var(--code-bg)"/>
+        <text x="115" y="219">Central bank CUTS rates</text>
+        <text x="115" y="235" font-size="11.5" font-weight="400" fill="var(--muted)">borrowing gets cheap</text>
+
+        <rect x="20" y="90" width="190" height="44" rx="8" fill="var(--up-soft)"/>
+        <text x="115" y="109">Cheap money heats things up</text>
+        <text x="115" y="125" font-size="11.5" font-weight="400" fill="var(--muted)">loans, projects, hiring</text>
+      </g>
+      <!-- arrows clockwise -->
+      <g stroke="var(--muted)" stroke-width="1.8" fill="none" marker-end="url(#arr)">
+        <path d="M 448 55 Q 545 60 578 86"/>
+        <path d="M 585 138 L 585 196"/>
+        <path d="M 486 235 Q 465 262 449 268"/>
+        <path d="M 251 268 Q 230 262 213 240"/>
+        <path d="M 115 196 L 115 138"/>
+        <path d="M 122 86 Q 155 60 251 55"/>
+      </g>
+    </svg>
+  </div>
+  <figcaption class="fig-note">Rates go up to cool inflation; rates come down to revive a cold economy. For you as an investor, the punchline sits in Lesson 4: <strong>every turn of this wheel changes the discount rate — the gravity under every valuation you own.</strong></figcaption>
+</figure>
+
+<h2>3. Inflation — the silent tax on standing still</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Inflation quietly shrinks what your money can buy — slowly enough that you don't feel it, fast enough to halve your savings in a generation.</div>
+
+<div class="steps">
+  <span class="s-label">What 3% inflation does to €10,000 hidden under the bed</span>
+  <ol>
+    <li>Each year, prices rise 3%. So each year your money buys <span class="m">1 ÷ 1.03 ≈ 2.9%</span> less.</li>
+    <li>After 10 years: <span class="m">€10,000 ÷ 1.03¹⁰ = €7,441</span> of today's buying power.</li>
+    <li>After 20 years: <span class="m">€5,537</span>. After 30 years: <span class="m">€4,120</span>.</li>
+  </ol>
+</div>
+
+<figure class="viz" aria-label="Bars showing purchasing power of 10000 euros shrinking over 30 years at 3 percent inflation">
+  <p class="fig-title">€10,000 in cash, eaten by 3% inflation</p>
+  <p class="fig-sub">What the same money still buys, measured in today's prices.</p>
+  <div class="hbar-row"><div class="lab">Today</div><div class="hbar-track baseline"><div class="hbar" style="width:78%; background:var(--c-econ)"></div><span class="hbar-val">€10,000</span></div></div>
+  <div class="hbar-row"><div class="lab">After 10 years</div><div class="hbar-track baseline"><div class="hbar" style="width:58%; background:var(--c-econ)"></div><span class="hbar-val">€7,441</span></div></div>
+  <div class="hbar-row"><div class="lab">After 20 years</div><div class="hbar-track baseline"><div class="hbar" style="width:43%; background:var(--c-econ)"></div><span class="hbar-val">€5,537</span></div></div>
+  <div class="hbar-row"><div class="lab">After 30 years</div><div class="hbar-track baseline"><div class="hbar" style="width:32%; background:var(--c-econ)"></div><span class="hbar-val">€4,120</span></div></div>
+  <figcaption class="fig-note">This is why "doing nothing with my money is safe" is false — cash loses guaranteed, just slowly. It's also why the number that matters is always the <dfn>real return</dfn>: your return <em>minus</em> inflation. A savings account paying 1% during 3% inflation has a real return of <strong>−2%</strong> — a guaranteed slow loss wearing a "safe" costume. Stocks are ownership of real businesses that can raise their prices, which is why, over decades, they've been one of the few reliable inflation-beaters.</figcaption>
+</figure>
+
+<h2>4. Bonds — the seesaw that rules the world</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>A bond is a tradable loan, and its price moves opposite to interest rates — a seesaw that explains half of all financial news.</div>
+
+<p>A <dfn>bond</dfn> is simple: you lend money (to a government or company), they pay you fixed interest (the <dfn>coupon</dfn>) every year, and return the full amount at the end. Bonds trade on markets just like shares. The bond market is even bigger than the stock market, and it sets the "safe rate" that anchors Lesson 4's discount rate. One mechanism to understand deeply:</p>
+
+<div class="steps">
+  <span class="s-label">The seesaw — why rates up means bond prices down</span>
+  <ol>
+    <li>Last year you bought a government bond: <span class="m">€1,000</span>, paying <span class="m">2%</span> (€20/year) for 10 years.</li>
+    <li>Today the central bank has raised rates, and <em>new</em> bonds pay <span class="m">4%</span> (€40/year).</li>
+    <li>You want to sell yours. Who would pay €1,000 for €20/year when €1,000 now buys €40/year? Nobody.</li>
+    <li>To find a buyer, your price must drop until your €20/year becomes competitive — for a 10-year bond, to roughly <span class="m">€840</span>. You lost ~16% on a "safe" investment, purely because rates rose.</li>
+  </ol>
+</div>
+<p>Flip it around: when rates <em>fall</em>, old bonds with fat coupons become precious and their prices <em>rise</em>. Rates up → bond prices down. Rates down → bond prices up. Always. And the longer the bond has left to run, the harder the seesaw swings it — exactly the "far money reacts hardest" rule from Lesson 4, because a bond IS pure far money.</p>
+<p>One more bond fact you'll meet in every market summary: the <dfn>yield curve</dfn> — the line of interest rates from short loans (3 months) to long ones (10+ years). Normally long rates are higher (more waiting, more risk). When short rates rise <em>above</em> long rates (an "inverted" curve), it historically often signaled a recession within a year or two — the market betting that the central bank has braked too hard. Useful context; imperfect prophet.</p>
+
+<h2>5. You are the central bank — press the buttons</h2>
+<p>Everything from Lessons 4 and 5 in one machine. You control the policy rate. Watch what one decision does to five different things people own:</p>
+
+<figure class="viz" aria-label="Interactive simulator showing effects of a rate cut or hike on bonds, stocks, savings and currency">
+  <p class="fig-title">The rate decision simulator</p>
+  <p class="fig-sub">Starting point: rates at 3%, everything calm. Make your move.</p>
+  <div class="sim-actions">
+    <button class="viz-btn" id="btn-cut" type="button" aria-pressed="false">CUT rates by 1%</button>
+    <button class="viz-btn" id="btn-hike" type="button" aria-pressed="false">HIKE rates by 1%</button>
+    <button class="viz-btn secondary" id="btn-hold" type="button">Reset / hold</button>
+  </div>
+  <div class="fx-grid">
+    <div class="fx-card"><div class="f-name">10-year government bond</div><div class="f-delta flat" id="fx-bond">—</div><div class="f-why" id="fxw-bond">The seesaw: bond prices move opposite to rates, ~9% per 1% for a 10-year bond.</div></div>
+    <div class="fx-card"><div class="f-name">Steady dividend stock <span class="mono">(growth 1%)</span></div><div class="f-delta flat" id="fx-value">—</div><div class="f-why" id="fxw-value">Lesson 4's formula with a wide (rate−growth) gap: moves, but moderately.</div></div>
+    <div class="fx-card"><div class="f-name">Exciting growth stock <span class="mono">(growth 5%)</span></div><div class="f-delta flat" id="fx-growth">—</div><div class="f-why" id="fxw-growth">Narrow (rate−growth) gap: the formula multiplies every rate move violently.</div></div>
+    <div class="fx-card"><div class="f-name">Your savings account &amp; new mortgages</div><div class="f-delta flat" id="fx-save">—</div><div class="f-why" id="fxw-save">Banks pass the policy rate on — slowly to savers, quickly to borrowers.</div></div>
+    <div class="fx-card"><div class="f-name">The currency (tendency)</div><div class="f-delta flat" id="fx-fx">—</div><div class="f-why" id="fxw-fx">Higher rates attract foreign money seeking interest → currency tends to strengthen. A tendency, not a law.</div></div>
+  </div>
+  <figcaption class="fig-note">Numbers are illustrative (formula-based), and real markets move on the <em>surprise</em> vs. what was expected — Lesson 1's machine applies to central banks too: a well-telegraphed hike can move nothing; a surprise quarter-point can move everything.</figcaption>
+</figure>
+
+<h2>6. The economic seasons — and why the market moves first</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>The economy breathes in cycles of a few years — and the stock market moves 6–12 months <em>ahead</em> of it, so trading on today's economic news is trading the past.</div>
+
+<p>Economies don't grow in straight lines. They breathe: <strong>expansion</strong> (growth, hiring, optimism) → <strong>peak</strong> (overheating, inflation, rate hikes) → <strong>recession</strong> (shrinking, layoffs, fear) → <strong>recovery</strong> (rate cuts, cheap money, rebirth). A full breath historically takes roughly 4–10 years, and no two are identical. Here is the single most misunderstood fact about this cycle:</p>
+
+<figure class="viz" aria-label="Two waves: the stock market wave leads the economy wave by several months">
+  <p class="fig-title">The market breathes before the economy does</p>
+  <p class="fig-sub">Same cycle, two waves — the market's turns come months earlier.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-econ)"></span>the economy (jobs, production)</span>
+    <span class="chip"><span class="sw" style="background:var(--c-mkt)"></span>the stock market</span>
+  </div>
+  <div class="chartbox"><svg id="cycle-svg" viewBox="0 0 700 260" role="img" aria-label="Two sine-like waves. The green market wave peaks and bottoms several months before the blue economy wave. Annotations mark where recessions are announced after the market already fell, and where the market bottoms while news is still terrible."></svg></div>
+  <figcaption class="fig-note">Why does the market lead? Because prices are made of <em>expectations</em> (Lesson 1). Investors don't wait for the recession to be announced — they sell when they first smell it, a year early. And they buy again while the news is still terrible, because they're pricing the recovery beyond it. Consequences: "recession officially declared" days often see stocks <em>rise</em> (old news, already priced), and the market's bottom happens at maximum fear, never at the all-clear.</figcaption>
+</figure>
+
+<p>The seasons also treat sectors differently — this is why your two markets don't move as one:</p>
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Type</th><th>Examples</th><th>Behavior</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Defensive</strong></td><td>food, pharma, utilities — things bought in any weather (Lotus Bakeries, UCB)</td><td>Milder swings. Shine in downturns, lag in booms.</td></tr>
+      <tr><td><strong>Cyclical</strong></td><td>construction, chips, luxury, airlines — postponable purchases (Melexis, Kinepolis)</td><td>Violent swings. Fly in booms, crash in recessions.</td></tr>
+      <tr><td><strong>Financial</strong></td><td>banks, insurers (KBC, Ageas)</td><td>Live off interest rates and loan defaults — a category of their own.</td></tr>
+    </tbody>
+  </table>
+</div>
+<p>Look at those examples again: they're the BEL 20. Belgium's index is a mix of global defensives and cyclicals — mostly moved by <em>world</em> macro, not Belgian news. One more reason (besides Lesson 1's breadth problem) why your home market is a stock-picker's niche, not a macro playground.</p>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #1 — trading the announcement</span>
+  <p>CPI (the monthly inflation number) comes out at 14:30. Your plan: read it fast, trade fast, profit. Reality: algorithms react in microseconds (Lesson 1 — you know who's on the other side now), the first minutes are whipsaw chaos, spreads widen (Lesson 2), and the "obvious" direction reverses half the time because what matters is the number <em>versus expectations</em>, and expectations were already priced.</p>
+  <p>Long-horizon rule: know the calendar (CPI days, central bank meetings) — not to trade them, but to <strong>avoid placing orders around them</strong>. Let the dust settle; your horizon is months, not minutes.</p>
+</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #2 — "recession is coming, I'll sell everything and buy back at the bottom"</span>
+  <p>Three problems. One: economists and headlines have predicted roughly nine of the last five recessions — the signal is unreliable. Two: the market leads — by the time the recession is visible, the fall largely happened. Three: re-entry. The market bottoms at <em>maximum</em> fear; the news at the bottom is always apocalyptic; almost nobody who sold gets back in near it. They wait for "clarity", which arrives 40% higher.</p>
+  <p>The recovery's biggest days cluster right around the bottom — miss a handful of them and you miss a huge part of the decade's return. Timing the cycle with your whole portfolio is how patient money becomes impatient losses.</p>
+</div>
+
+<h2>7. So what do you actually DO with macro?</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Macro is for positioning and protection, not prediction — it tells you what weather is possible, not tomorrow's forecast.</div>
+
+<p>The honest truth that separates professionals from storytellers: <strong>nobody reliably predicts macro.</strong> Not banks, not hedge funds, not the famous person on YouTube with the confident voice. The few who nail one call (a crash, an inflation wave) usually miss the next one loudly. So what's macro <em>for</em>? Four real uses:</p>
+<ul>
+  <li><strong>Never be confused.</strong> When rates jump and your best stock falls 15% on no news, you now know: gravity changed, not your analysis (Lesson 4). Confusion causes panic-selling; understanding prevents it.</li>
+  <li><strong>Stress-test your portfolio, don't forecast.</strong> Ask "IF rates rise 2%, what happens to what I own?" — if the answer is "everything I own dies together" (all growth stocks, all long bonds), fix the portfolio <em>now</em>, whatever your forecast.</li>
+  <li><strong>Diversify across weather.</strong> Own things that suffer in different seasons: some defensive, some cyclical, some short-duration, some long. Not because you know the season — because you don't.</li>
+  <li><strong>Respect the calendar.</strong> Know when CPI and central-bank days are; don't place Belgian limit orders into that chaos.</li>
+</ul>
+<p>This maps exactly onto our future system (master plan, the debate we ran): macro enters as <strong>risk scaling</strong> — "how exposed are we to each weather?" — never as a prediction signal. Regime <em>awareness</em>, not regime <em>forecasting</em>. Even the professionals who tried to model regime prediction mostly overfit it; we decided from day one not to play that game.</p>
+
+<h2>8. Check yourself</h2>
+<div class="quiz">
+  <details><summary>The ECB raises rates by 1%. Walk the chain: why does your favorite growth stock fall 20% "on no news about the company"?</summary><p class="answer">Policy rate up → safe rates up → everyone's discount rate up → Lesson 4's formula: value = profit ÷ (rate − growth). For a growth stock the (rate−growth) gap is tiny, so adding 1% to the rate shrinks the value violently (e.g. 1/0.03 → 1/0.04 = −25%). The company changed nothing; the gravity changed.</p></details>
+  <details><summary>You own a 10-year bond paying 2%. New bonds pay 4%. Why is yours suddenly worth ~16% less?</summary><p class="answer">Nobody will pay full price for €20/year when the same money now buys €40/year. Your bond's price must fall until its fixed coupon matches the new reality. The seesaw: rates up, existing bond prices down — and the longer the bond, the bigger the swing.</p></details>
+  <details><summary>The news announces: "the recession has officially begun." Stocks rise 2% that day. Explain without magic.</summary><p class="answer">The market smelled the recession a year ago and already fell then — prices are expectations (Lesson 1). By announcement day, the recession is old news, fully priced. If the official news is even slightly less bad than feared, the surprise is positive and prices rise. The market trades the future; the news reports the past.</p></details>
+  <details><summary>Your savings account pays 1%. Inflation is 3%. What is really happening to your money, and how bad is it over 20 years?</summary><p class="answer">Real return = 1% − 3% = −2% per year: a guaranteed slow loss. Over 20 years: ×(0.98)²⁰ ≈ −33% of buying power. "Safe" cash is only safe against volatility — not against inflation. That's the deepest reason to own productive assets at all.</p></details>
+  <details><summary>US CPI comes out in 10 minutes. You were about to place a limit order on a Belgian small-cap. Wait or send?</summary><p class="answer">Wait. Around macro announcements spreads widen, liquidity thins, and prices whipsaw — even on stocks far from the news. Your horizon is months; ten minutes of patience costs nothing and avoids being the counterparty who provides someone's lunch during the chaos.</p></details>
+  <details><summary>The Fed hikes while the ECB holds. What tends to happen to the dollar — and name BOTH forces acting on your US stocks (in euros).</summary><p class="answer">Higher US rates attract money seeking interest → the dollar tends to strengthen against the euro. Your US holdings then face two opposite forces: the hike pressures their valuations down (gravity), while the stronger dollar makes each dollar worth more in euros. Sometimes they cancel, sometimes they don't — this is Lesson 2's double bet, now with its engine visible.</p></details>
+</div>
+
+<h2>9. Key words from this lesson</h2>
+<div class="keyterms">
+  <div><b>Central bank</b> — the bank of the banks (ECB, Fed); sets the price of money.</div>
+  <div><b>Policy rate</b> — the base interest rate that ripples into all loans, bonds, and valuations.</div>
+  <div><b>Inflation / CPI</b> — the speed of price rises / the monthly index that measures it.</div>
+  <div><b>Real return</b> — your return minus inflation; the only return that buys anything.</div>
+  <div><b>Bond / coupon / yield</b> — a tradable loan / its fixed interest / its effective return at today's price.</div>
+  <div><b>The seesaw</b> — rates up ⇒ existing bond prices down, and vice versa. Longer bond, bigger swing.</div>
+  <div><b>Yield curve</b> — rates from short to long maturities; inversion has often preceded recessions.</div>
+  <div><b>Expansion / recession</b> — the economy's in-breath and out-breath; a full cycle ≈ 4–10 years.</div>
+  <div><b>Defensive / cyclical</b> — bought-in-any-weather sectors vs. postponable-purchase sectors.</div>
+  <div><b>The market leads</b> — stocks turn 6–12 months before the economy; news trades the past.</div>
+  <div><b>Stress test</b> — asking "what if rates/growth surprise?" about your portfolio, instead of forecasting.</div>
+  <div><b>Regime</b> — the current macro weather; our system will measure exposure to it, never predict it.</div>
+</div>
+
+<h2>10. If you remember only three things</h2>
+<div class="steps">
+  <ol>
+    <li><strong>Rates are the gravity of everything.</strong> One policy rate flows into bonds (seesaw), stocks (the Lesson 4 formula), currencies, and your mortgage. When everything moves together, look at rates first.</li>
+    <li><strong>The market moves before the economy.</strong> Selling on recession headlines and buying on all-clear headlines is systematically backwards — that's trading the past at the prices of the future.</li>
+    <li><strong>Macro is armor, not a crystal ball.</strong> Use it to understand, stress-test and diversify. The moment you're sure what macro does next, re-read this lesson.</li>
+  </ol>
+</div>
+
+<h2>11. Homework — take the economy's pulse (~45 min)</h2>
+<div class="homework">
+  <h3>Field exercise</h3>
+  <ul>
+    <li><strong>The two thermostats:</strong> find today's ECB policy rate (ecb.europa.eu) and the Fed's rate (federalreserve.gov). Also find current eurozone and US inflation. Write all four down — is each bank above or below its 2% target?</li>
+    <li><strong>The seesaw, yourself:</strong> a 10-year bond pays 2% and yields rise to 3.5%. Using the Lesson 4 discounting idea (or ~9% price change per 1% of rates), estimate the price damage. One line of math.</li>
+    <li><strong>Classify your stocks:</strong> your two companies from Lesson 1 — defensive, cyclical, or financial? One sentence of reasoning each.</li>
+    <li><strong>The calendar:</strong> find the date of the next ECB meeting and the next US CPI release. Put both in your phone's calendar — the habit starts now.</li>
+    <li><strong>Stress test (the important one):</strong> imagine rates rise 2% next year. In one honest paragraph: what happens to the things you own (or plan to own)? If the answer is "everything falls together", note what kind of asset would balance it.</li>
+  </ul>
+  <p>Reminder from your teacher: Lesson 6 (risk &amp; position sizing) works with <em>your</em> paper account and <em>your</em> numbers. If the IBKR paper account from Lesson 2 doesn't exist yet, this weekend is the moment — it's 30 minutes of clicking.</p>
+</div>
+
+<footer>
+  <span>Lesson 5 of 8 · Part 1: Understanding Trading</span>
+  <span>Next: <span class="cmd">start lesson 6</span> — Risk: position sizing and the math of survival</span>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- rate decision simulator ---------- */
+  var els = {
+    bond: [document.getElementById("fx-bond")],
+    value: [document.getElementById("fx-value")],
+    growth: [document.getElementById("fx-growth")],
+    save: [document.getElementById("fx-save")],
+    fx: [document.getElementById("fx-fx")]
+  };
+  var btnCut = document.getElementById("btn-cut"), btnHike = document.getElementById("btn-hike"), btnHold = document.getElementById("btn-hold");
+
+  function setCard(id, text, dir) {
+    var el = els[id][0];
+    el.textContent = text;
+    el.className = "f-delta " + dir;
+  }
+  function reset() {
+    setCard("bond", "—", "flat"); setCard("value", "—", "flat"); setCard("growth", "—", "flat");
+    setCard("save", "—", "flat"); setCard("fx", "—", "flat");
+    btnCut.setAttribute("aria-pressed", "false");
+    btnHike.setAttribute("aria-pressed", "false");
+  }
+  function cut() {
+    // rates 3% -> 2%. value stock g=1%: 1/(0.02-0.01)=100 vs 1/(0.03-0.01)=50 -> +... too extreme with r=3; use demanded return 8->7 instead
+    // stocks use demanded return 8% baseline: value g1: 1/0.07 vs 1/0.06 = +16.7% ; growth g5: 1/0.03 vs 1/0.02 = +50%
+    setCard("bond", "≈ +9%", "up");
+    setCard("value", "≈ +17%", "up");
+    setCard("growth", "≈ +50%", "up");
+    setCard("save", "interest falls · mortgages cheaper", "down");
+    setCard("fx", "tends to weaken", "down");
+    btnCut.setAttribute("aria-pressed", "true");
+    btnHike.setAttribute("aria-pressed", "false");
+  }
+  function hike() {
+    // value g1: 1/0.08->1/0.09... baseline 8%: hike -> 1/0.08 vs 1/0.07? keep symmetric to L4: -12.5% ; growth: 1/0.03->1/0.04 = -25%
+    setCard("bond", "≈ −9%", "down");
+    setCard("value", "≈ −11%", "down");
+    setCard("growth", "≈ −25%", "down");
+    setCard("save", "interest rises · mortgages costlier", "up");
+    setCard("fx", "tends to strengthen", "up");
+    btnHike.setAttribute("aria-pressed", "true");
+    btnCut.setAttribute("aria-pressed", "false");
+  }
+  btnCut.addEventListener("click", cut);
+  btnHike.addEventListener("click", hike);
+  btnHold.addEventListener("click", reset);
+  reset();
+
+  /* ---------- market-leads-economy waves ---------- */
+  var svg = document.getElementById("cycle-svg");
+  var W = 700, H = 260, padL = 20, padR = 20, midY = 118, amp = 62;
+  function wave(shiftMonths, color, width) {
+    // one full cycle over the width; shift in fraction of cycle
+    var pts = [];
+    var N = 140;
+    for (var i = 0; i <= N; i++) {
+      var x = padL + (W - padL - padR) * i / N;
+      var t = i / N * 2 * Math.PI * 1.25; // 1.25 cycles
+      var y = midY - amp * Math.sin(t + shiftMonths);
+      pts.push((i ? "L" : "M") + x.toFixed(1) + " " + y.toFixed(1));
+    }
+    return '<path d="' + pts.join(" ") + '" fill="none" stroke="' + color + '" stroke-width="' + width + '"/>';
+  }
+  var g = "";
+  g += '<line x1="' + padL + '" y1="' + midY + '" x2="' + (W - padR) + '" y2="' + midY + '" stroke="var(--grid)" stroke-width="1"/>';
+  g += wave(0, "var(--c-econ)", 2.5);
+  g += wave(0.85, "var(--c-mkt)", 2); // market leads: shifted earlier in phase
+  // annotations
+  g += '<g font-family="\'Segoe UI\', system-ui, sans-serif" font-size="12" fill="var(--ink)">';
+  // market peak before economy peak: economy sin peaks at t=pi/2 -> i where t=1.57: frac=1.57/(2pi*1.25)=0.2 -> x=padL+0.2*660=152 ; market peaks earlier: t+0.85=1.57 -> t=0.72 -> frac=0.0917 -> x=80
+  g += '<text x="86" y="30" text-anchor="middle" font-weight="600">market peaks</text>';
+  g += '<text x="86" y="45" text-anchor="middle" fill="var(--muted)" font-size="11">while news is still great</text>';
+  g += '<text x="210" y="30" text-anchor="middle" font-weight="600" fill="var(--muted)">economy peaks later</text>';
+  // economy trough: t=3*pi/2=4.71 -> frac=0.6 -> x=416 ; market trough: t=4.71-0.85=3.86 -> frac=0.4917 -> x=344
+  g += '<text x="330" y="236" text-anchor="middle" font-weight="600">market bottoms</text>';
+  g += '<text x="330" y="251" text-anchor="middle" fill="var(--muted)" font-size="11">at maximum fear, news still awful</text>';
+  g += '<text x="470" y="222" text-anchor="middle" font-weight="600" fill="var(--muted)">recession "announced" ≈ here</text>';
+  g += "</g>";
+  // lead arrows
+  g += '<g stroke="var(--muted)" stroke-width="1.4" fill="none"><path d="M 86 52 V 66"/><path d="M 330 224 V 208"/></g>';
+  svg.innerHTML = g;
+})();
+</script>
+
+</html>

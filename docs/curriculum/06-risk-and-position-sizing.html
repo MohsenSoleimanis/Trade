@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 6 — Risk: Position Sizing and the Math of Survival</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-gain: #1baf7a; --c-loss: #d03b3b; --c-path: #2a78d6;
+    --gain-soft: rgba(27,175,122,.14); --loss-soft: rgba(208,59,59,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-gain: #199e70; --c-loss: #e66767; --c-path: #3987e5;
+      --gain-soft: rgba(25,158,112,.18); --loss-soft: rgba(230,103,103,.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-gain: #199e70; --c-loss: #e66767; --c-path: #3987e5;
+    --gain-soft: rgba(25,158,112,.18); --loss-soft: rgba(230,103,103,.15);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-gain: #1baf7a; --c-loss: #d03b3b; --c-path: #2a78d6;
+    --gain-soft: rgba(27,175,122,.14); --loss-soft: rgba(208,59,59,.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.75; margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 52px 0 30px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 60ch; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 30px 0 4px; }
+  p { margin: 12px 0; font-size: 16px; }
+  li { font-size: 16px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .idea { background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px; font-size: 16px; }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .steps { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 22px; margin: 20px 0; box-shadow: var(--shadow); }
+  .steps .s-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .steps ol { margin: 6px 0 0; padding-left: 22px; }
+  .steps li { font-size: 15px; margin: 9px 0; }
+  .steps .m { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  figure.viz { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); margin: 26px 0; padding: 20px 22px 16px; }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .chartbox { position: relative; }
+  .chartbox svg { display: block; width: 100%; height: auto; }
+
+  .pair-row { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 12px; margin: 12px 0; }
+  .pair-row .lab { font-size: 13px; text-align: right; font-family: Consolas, "Cascadia Mono", monospace; font-weight: 700; }
+  .pair-bars { display: grid; gap: 3px; }
+  .pbar-track { position: relative; height: 16px; }
+  .pbar { height: 16px; border-radius: 0 4px 4px 0; min-width: 2px; display: inline-flex; align-items: center; }
+  .pbar-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; color: var(--ink); margin-left: 7px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .baseline { border-left: 2px solid var(--line); }
+
+  /* casino */
+  .sim-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; align-items: center; }
+  button.viz-btn { font: 600 13.5px "Segoe UI", system-ui, sans-serif; color: var(--bg); background: var(--accent); border: none; border-radius: 6px; padding: 9px 15px; cursor: pointer; }
+  button.viz-btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.viz-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.viz-btn[aria-pressed="true"] { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .sim-stats { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 4px; }
+  .stat { background: var(--code-bg); border-radius: 6px; padding: 9px 15px; flex: 1; min-width: 140px; }
+  .stat .s-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-family: Consolas, "Cascadia Mono", monospace; }
+  .stat .s-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .s-sub { font-size: 11.5px; color: var(--muted); }
+
+  .example { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 18px 22px; margin: 22px 0; box-shadow: var(--shadow); }
+  .example .ex-label, .trap .ex-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px; }
+  .example .ex-label { color: var(--accent); }
+  .example p, .example li { font-size: 15px; }
+  .trap { background: var(--trap-soft); border: 1px solid var(--line); border-left: 3px solid var(--trap); border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 22px 0; }
+  .trap .ex-label { color: var(--trap); }
+  .trap p { font-size: 15px; margin: 8px 0 0; }
+  .trap p:first-of-type { margin-top: 0; }
+
+  .tablebox { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; }
+
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .quiz summary { padding: 13px 18px; cursor: pointer; font-size: 15px; font-weight: 600; list-style: none; }
+  .quiz summary::-webkit-details-marker { display: none; }
+  .quiz summary::before { content: "Q · "; font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); font-weight: 700; }
+  .quiz summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .quiz .answer { padding: 12px 18px 15px; font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); margin: 0; }
+
+  .keyterms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 18px; }
+  .keyterms > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; font-size: 14px; }
+  .keyterms b { color: var(--accent); }
+
+  .homework { background: var(--accent-soft); border-radius: 8px; padding: 22px 26px; margin-top: 24px; }
+  .homework h3 { margin-top: 0; }
+  .homework p, .homework li { font-size: 15px; }
+
+  .constitution { background: var(--surface); border: 2px solid var(--accent); border-radius: 8px; padding: 20px 26px; margin: 22px 0; }
+  .constitution h3 { margin-top: 0; }
+  .constitution li { font-size: 15px; margin: 10px 0; }
+  .constitution .fill { font-family: Consolas, "Cascadia Mono", monospace; border-bottom: 2px dotted var(--muted); padding: 0 30px; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 · Understanding Trading · Lesson 6 of 8</div>
+  <h1>Risk: Position Sizing and the Math of Survival</h1>
+  <p class="subtitle">Everything until now was about being right. This lesson is about the more important thing: not being destroyed when you're wrong. It contains the least glamorous and most valuable math in all of finance — and a casino where you can go broke safely, as many times as you need.</p>
+  <div class="lesson-meta"><span>reading: ~45 min</span><span>homework: ~1 hr</span><span>prerequisite: Lessons 1–5</span><span>interactive: yes — the survival casino</span></div>
+</header>
+
+<h2>1. Losses are heavier than gains — the cruel arithmetic</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>A loss needs a bigger gain to repair it — and the bigger the loss, the crazier the repair job becomes.</div>
+
+<p>Start with a question that looks trivial: you have €1,000, you lose 50%, then you gain 50%. Are you back to €1,000?</p>
+<div class="steps">
+  <span class="s-label">The check — ten seconds that change how you invest</span>
+  <ol>
+    <li>Lose 50%: <span class="m">€1,000 × 0.50 = €500</span>.</li>
+    <li>Gain 50%: <span class="m">€500 × 1.50 = €750</span>.</li>
+    <li>You are down <span class="m">−25%</span> after "a −50% and a +50%". Losses and gains are not symmetric — a loss shrinks the base that your future gains grow from.</li>
+  </ol>
+</div>
+
+<figure class="viz" aria-label="Paired bars showing each loss and the gain required to recover from it">
+  <p class="fig-title">What it takes to get back to zero</p>
+  <p class="fig-sub">Each loss, and the gain required just to repair it.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-loss)"></span>the loss</span>
+    <span class="chip"><span class="sw" style="background:var(--c-gain)"></span>gain needed to recover</span>
+  </div>
+  <div class="pair-row"><div class="lab">−10%</div><div class="pair-bars">
+    <div class="pbar-track baseline"><div class="pbar" style="width:5%; background:var(--c-loss)"></div></div>
+    <div class="pbar-track baseline"><div class="pbar" style="width:5.6%; background:var(--c-gain)"></div><span class="pbar-val">+11% — easy</span></div>
+  </div></div>
+  <div class="pair-row"><div class="lab">−25%</div><div class="pair-bars">
+    <div class="pbar-track baseline"><div class="pbar" style="width:12.5%; background:var(--c-loss)"></div></div>
+    <div class="pbar-track baseline"><div class="pbar" style="width:16.7%; background:var(--c-gain)"></div><span class="pbar-val">+33% — a good year</span></div>
+  </div></div>
+  <div class="pair-row"><div class="lab">−50%</div><div class="pair-bars">
+    <div class="pbar-track baseline"><div class="pbar" style="width:25%; background:var(--c-loss)"></div></div>
+    <div class="pbar-track baseline"><div class="pbar" style="width:50%; background:var(--c-gain)"></div><span class="pbar-val">+100% — years of work</span></div>
+  </div></div>
+  <div class="pair-row"><div class="lab">−80%</div><div class="pair-bars">
+    <div class="pbar-track baseline"><div class="pbar" style="width:40%; background:var(--c-loss)"></div></div>
+    <div class="pbar-track baseline"><div class="pbar" style="width:100%; background:var(--c-gain)"></div><span class="pbar-val">+400% — a career</span></div>
+  </div></div>
+  <figcaption class="fig-note">Small losses are a cost of doing business. Big losses are a different animal: they eat the <em>time</em> of your life, not just money. Every rule in this lesson exists to keep you out of the bottom rows. This is why professionals obsess about risk first and returns second — the math forces them to.</figcaption>
+</figure>
+
+<h2>2. The survival casino — go broke here, safely</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Even with the odds in your favor, betting too big per round guarantees ruin — an edge only pays if you survive long enough to collect it.</div>
+
+<p>Here is a game that is <em>rigged in your favor</em>: a coin that wins 60% of the time. Win: your bet doubles back. Lose: your bet is gone. You start with €1,000 and flip 100 times. The only decision — the same decision as in real investing — is <strong>how much of your money to bet each flip</strong>.</p>
+<p>Intuition says: "great odds, bet big!" Let the casino teach you what actually happens. Pick a bet size, run it, and watch 5 players with identical luck rules. Then try the other sizes:</p>
+
+<figure class="viz" aria-label="Interactive simulator: choose a bet size and see equity curves of five players with a favorable coin">
+  <p class="fig-title">The survival casino — 60%-win coin, 100 flips, €1,000 start</p>
+  <p class="fig-sub">Same lucky coin for everyone. Only the bet size changes. Run each size several times.</p>
+  <div class="sim-actions">
+    <span style="font-size:13.5px; font-weight:600">Bet per flip:</span>
+    <button class="viz-btn" data-bet="0.05" aria-pressed="true" type="button">5%</button>
+    <button class="viz-btn" data-bet="0.20" aria-pressed="false" type="button">20%</button>
+    <button class="viz-btn" data-bet="0.50" aria-pressed="false" type="button">50%</button>
+    <button class="viz-btn" data-bet="1.00" aria-pressed="false" type="button">100% (all-in)</button>
+    <button class="viz-btn secondary" id="btn-rerun" type="button">Run again ↻</button>
+  </div>
+  <div class="chartbox"><svg id="casino-svg" viewBox="0 0 700 300" role="img" aria-label="Equity curves of five simulated players over 100 coin flips"></svg></div>
+  <div class="sim-stats">
+    <div class="stat"><div class="s-label">went broke</div><div class="s-val" id="st-bust">—</div><div class="s-sub">of 500 simulated players (&lt;10% left)</div></div>
+    <div class="stat"><div class="s-label">median final money</div><div class="s-val" id="st-median">—</div><div class="s-sub">the typical player's result</div></div>
+    <div class="stat"><div class="s-label">ended richer than start</div><div class="s-val" id="st-winners">—</div><div class="s-sub">despite the coin winning 60%!</div></div>
+  </div>
+  <figcaption class="fig-note">What you should discover: at <strong>5%</strong>, nearly everyone grows — slow, boring, alive. At <strong>20%</strong>, the typical player grows faster, but the swings are violent and some still get crushed by a bad streak. At <strong>50%</strong>, most players are destroyed <em>by a coin that favors them</em>. At <strong>100%</strong>, ruin is mathematically guaranteed — one lost flip ends everything, and the chance of winning 100 flips in a row is zero. <strong>The edge was identical every time. Only the bet size decided who survived.</strong></figcaption>
+</figure>
+
+<div class="example">
+  <span class="ex-label">Why this is the deepest lesson in trading</span>
+  <p>There is a mathematically "optimal" bet size for growth (professionals call it the <dfn>Kelly fraction</dfn> — for this coin it's 20%). But look at what 20% felt like in the casino: stomach-turning crashes on the way. And in real markets there's a killer difference: <strong>the casino told you the odds were 60%. The market never tells you the odds.</strong> Your "edge" is always a guess — and if you guess 60% when the truth is 52%, a Kelly-sized bet becomes a ruin-sized bet.</p>
+  <p>That is why professionals bet a <em>fraction</em> of the theoretical optimum, and why every rule that follows in this lesson will feel "too careful". It isn't. It's priced for the fact that you don't know your own odds.</p>
+</div>
+
+<h2>3. Position sizing — the only lever you fully control</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>You can't control whether a stock falls — you fully control how much of your money is standing under it when it does.</div>
+
+<p>You cannot control returns, news, or the tide. The one thing entirely in your hands is <strong>size</strong>. Professionals size positions backwards from a simple question: <em>"if this idea goes wrong, how much am I willing to lose?"</em> That number is your <dfn>risk budget</dfn> per idea. For beginners: <strong>1% of your portfolio per idea, 2% maximum.</strong> Then the position size computes itself:</p>
+
+<div class="steps">
+  <span class="s-label">Sizing a real position — the backwards method</span>
+  <ol>
+    <li>Portfolio: <span class="m">€10,000</span>. Risk budget per idea: 1.5% → <span class="m">€150</span>. This is the most you accept losing on this idea.</li>
+    <li>You want to buy a stock at <span class="m">€50</span>. You decide (from your Lesson 3–4 analysis, not from a feeling): "if it falls to €40 — that's −20% — my reason for owning it was wrong, and I exit."</li>
+    <li>So each share can cost you at most <span class="m">€50 − €40 = €10</span> of loss.</li>
+    <li>Position size: <span class="m">€150 ÷ €10 = 15 shares</span> → an investment of <span class="m">15 × €50 = €750</span>.</li>
+    <li>Check it: if the worst case happens, you lose <span class="m">15 × €10 = €150 = 1.5%</span> of your portfolio. Painful, survivable, planned. You can be wrong <em>many times in a row</em> and still be in the game.</li>
+  </ol>
+</div>
+
+<p>Notice what this method quietly does: <strong>riskier ideas automatically get smaller positions.</strong> A wild Belgian small-cap where your exit sits 40% below entry gets half the money of a steady dividend payer with a 20% exit. You never again ask "how much should I buy?" — you ask "how much can this cost me?" and the size falls out.</p>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #1 — risk measured in %, felt in €</span>
+  <p>"A 30% drawdown is acceptable" is easy to say. Now say it in euros: on a €20,000 portfolio, that's <strong>watching €6,000 evaporate</strong> — months of salary — while headlines scream the world is ending and your family asks if everything is okay.</p>
+  <p>Percentages are for spreadsheets; your behavior runs on euros. Before investing anything, complete this sentence honestly: "I can watch €______ disappear temporarily without selling in panic." Then size your whole portfolio so the worst realistic drawdown stays inside that number. The biggest risk to your money is not the market — it's you, panic-selling at the bottom (Lesson 8 is entirely about this).</p>
+</div>
+
+<h2>4. Diversification — the only free lunch in finance</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Spreading money across bets that don't move together cuts your swings without cutting your expected return — but only if the bets are truly different.</div>
+
+<p>One stock can fall 80% (a scandal, a failed product — remember the asymmetry chart). Ten <em>unrelated</em> stocks essentially cannot all do that at once. Same expected return, far smaller swings — the closest thing to free protection that exists. But watch the curve — the benefit has a shape:</p>
+
+<figure class="viz" aria-label="Curve of portfolio volatility falling as the number of holdings grows, flattening at a market risk floor">
+  <p class="fig-title">More holdings, less wiggle — until the floor</p>
+  <p class="fig-sub">Typical yearly swing (volatility) of a portfolio as you add stocks that are only partly related.</p>
+  <div class="chartbox"><svg id="div-svg" viewBox="0 0 700 300" role="img" aria-label="Volatility drops steeply from one stock at 30 percent to about 18 percent at ten stocks, then flattens toward a floor near 16 percent labeled market risk"></svg></div>
+  <figcaption class="fig-note">Two honest readings. First: the big win comes fast — going from 1 stock to 10–15 already captures most of the benefit; collecting 50 stocks adds little (an ETF does that for you at 0.1% cost). Second: the curve <strong>never reaches zero</strong>. The floor is <dfn>market risk</dfn> — Lesson 5's tide, which no amount of stock-picking diversifies away. To soften the tide itself you need different <em>asset types</em>: stocks + bonds + cash, not just more stocks.</figcaption>
+</figure>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #2 — fake diversification</span>
+  <p>"I'm diversified: I own 12 different tech stocks." That is one bet, written twelve times. In 2022 they all fell together 50–80%, because one force (rates — Lesson 4) ruled them all. Same trap in your home market: ten BEL 20 names is still largely <em>one</em> bet on the global cycle.</p>
+  <p>Real diversification means different <strong>reasons to lose</strong>: different sectors (defensive + cyclical, Lesson 5), different asset types (stocks + bonds + cash), different currencies (EUR + USD — Lesson 2's double bet, used deliberately). And a warning that becomes crucial in crashes: <strong>when panic hits, correlations rise toward 1</strong> — things that usually move independently suddenly fall together. Diversification softens crashes; nothing eliminates them.</p>
+</div>
+
+<h2>5. Leverage — how winners become bankrupt</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Borrowed money multiplies the asymmetry of losses — it turns survivable drawdowns into unrecoverable ruin, which is why your leverage stays at zero.</div>
+
+<p>Your broker will happily offer you <dfn>margin</dfn> — trading with borrowed money. "2× leverage" sounds like "double the profits". Here is what it actually doubles:</p>
+<div class="steps">
+  <span class="s-label">2× leverage meets a normal bad year</span>
+  <ol>
+    <li>You have <span class="m">€10,000</span> and borrow another <span class="m">€10,000</span> → you hold €20,000 of stocks.</li>
+    <li>The market has an ordinary bad year: <span class="m">−30%</span> (happens roughly once a decade — Lesson 5's seasons).</li>
+    <li>Your €20,000 becomes <span class="m">€14,000</span>. The broker's €10,000 loan is untouched — the whole loss is yours: your equity is <span class="m">€4,000</span>. A −30% market made you <strong>−60%</strong>.</li>
+    <li>Worse: before you get there, the broker issues a <dfn>margin call</dfn> — deposit more money or they sell your positions <em>for you, at the bottom, automatically</em>. The recovery you would have ridden out (unleveraged) happens without you.</li>
+    <li>Check the asymmetry chart: −60% needs +150% to repair. Unleveraged −30% needed +43%. Leverage didn't double your risk — it changed which rows of that chart you live in.</li>
+  </ol>
+</div>
+<p>Professionals use leverage with hedges, daily risk systems, and someone watching every position. You, for the entire length of this curriculum and long after: <strong>leverage = 0</strong>. This single rule removes the only way a diversified, correctly-sized portfolio can actually die.</p>
+
+<h2>6. Your Risk Constitution — write it while you're calm</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Rules written in calm weather are the only thing that works in a storm — decide everything now, while nothing is at stake.</div>
+
+<p>This is the personal version of the "kill criteria" from our master plan — the same discipline professionals use, sized for one human. Copy it, fill it in, sign it, keep it where you'll see it. When markets crash (they will), you don't decide anything — you read what calm-you already decided:</p>
+
+<div class="constitution">
+  <h3>My Risk Constitution</h3>
+  <ol>
+    <li>I risk at most <span class="fill">1–2</span>% of my portfolio per idea. Position sizes are computed backwards from this number, never from excitement.</li>
+    <li>No single stock exceeds <span class="fill">10</span>% of my portfolio, no matter how sure I feel. Feeling sure is data about me, not about the stock.</li>
+    <li>The maximum drawdown I can watch without panic, in euros, is <span class="fill">€______</span>. My total portfolio is sized so a realistic worst case stays inside it.</li>
+    <li>My emergency fund (<span class="fill">______</span> months of living costs) lives outside the portfolio and is never invested. I never invest money with a deadline.</li>
+    <li>My leverage is <strong>zero</strong>. I do not trade on margin, whatever the opportunity looks like.</li>
+    <li>Before every buy, I write one sentence: <em>"I am wrong about this if ______"</em> — and the exit level that follows from it (Lesson 2's stops, placed outside the noise).</li>
+    <li>I change these rules only in calm markets, in writing, with two weeks between deciding and applying. Never during a drawdown, never after a big win.</li>
+  </ol>
+</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #3 — "just this once"</span>
+  <p>The constitution's real enemy isn't a crash — it's a <em>great opportunity</em>. "This one is so obvious, 25% of the portfolio just this once." Every blown-up account has this sentence in its history. The whole point of rules is that they hold precisely when you're most convinced — because (Lesson 1) being convinced is exactly when you should ask who's on the other side of the trade, and (casino, section 2) one oversized bet is all ruin needs.</p>
+</div>
+
+<h2>7. Check yourself</h2>
+<div class="quiz">
+  <details><summary>Your portfolio falls 50%, then rises 50%. Where are you, and why?</summary><p class="answer">At 75% of where you started (×0.5 then ×1.5). Losses shrink the base your gains grow from — the asymmetry that makes big losses cost time, not just money, and the reason every rule in this lesson exists.</p></details>
+  <details><summary>The casino coin wins 60% of flips. Why does betting 100% each flip guarantee ruin?</summary><p class="answer">All-in means one lost flip ends the game — and the chance of winning 100 flips straight is 0.6¹⁰⁰ ≈ zero. An edge pays off over many rounds; oversizing makes sure you're not there for them. Survival first, edge second.</p></details>
+  <details><summary>€20,000 portfolio, 1% risk budget, stock at €80, your "I was wrong" exit at €60. How many shares?</summary><p class="answer">Risk budget €200. Loss per share €20. Position: €200 ÷ €20 = 10 shares (€800). Worst case: 10 × €20 = €200 = exactly 1%. The method: budget first, size falls out.</p></details>
+  <details><summary>A friend owns 12 different chip and software stocks and calls it diversified. What's wrong, and what would fix it?</summary><p class="answer">Twelve names, one bet — a single force (rates, the tech cycle) moves them all together, as 2022 proved. Real diversification needs different reasons to lose: mix sectors (defensive + cyclical), asset types (stocks + bonds + cash), currencies. And in a panic, even good diversification only softens the blow — correlations rise toward 1.</p></details>
+  <details><summary>You buy €20,000 of stocks with €10,000 of your money and €10,000 of margin. The market drops 30%, an ordinary bad year. What happens to you?</summary><p class="answer">The €6,000 loss is entirely yours: your equity falls to €4,000 — a 60% loss that needs +150% to repair. And likely before that, a margin call forced the broker to sell your positions at the bottom, locking the loss in. Leverage converts a survivable season into ruin — which is why yours is zero.</p></details>
+  <details><summary>Why must the Risk Constitution be written now, and not decided "when the situation comes"?</summary><p class="answer">Because the situation arrives with fear or euphoria attached, and decisions made inside those states are the worst you'll ever make (Lesson 8 territory). Calm-you writes the rules; stressed-you only has to obey them. Same reason our future trading system pre-registers its kill criteria before going live.</p></details>
+</div>
+
+<h2>8. Key words from this lesson</h2>
+<div class="keyterms">
+  <div><b>Asymmetry of losses</b> — −50% needs +100% back. Big losses cost time, not just money.</div>
+  <div><b>Risk of ruin</b> — the chance of losing so much the game ends. The only unacceptable risk.</div>
+  <div><b>Risk budget</b> — the euros you accept losing per idea (1–2% of portfolio). Sizing starts here.</div>
+  <div><b>Position sizing</b> — budget ÷ loss-per-share = shares. Computed backwards, never from conviction.</div>
+  <div><b>Kelly fraction</b> — the theoretical optimal bet; pros bet far below it because real odds are guesses.</div>
+  <div><b>Drawdown</b> — the fall from a peak to a valley. Measure yours in euros, not percent.</div>
+  <div><b>Volatility</b> — the typical size of wiggles: ~15%/yr for a world ETF, 30–50% for single stocks.</div>
+  <div><b>Diversification</b> — spreading across bets with different reasons to lose. The only free lunch.</div>
+  <div><b>Market risk</b> — the floor no diversification removes: the tide itself (Lesson 5).</div>
+  <div><b>Correlation</b> — how much things move together; rises toward 1 exactly when you need it lowest.</div>
+  <div><b>Leverage / margin call</b> — borrowed money; the forced sale at the bottom that comes with it.</div>
+  <div><b>Risk Constitution</b> — your pre-written rules; the personal version of a system's kill criteria.</div>
+</div>
+
+<h2>9. If you remember only three things</h2>
+<div class="steps">
+  <ol>
+    <li><strong>Survive first.</strong> −50% needs +100%; ruin needs only one oversized bet. The casino proved it: identical edge, and bet size alone decided who lived.</li>
+    <li><strong>Size backwards from the loss.</strong> Risk budget (1–2%) ÷ "how much can this cost per share" = position size. Conviction never enters the formula.</li>
+    <li><strong>Diversify reasons-to-lose, and use zero leverage.</strong> Different sectors, asset types, currencies — and no borrowed money, ever, because leverage is the one door through which a careful portfolio can still die.</li>
+  </ol>
+</div>
+
+<h2>10. Homework — build your armor (~1 hr)</h2>
+<div class="homework">
+  <h3>Field exercise — two versions, no excuses</h3>
+  <p><strong>Everyone:</strong></p>
+  <ul>
+    <li><strong>The casino, seriously:</strong> run each bet size at least 5 times. Write one sentence per size describing what happens. You're done when you can explain to a friend why 50% bets destroy players holding a winning coin.</li>
+    <li><strong>Three sizing calculations:</strong> assume a €10,000 portfolio and 1% risk budget. Compute position sizes for: (a) Microsoft at its current price with a −20% exit, (b) your Belgian stock from Lesson 1 with a −30% exit (wilder, so smaller — see it happen), (c) a world ETF with a −25% exit. Real prices, real share counts.</li>
+    <li><strong>Sign your Risk Constitution:</strong> copy the seven rules, fill in your own numbers — especially the euro drawdown you can truly watch — and save it as <span class="mono">risk-constitution.md</span> in your project folder. This document later becomes part of your system's config.</li>
+  </ul>
+  <p><strong>If your IBKR paper account exists</strong> (Lesson 2): place the three positions above at your computed sizes, each with its exit level noted. Congratulations — you're now running a sized, rule-governed paper portfolio, which is more than most people with real money have.</p>
+  <p><strong>If it still doesn't:</strong> do the calculations on paper — they work identically — and notice that the only thing between you and practice is 30 minutes of account setup this weekend.</p>
+</div>
+
+<footer>
+  <span>Lesson 6 of 8 · Part 1: Understanding Trading</span>
+  <span>Next: <span class="cmd">start lesson 7</span> — The strategy landscape: value, momentum, dividends, events</span>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- seeded RNG ---------- */
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  /* ---------- survival casino ---------- */
+  var FLIPS = 100, START = 1000, P_WIN = 0.6, N_SIM = 500, N_SHOW = 5;
+  var betSize = 0.05, runCount = 0;
+  var svg = document.getElementById("casino-svg");
+  var W = 700, H = 300, padL = 58, padR = 16, padT = 14, padB = 30;
+  var Y_MAX = 6000;
+
+  function simulate(bet, rnd) {
+    var eq = [START], m = START;
+    for (var i = 0; i < FLIPS; i++) {
+      if (m < 1) { eq.push(0); continue; }
+      var stake = m * bet;
+      m = rnd() < P_WIN ? m + stake : m - stake;
+      if (m < 1) m = 0;
+      eq.push(m);
+    }
+    return eq;
+  }
+
+  function xs(i) { return padL + (W - padL - padR) * i / FLIPS; }
+  function ys(v) { return padT + (H - padT - padB) * (1 - Math.min(v, Y_MAX) / Y_MAX); }
+
+  function draw() {
+    var rnd = mulberry32(777 + runCount * 1013 + Math.round(betSize * 100) * 7);
+    // stats over N_SIM players
+    var finals = [], bust = 0;
+    var showPaths = [];
+    for (var s = 0; s < N_SIM; s++) {
+      var eq = simulate(betSize, rnd);
+      var fin = eq[FLIPS];
+      finals.push(fin);
+      if (fin < START * 0.10) bust++;
+      if (s < N_SHOW) showPaths.push(eq);
+    }
+    finals.sort(function (a, b) { return a - b; });
+    var median = finals[Math.floor(N_SIM / 2)];
+    var winners = finals.filter(function (v) { return v > START; }).length;
+
+    // render chart
+    var g = "";
+    // grid
+    [0, 1000, 2000, 4000, 6000].forEach(function (v) {
+      g += '<line x1="' + padL + '" y1="' + ys(v).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + ys(v).toFixed(1) + '" stroke="var(--grid)" stroke-width="1"/>' +
+           '<text x="' + (padL - 8) + '" y="' + (ys(v) + 4).toFixed(1) + '" font-size="11" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="end">€' + (v >= 1000 ? (v / 1000) + "k" : v) + "</text>";
+    });
+    // start line
+    g += '<line x1="' + padL + '" y1="' + ys(START) + '" x2="' + (W - padR) + '" y2="' + ys(START) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 4"/>';
+    g += '<text x="' + (W - padR) + '" y="' + (ys(START) - 6) + '" font-size="10.5" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="end">start €1,000</text>';
+    // x labels
+    [0, 25, 50, 75, 100].forEach(function (f) {
+      g += '<text x="' + xs(f).toFixed(1) + '" y="' + (H - 8) + '" font-size="11" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="middle">' + f + "</text>";
+    });
+    g += '<text x="' + padL + '" y="' + (H - 8) + '" font-size="10" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="start"></text>';
+    // paths
+    showPaths.forEach(function (eq) {
+      var d = eq.map(function (v, i) { return (i ? "L" : "M") + xs(i).toFixed(1) + " " + ys(v).toFixed(1); }).join(" ");
+      var died = eq[FLIPS] < START * 0.10;
+      g += '<path d="' + d + '" fill="none" stroke="' + (died ? "var(--c-loss)" : "var(--c-path)") + '" stroke-width="1.7" opacity="0.85"/>';
+    });
+    svg.innerHTML = g;
+
+    // stats
+    document.getElementById("st-bust").textContent = Math.round(bust / N_SIM * 100) + "%";
+    document.getElementById("st-median").textContent = "€" + Math.round(median).toLocaleString();
+    document.getElementById("st-winners").textContent = Math.round(winners / N_SIM * 100) + "%";
+  }
+
+  document.querySelectorAll("button[data-bet]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      betSize = parseFloat(b.dataset.bet);
+      document.querySelectorAll("button[data-bet]").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      draw();
+    });
+  });
+  document.getElementById("btn-rerun").addEventListener("click", function () { runCount++; draw(); });
+  draw();
+
+  /* ---------- diversification curve ---------- */
+  (function () {
+    var dsvg = document.getElementById("div-svg");
+    var sigma = 30, rho = 0.30;
+    var floor = Math.sqrt(rho) * sigma; // ~16.4
+    var W2 = 700, H2 = 300, pL = 58, pR = 20, pT = 16, pB = 34, NMAX = 50;
+    function x2(n) { return pL + (W2 - pL - pR) * (n - 1) / (NMAX - 1); }
+    function y2(v) { return pT + (H2 - pT - pB) * (1 - (v - 10) / (32 - 10)); }
+    var g = "";
+    [15, 20, 25, 30].forEach(function (v) {
+      g += '<line x1="' + pL + '" y1="' + y2(v).toFixed(1) + '" x2="' + (W2 - pR) + '" y2="' + y2(v).toFixed(1) + '" stroke="var(--grid)" stroke-width="1"/>' +
+           '<text x="' + (pL - 8) + '" y="' + (y2(v) + 4).toFixed(1) + '" font-size="11" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="end">' + v + "%</text>";
+    });
+    [1, 10, 20, 30, 40, 50].forEach(function (n) {
+      g += '<text x="' + x2(n).toFixed(1) + '" y="' + (H2 - 10) + '" font-size="11" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="middle">' + n + "</text>";
+    });
+    g += '<text x="' + (W2 / 2) + '" y="' + (H2 + 0) + '" font-size="11" fill="var(--muted)" text-anchor="middle"></text>';
+    // floor
+    g += '<line x1="' + pL + '" y1="' + y2(floor).toFixed(1) + '" x2="' + (W2 - pR) + '" y2="' + y2(floor).toFixed(1) + '" stroke="var(--c-loss)" stroke-width="1.5" stroke-dasharray="5 4"/>';
+    g += '<text x="' + (W2 - pR) + '" y="' + (y2(floor) + 16) + '" font-size="11.5" font-weight="600" fill="var(--ink)" text-anchor="end">market risk floor ≈ ' + floor.toFixed(0) + "% — the tide never diversifies away</text>";
+    // curve
+    var pts = [];
+    for (var n = 1; n <= NMAX; n++) {
+      var v = Math.sqrt(sigma * sigma / n + (1 - 1 / n) * rho * sigma * sigma);
+      pts.push((n === 1 ? "M" : "L") + x2(n).toFixed(1) + " " + y2(v).toFixed(1));
+    }
+    g += '<path d="' + pts.join(" ") + '" fill="none" stroke="var(--c-path)" stroke-width="2.5"/>';
+    // annotations
+    g += '<circle cx="' + x2(1) + '" cy="' + y2(30) + '" r="4" fill="var(--c-path)" stroke="var(--surface)" stroke-width="2"/>';
+    g += '<text x="' + (x2(1) + 10) + '" y="' + (y2(30) + 4) + '" font-size="12" font-weight="600" fill="var(--ink)">1 stock: ~30% swings</text>';
+    var v15 = Math.sqrt(sigma * sigma / 15 + (1 - 1 / 15) * rho * sigma * sigma);
+    g += '<circle cx="' + x2(15) + '" cy="' + y2(v15) + '" r="4" fill="var(--c-path)" stroke="var(--surface)" stroke-width="2"/>';
+    g += '<text x="' + (x2(15) + 10) + '" y="' + (y2(v15) - 8) + '" font-size="12" font-weight="600" fill="var(--ink)">~15 stocks: most of the benefit captured</text>';
+    g += '<text x="' + x2(25) + '" y="' + (H2 - 10 + 14) + '" font-size="11" fill="var(--muted)" text-anchor="middle">number of (partly related) stocks held</text>';
+    dsvg.innerHTML = g;
+  })();
+})();
+</script>
+
+</html>

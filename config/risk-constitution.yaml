@@ -1,0 +1,58 @@
+# ============================================================
+# De Waag — Risk Constitution (machine-enforced)
+# ============================================================
+# This is Lesson 6, as law. Every order ticket, position size and
+# strategy change the system ever allows is checked against this file.
+#
+# Fill in the values marked FILL-ME, then set `signed_on` to today's
+# date. Until signed, the app runs in UNSIGNED mode: research works,
+# but the Trading Desk stays locked.
+#
+# Rule of rules (§7): change this file only in calm markets, with a
+# two-week gap between deciding and applying. Git history is the
+# audit trail — every change to this file is a signed amendment.
+# ============================================================
+
+owner: "Mohsen"
+signed_on: null            # FILL-ME: YYYY-MM-DD when you sign
+
+# --- §1  Risk per idea (Lesson 6 §3: the backwards sizing method) ---
+# The most you accept losing on any single idea, as % of portfolio.
+# Position size = (this % × portfolio) ÷ (entry − "I-am-wrong" exit).
+# Hard ceiling in code: 2.0 — the loader refuses more.
+max_risk_per_idea_pct: 1.0
+
+# --- §2  Position cap (Lesson 6 §6: feeling sure is data about you) ---
+# No single stock may exceed this % of the portfolio, ever.
+# Hard ceiling in code: 10.0.
+max_position_pct: 10.0
+
+# --- §3  Drawdown limit IN EUROS (Lesson 6, trap #1) ---
+# The euros you can watch temporarily vanish without panic-selling.
+# Percentages are for spreadsheets; your behavior runs on euros.
+# 0 means "not yet decided" and keeps the constitution UNSIGNED.
+max_drawdown_eur: 0        # FILL-ME
+
+# --- §4  Emergency fund (Lesson 6 §6: never invest money with a deadline) ---
+# Months of living costs held OUTSIDE the portfolio, never invested.
+emergency_fund_months: 6
+
+# --- §5  Leverage (Lesson 6 §5: the one door to ruin) ---
+# This must be 0. The code refuses to start with any other value.
+# There is deliberately no way to override this from config.
+leverage: 0
+
+# --- §6  Thesis discipline (Lesson 6 §6, rule 6) ---
+# Every buy requires a written thesis and an "I am wrong if ___" exit.
+# true = Trading Desk blocks tickets without one.
+require_thesis: true
+
+# --- §7  Strategy patience (Lesson 7: the anti-hopping vaccine) ---
+# Minimum years before abandoning a chosen strategy without a written,
+# evidence-based reason (drought alone is never a reason).
+min_years_before_strategy_change: 5
+
+# --- Strategy Statement (Lesson 7 homework) ---
+strategy_statement: |
+  FILL-ME: core / tilt / niche, and the conditions under which
+  I am allowed to change them. Written while calm.

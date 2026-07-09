@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 2 — How Trading Actually Happens: Orders, Fills &amp; Costs</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-buy: #1baf7a; --c-sell: #d03b3b; --c-price: #2a78d6;
+    --buy-soft: rgba(27,175,122,.14); --sell-soft: rgba(208,59,59,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-buy: #199e70; --c-sell: #e66767; --c-price: #3987e5;
+      --buy-soft: rgba(25,158,112,.18); --sell-soft: rgba(230,103,103,.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-buy: #199e70; --c-sell: #e66767; --c-price: #3987e5;
+    --buy-soft: rgba(25,158,112,.18); --sell-soft: rgba(230,103,103,.15);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-buy: #1baf7a; --c-sell: #d03b3b; --c-price: #2a78d6;
+    --buy-soft: rgba(27,175,122,.14); --sell-soft: rgba(208,59,59,.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.75; margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 52px 0 30px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 60ch; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 30px 0 4px; }
+  p { margin: 12px 0; font-size: 16px; }
+  li { font-size: 16px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .idea { background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px; font-size: 16px; }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .steps { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 22px; margin: 20px 0; box-shadow: var(--shadow); }
+  .steps .s-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .steps ol { margin: 6px 0 0; padding-left: 22px; }
+  .steps li { font-size: 15px; margin: 9px 0; }
+  .steps .m { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  figure.viz { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); margin: 26px 0; padding: 20px 22px 16px; }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* order journey flow */
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch; margin-top: 6px; }
+  .flow-step { flex: 1; min-width: 118px; background: var(--code-bg); border-radius: 6px; padding: 12px 12px 10px; position: relative; }
+  .flow-step .f-num { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; color: var(--accent); font-weight: 700; display: block; }
+  .flow-step .f-title { font-weight: 600; font-size: 13.5px; display: block; margin: 2px 0 4px; }
+  .flow-step .f-desc { font-size: 12px; color: var(--muted); line-height: 1.5; display: block; }
+  .flow-step .f-time { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; color: var(--accent); display: block; margin-top: 6px; }
+  .flow-arrow { align-self: center; color: var(--muted); font-size: 16px; }
+
+  /* order book */
+  .ob-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--code-bg); border-radius: 6px; padding: 8px 14px; flex: 1; min-width: 110px; }
+  .stat .s-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-family: Consolas, "Cascadia Mono", monospace; }
+  .stat .s-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ob-grid { display: grid; gap: 3px; }
+  .ob-row { display: grid; grid-template-columns: 64px 1fr 170px; align-items: center; gap: 10px; min-height: 24px; }
+  .ob-price { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .ob-track { position: relative; display: block; height: 20px; border-left: 2px solid var(--line); }
+  .ob-bar { display: block; height: 20px; border-radius: 0 4px 4px 0; transition: width .5s ease; }
+  @media (prefers-reduced-motion: reduce) { .ob-bar { transition: none; } }
+  .ob-bar.ask { background: var(--c-sell); }
+  .ob-bar.bid { background: var(--c-buy); }
+  .ob-bar.mine { outline: 2px dashed var(--ink); outline-offset: -2px; }
+  .ob-size { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ob-size .fill-tag { color: var(--ink); font-weight: 700; }
+  .ob-spread { display: flex; align-items: center; gap: 10px; margin: 6px 0; padding: 5px 0 5px 74px; font-size: 12px; color: var(--muted); font-style: italic; }
+  .ob-spread::before, .ob-spread::after { content: ""; flex: 1; border-top: 1px dashed var(--line); }
+  .ob-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+  button.viz-btn { font: 600 13.5px "Segoe UI", system-ui, sans-serif; color: var(--bg); background: var(--accent); border: none; border-radius: 6px; padding: 9px 14px; cursor: pointer; }
+  button.viz-btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.viz-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.viz-btn[disabled] { opacity: .45; cursor: default; }
+  .ob-report { margin-top: 14px; font-size: 14px; background: var(--accent-soft); border-radius: 6px; padding: 12px 16px; display: none; }
+  .ob-report.show { display: block; }
+  .ob-report .rline { margin: 3px 0; }
+  .ob-report .mono { font-variant-numeric: tabular-nums; }
+
+  /* h-bars */
+  .hbar-row { display: grid; grid-template-columns: 160px 1fr; align-items: center; gap: 12px; margin: 9px 0; }
+  .hbar-row .lab { font-size: 13px; color: var(--ink); text-align: right; line-height: 1.3; }
+  .hbar-row .lab small { color: var(--muted); display: block; font-size: 11.5px; }
+  .hbar-track { position: relative; height: 22px; }
+  .hbar { height: 22px; border-radius: 0 4px 4px 0; min-width: 2px; display: inline-flex; align-items: center; }
+  .hbar-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; color: var(--ink); margin-left: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .baseline { border-left: 2px solid var(--line); }
+
+  .example { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 18px 22px; margin: 22px 0; box-shadow: var(--shadow); }
+  .example .ex-label, .trap .ex-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px; }
+  .example .ex-label { color: var(--accent); }
+  .example p, .example li { font-size: 15px; }
+  .example p:last-child { margin-bottom: 0; }
+  .trap { background: var(--trap-soft); border: 1px solid var(--line); border-left: 3px solid var(--trap); border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 22px 0; }
+  .trap .ex-label { color: var(--trap); }
+  .trap p { font-size: 15px; margin: 8px 0 0; }
+  .trap p:first-of-type { margin-top: 0; }
+
+  .tablebox { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; }
+
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .quiz summary { padding: 13px 18px; cursor: pointer; font-size: 15px; font-weight: 600; list-style: none; }
+  .quiz summary::-webkit-details-marker { display: none; }
+  .quiz summary::before { content: "Q · "; font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); font-weight: 700; }
+  .quiz summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .quiz .answer { padding: 12px 18px 15px; font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); margin: 0; }
+
+  .keyterms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 18px; }
+  .keyterms > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; font-size: 14px; }
+  .keyterms b { color: var(--accent); }
+
+  .homework { background: var(--accent-soft); border-radius: 8px; padding: 22px 26px; margin-top: 24px; }
+  .homework h3 { margin-top: 0; }
+  .homework p, .homework li { font-size: 15px; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 · Understanding Trading · Lesson 2 of 8</div>
+  <h1>How Trading Actually Happens: Orders, Fills &amp; Costs</h1>
+  <p class="subtitle">Lesson 1 showed you what a share is and where the price comes from. This lesson is about the moment of action: what happens between clicking "Buy" and owning shares, the three order types you must know, and every cost that quietly eats your money — especially in Belgium.</p>
+  <div class="lesson-meta"><span>reading: ~45 min</span><span>homework: ~2 hrs</span><span>prerequisite: Lesson 1</span><span>interactive: yes — 3 buttons this time</span></div>
+</header>
+
+<h2>1. The journey of your order</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Between your click and your shares there are four stations — and knowing them explains every strange thing your broker will ever show you.</div>
+
+<p>You click "Buy 10 shares". What actually happens? Your order travels:</p>
+
+<figure class="viz" aria-label="Flow diagram of an order's journey from click to settled shares">
+  <p class="fig-title">From click to owning shares</p>
+  <div class="flow">
+    <div class="flow-step"><span class="f-num">1</span><span class="f-title">You click Buy</span><span class="f-desc">Your broker app builds the order: what, how many, what type.</span><span class="f-time">instant</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="f-num">2</span><span class="f-title">Broker checks &amp; routes</span><span class="f-desc">Do you have the money? Then the order is sent to the exchange.</span><span class="f-time">milliseconds</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="f-num">3</span><span class="f-title">Exchange matches</span><span class="f-desc">Your order meets the order book (Lesson 1). If a seller matches, you get a <b>fill</b>.</span><span class="f-time">microseconds</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="f-num">4</span><span class="f-title">Settlement</span><span class="f-desc">Money and shares officially change owners, electronically.</span><span class="f-time">US: 1 day · EU: 2 days</span></div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step"><span class="f-num">5</span><span class="f-title">Yours</span><span class="f-desc">The shares are registered to your account. No paper exists — it's all electronic records.</span><span class="f-time">done</span></div>
+  </div>
+  <figcaption class="fig-note">Two words to remember: a <dfn>fill</dfn> = your order (or part of it) got executed at some price. <dfn>Settlement</dfn> = the official ownership transfer, one day later in the US ("T+1"), two days in Europe ("T+2"). Your broker shows the shares immediately, but the legal transfer completes on the settlement day.</figcaption>
+</figure>
+
+<p>Notice something important in station 3: your order does not meet "the market" — it meets the <em>order book</em>, the two lists from Lesson 1. Everything in this lesson follows from that one fact.</p>
+
+<h2>2. The three order types you must know</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>A market order buys <em>now</em> at an unknown price; a limit order buys at a <em>known price</em> but maybe never; a stop order is a tripwire that fires a market order when a level is touched.</div>
+
+<p>When you send an order, you must choose its type. The type answers one question: <strong>what matters more to you — speed, or price?</strong></p>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Order type</th><th>What you're saying</th><th>You control</th><th>You risk</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Market</strong></td><td>"Buy/sell NOW, at whatever price is available."</td><td>Speed — you fill instantly.</td><td>Price — you eat spread + slippage (Lesson 1's €45).</td></tr>
+      <tr><td><strong>Limit</strong></td><td>"Buy only at €20.05 or better. Otherwise, wait."</td><td>Price — never worse than your number.</td><td>Fill — maybe you never buy at all.</td></tr>
+      <tr><td><strong>Stop</strong></td><td>"IF the price touches €19.00, THEN sell me at market."</td><td>A trigger level.</td><td>Both — it fires a market order, at whatever price comes next.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>Words don't teach this — the order book does. Same book as Lesson 1, but now you have <strong>three different buttons</strong>. Try all three (reset between tries) and watch how differently they behave:</p>
+
+<figure class="viz" aria-label="Interactive order book with market order and two limit order buttons">
+  <p class="fig-title">Order type simulator — "Sint-Anna Brewing", last trade €20.00</p>
+  <p class="fig-sub">Try each button. Watch what fills, what waits, and what it costs. Reset between experiments.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-sell)"></span>sellers (asks)</span>
+    <span class="chip"><span class="sw" style="background:var(--c-buy)"></span>buyers (bids)</span>
+    <span class="chip"><span class="sw" style="background:var(--c-buy); outline:2px dashed var(--ink); outline-offset:-2px"></span>your waiting order</span>
+  </div>
+  <div class="ob-stats">
+    <div class="stat"><div class="s-label">best buyer</div><div class="s-val" id="st-bid">€19.95</div></div>
+    <div class="stat"><div class="s-label">best seller</div><div class="s-val" id="st-ask">€20.05</div></div>
+    <div class="stat"><div class="s-label">last price</div><div class="s-val" id="st-last">€20.00</div></div>
+  </div>
+  <div class="ob-grid" id="ob-asks"></div>
+  <div class="ob-spread">the spread — nobody agrees here</div>
+  <div class="ob-grid" id="ob-bids"></div>
+  <div class="ob-actions">
+    <button class="viz-btn" id="btn-mkt" type="button">Market BUY 600</button>
+    <button class="viz-btn" id="btn-lim1" type="button">Limit BUY 600 @ €20.05</button>
+    <button class="viz-btn" id="btn-lim2" type="button">Limit BUY 600 @ €19.95</button>
+    <button class="viz-btn secondary" id="btn-reset" type="button">Reset</button>
+  </div>
+  <div class="ob-report" id="ob-report"></div>
+  <figcaption class="fig-note">One experiment at a time — press Reset to try the next. The dashed outline marks <em>your</em> order sitting in the book, waiting.</figcaption>
+</figure>
+
+<p>What you should have seen, in words:</p>
+<ul>
+  <li><strong>Market BUY 600</strong> — everything fills instantly, but at an average of €20.075, and the price jumps. Fast and expensive. (Exactly Lesson 1.)</li>
+  <li><strong>Limit BUY 600 @ €20.05</strong> — 300 fill immediately at €20.05 (there was a seller there). The other 300 <em>become a green bar in the book</em>: you are now the best buyer, waiting at €20.05. Maybe a seller comes down to you. Maybe not. Price certain, fill uncertain.</li>
+  <li><strong>Limit BUY 600 @ €19.95</strong> — nothing fills. Your price is below every seller. Your order joins the line at €19.95 — <em>behind</em> the 400 shares already waiting there (first come, first served). The patient version: you only buy if the price comes down to you.</li>
+</ul>
+
+<div class="idea"><span class="i-label">In simple words</span>A market order <em>takes</em> from the book and pays the spread. A limit order <em>joins</em> the book and waits. On big liquid stocks the difference is cents. On small Belgian stocks the difference is your profit.</div>
+
+<h3>The stop order — a tripwire, not a guarantee</h3>
+<p>A <dfn>stop order</dfn> (often "stop-loss") protects a position you already own. You own shares at €20 and tell the broker: "if the price touches €19.00, sell everything." It sounds like insurance. Understand precisely what it does:</p>
+<div class="steps">
+  <span class="s-label">A stop-loss in slow motion — the good case and the ugly case</span>
+  <ol>
+    <li>You own 500 shares, bought at <span class="m">€20.00</span>. You set a stop at <span class="m">€19.00</span> ("max loss ~5%").</li>
+    <li><strong>Good case:</strong> the price drifts down calmly, touches €19.00 → your stop <em>triggers a market order</em> → fills near <span class="m">€18.98</span>. Loss ≈ 5%. It worked.</li>
+    <li><strong>Ugly case:</strong> bad news comes <em>overnight</em>. The stock closed at €19.80. It <em>opens</em> tomorrow at <span class="m">€16.00</span> — no trading happened between: prices can jump, they don't slide through every number.</li>
+    <li>Your stop triggers at the first price at or below €19.00 — which is €16.00. You sell at <span class="m">€16.00</span>, not €19.00. Loss: <span class="m">20%</span>, not 5%.</li>
+  </ol>
+</div>
+<p>So: a stop order limits losses in <em>calm, continuous</em> falls. It cannot protect you from overnight gaps — nothing can, except position size (Lesson 6). There is also a <dfn>stop-limit</dfn> variant ("if €19.00 touches, place a limit at €18.80") — it protects the price but risks not selling at all while the stock keeps falling. Every choice trades one risk for another.</p>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #1 — the stop-loss placed inside the noise</span>
+  <p>Lesson 1 showed that daily moves are mostly random noise. A typical stock wanders ±2% in a normal week, meaning: a stop 3% below your buy price will almost certainly be hit <em>by pure randomness</em> — you get sold out, pay the costs, and then watch the stock recover without you.</p>
+  <p>If you use stops at all: place them below the level where your <em>reason</em> for owning the stock would be wrong — not at "a round number close by so I feel safe". Feeling safe is expensive.</p>
+</div>
+
+<h2>3. Which order type, when?</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>One rule covers 95% of cases: liquid US giants → market order is acceptable for small amounts; everything else — always a limit order.</div>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Situation</th><th>Use</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>US mega-cap (Apple, Microsoft), small order, mid-day</td><td><strong>Market</strong> is OK</td><td>Spread ≈ 0.01–0.05%. Your order is a drop in an ocean.</td></tr>
+      <tr><td>Any Belgian stock, any small/mid cap anywhere</td><td><strong>Limit, always</strong></td><td>Wide spreads, thin books. A market order is a gift to whoever is on the other side.</td></tr>
+      <tr><td>First / last 15 minutes of the trading day</td><td><strong>Limit</strong></td><td>Spreads are widest at open and close; prices jump around while the book fills up.</td></tr>
+      <tr><td>Protecting an existing position</td><td><strong>Stop</strong>, placed wide</td><td>Accept it's a tripwire, not a guarantee; place it outside normal noise.</td></tr>
+      <tr><td>A stock that barely trades (see auctions, below)</td><td><strong>Limit, in the auction</strong></td><td>Some stocks only trade at fixed moments — the auction sets one fair price.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>One more setting on every order ticket: <dfn>time in force</dfn>. "<span class="mono">DAY</span>" = the order dies tonight if not filled. "<span class="mono">GTC</span>" (good-till-cancelled) = it stays alive for weeks until filled or cancelled. GTC sounds convenient. It has a hidden danger — trap #2:</p>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #2 — the forgotten GTC order fills at the worst moment</span>
+  <p>You place a GTC limit: "buy at €18.00" (price now €20.00). Three weeks later you've forgotten it. Ask yourself: <em>what has to happen for the price to fall to €18?</em> Usually: bad news.</p>
+  <p>So your old order fills exactly when informed people are selling — you buy at €18 <em>because something is wrong</em>, and by then your reason for wanting the stock may be dead. Professionals call this <dfn>adverse selection</dfn>: a resting order is a free gift to better-informed traders. Rule: check your open orders weekly, and prefer DAY orders you consciously renew.</p>
+</div>
+
+<h2>4. Auctions — how Euronext really opens, closes, and trades small caps</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>An auction collects everyone's orders first, then computes the single price where the most shares can trade — and everyone trades at that one price.</div>
+
+<p>Not all trading is continuous. At certain moments the exchange <em>pauses matching</em>, collects orders in a pile, and then finds one fair price. This is an <dfn>auction</dfn>. It works like this:</p>
+<div class="steps">
+  <span class="s-label">An auction in 4 steps</span>
+  <ol>
+    <li>For some minutes, orders arrive but nothing trades. The pile grows: buyers with their limits, sellers with theirs.</li>
+    <li>The exchange computer tries every possible price and asks: "at this price, how many shares can actually trade?"</li>
+    <li>It picks the price where the <strong>most shares match</strong>. Example: at €20.02, buyers want 5,000 and sellers offer 5,200 → 5,000 trade.</li>
+    <li>Everyone who matches trades at that <strong>single price</strong> — €20.02 for all, regardless of what limit they wrote (if it was €20.02 or better).</li>
+  </ol>
+</div>
+<p>Why you must know this, trading Belgium:</p>
+<ul>
+  <li><strong>Every Euronext day opens with an auction</strong> (~09:00) and <strong>closes with one</strong> (~17:30–17:35). The closing auction is the most liquid moment of the whole day — big funds trade there. For mid-size Belgian names, the closing auction is often the best place for your limit order.</li>
+  <li><strong>Many small Belgian stocks don't trade continuously at all.</strong> They trade by <dfn>double fixing</dfn>: two auctions per day (around 11:30 and 16:30), and nothing in between. If you send a market order to such a stock, it waits for the next auction and takes whatever price comes out. Check your stock's "trading mode" on euronext.com before your first order — homework includes this.</li>
+</ul>
+
+<h2>5. The complete bill — every cost, Belgian edition</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Six different hands take a piece of your money — most are invisible on your statement, and frequency of trading is what multiplies them.</div>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Cost</th><th>Typical size</th><th>When it hits</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Spread</strong> (Lesson 1)</td><td class="num">0.02% – 3%</td><td>Every trade. Invisible. Biggest on small caps.</td></tr>
+      <tr><td><strong>Slippage</strong> (Lesson 1)</td><td class="num">0% – 1%+</td><td>When your order is big vs. the book.</td></tr>
+      <tr><td><strong>Broker commission</strong></td><td class="num">€1 – €10 / trade</td><td>Every trade. The only cost shown clearly.</td></tr>
+      <tr><td><strong>TOB</strong> — Belgian stock-exchange tax</td><td class="num">0.35% shares · 0.12% or 1.32% ETFs</td><td>Every buy AND every sell. Rates depend on product type — verify current rules.</td></tr>
+      <tr><td><strong>Dividend withholding tax</strong></td><td class="num">30% (BE) · 15%+30% chain (US)</td><td>Every dividend. See math below.</td></tr>
+      <tr><td><strong>Currency conversion</strong></td><td class="num">0.02% – 0.5%</td><td>When buying USD stocks with EUR (and again when selling).</td></tr>
+      <tr><td><strong>Capital gains tax</strong></td><td class="num">10% above a yearly exemption</td><td>New in Belgium since 2026 — rules are fresh, verify the current details.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>Two of these deserve slow math. First, what actually reaches you from a US dividend:</p>
+<div class="steps">
+  <span class="s-label">A $100 US dividend, step by step (Belgian investor)</span>
+  <ol>
+    <li>The company pays <span class="m">$100</span> gross dividend for your shares.</li>
+    <li>The US takes 15% first (thanks to the tax treaty — but only if your broker filed your <dfn>W-8BEN</dfn> form; without it, 30%): <span class="m">$100 − 15% = $85</span>.</li>
+    <li>Belgium then takes 30% of what remains: <span class="m">$85 × 30% = $25.50</span>.</li>
+    <li>You keep: <span class="m">$85 − $25.50 = $59.50</span>. Almost 40% of the dividend is gone before it touches you.</li>
+  </ol>
+</div>
+<p>A Belgian dividend is simpler: <span class="mono">€100 − 30% = €70</span>. Lesson for later: dividend-heavy strategies must be judged on <em>net</em> dividends, not the pretty gross yield on the website.</p>
+
+<p>Second — the most important chart of this lesson. What happens when you trade often:</p>
+
+<figure class="viz" aria-label="Bar chart comparing the market's average yearly return to yearly costs at different trading frequencies">
+  <p class="fig-title">What the market gives vs. what frequent trading takes</p>
+  <p class="fig-sub">Per year, on a €10,000 portfolio of Belgian small-caps (~3.2% round-trip cost from Lesson 1).</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-buy)"></span>the market's long-run average gift</span>
+    <span class="chip"><span class="sw" style="background:var(--c-sell)"></span>costs of trading the whole portfolio N times</span>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Market average return<small>world stocks, long run</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:18%; background:var(--c-buy)"></div><span class="hbar-val">≈ +7% / yr</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Trade everything 1×/yr</div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:8.3%; background:var(--c-sell)"></div><span class="hbar-val">−3.2% / yr</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Trade everything 4×/yr</div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:33%; background:var(--c-sell)"></div><span class="hbar-val">−12.8% / yr</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Trade everything 12×/yr</div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:100%; background:var(--c-sell)"></div><span class="hbar-val">−38.4% / yr</span></div>
+  </div>
+  <figcaption class="fig-note">Read it slowly: the entire market, on average, gives ~7% per year. Trading your Belgian portfolio just 4 times per year already costs ~12.8% — you must be <em>brilliantly</em> right just to get back to zero. This is not an argument against trading. It is an argument for trading <strong>rarely, deliberately, and with limit orders</strong> — which is exactly the style our future system is designed around.</figcaption>
+</figure>
+
+<h2>6. Buying American stocks with euros — the double bet</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>When you buy a US stock, you always make two bets at once: on the stock, and on the dollar.</div>
+
+<div class="steps">
+  <span class="s-label">The hidden second bet, step by step</span>
+  <ol>
+    <li>You convert <span class="m">€10,000 → $10,800</span> (at 1.08) and buy Microsoft.</li>
+    <li>One year later Microsoft is up 10%: your shares are worth <span class="m">$11,880</span>. </li>
+    <li>But the dollar weakened 10% against the euro over that year (this happens — 2025 was worse than that).</li>
+    <li>Converting back: your $11,880 becomes ≈ <span class="m">€10,000</span>. The stock won 10%; the currency took it all back. You made nothing.</li>
+  </ol>
+</div>
+<p>The reverse also happens — the dollar can add to your gains. The point is not to fear it, but to <em>know</em> it: a US portfolio is always also a dollar position. Over many years currency swings partly cancel out; over one year they can dominate your result. (Your future system will measure this separately — that's part of "attribution" from the master plan.)</p>
+
+<h2>7. Check yourself</h2>
+<p>Answer first, then click. Each question is one of this lesson's core ideas in disguise.</p>
+<div class="quiz">
+  <details><summary>Why should you basically never send a market order for a Belgian small-cap?</summary><p class="answer">Thin book + wide spread. Your market order eats through the few cheap sellers and fills at bad prices (the simulator's €45 extra, but worse). With a limit order you set the worst price you accept — you risk not filling, but never overpaying. On small caps, "not filling" is a much cheaper problem than "filling badly".</p></details>
+  <details><summary>You own a stock at €20 with a stop-loss at €19. Terrible news comes overnight, and the stock opens at €16. At what price do you sell?</summary><p class="answer">About €16. A stop is a tripwire: when the price touches or jumps past €19, it fires a market order at the <em>next available price</em> — €16. Stops protect against slow slides, never against gaps. Only position size protects against gaps.</p></details>
+  <details><summary>What is dangerous about a "good-till-cancelled" buy limit far below the current price?</summary><p class="answer">It usually fills exactly when something bad happened — that's what pushed the price down to your level. You buy from better-informed sellers at the worst moment, and your original reason for buying may no longer be true. Old resting orders are gifts to informed traders. Review open orders weekly.</p></details>
+  <details><summary>Your friend trades his whole Belgian portfolio about once a month. The market averages ~7%/year. What return does his <em>skill</em> need to produce per year just to break even?</summary><p class="answer">About 38% of costs (12 × 3.2%) minus the 7% the market gives ≈ he needs to beat the market by roughly 31 percentage points every year just to reach zero. The best investors in history beat the market by 10–20 points. His system is mathematically doomed by frequency alone, before we know anything about his skill.</p></details>
+  <details><summary>A US stock pays you a $100 dividend. Your broker filed the W-8BEN. How much lands in your pocket as a Belgian investor?</summary><p class="answer">$59.50. The US takes 15% ($15), leaving $85. Belgium takes 30% of the $85 ($25.50). Net: $59.50 — about 40% is gone. Always judge dividend strategies on net numbers.</p></details>
+  <details><summary>You want to buy a tiny Belgian stock and notice it only trades at 11:30 and 16:30. What is happening, and what should you do?</summary><p class="answer">It's a "double fixing" stock — it trades only in two auctions per day, no continuous trading. Place a <em>limit</em> order and let it participate in the auction: the exchange finds the single price where the most shares match, and everyone trades at that price. Never send a market order into an auction on a thin stock — you accept whatever price falls out.</p></details>
+</div>
+
+<h2>8. Key words from this lesson</h2>
+<div class="keyterms">
+  <div><b>Fill</b> — your order (or part of it) got executed at some price.</div>
+  <div><b>Settlement</b> — the official ownership transfer: T+1 (US) or T+2 (Europe) days after the trade.</div>
+  <div><b>Market order</b> — "fill me now at any price." Controls speed, risks price.</div>
+  <div><b>Limit order</b> — "only at my price or better." Controls price, risks never filling.</div>
+  <div><b>Stop order</b> — a tripwire: when the level is touched, it fires a market order.</div>
+  <div><b>Stop-limit</b> — tripwire that fires a limit order: protects price, risks not selling at all.</div>
+  <div><b>DAY / GTC</b> — order dies tonight / order stays alive until cancelled.</div>
+  <div><b>Adverse selection</b> — old resting orders fill exactly when informed people trade against you.</div>
+  <div><b>Auction</b> — orders collect, then one price where the most shares match; all trade at it.</div>
+  <div><b>Double fixing</b> — small Euronext stocks that trade only in two auctions per day.</div>
+  <div><b>TOB</b> — Belgian tax on every buy and every sell (~0.35% for shares).</div>
+  <div><b>W-8BEN</b> — the form that cuts US dividend tax from 30% to 15% for you.</div>
+</div>
+
+<h2>9. If you remember only three things</h2>
+<div class="steps">
+  <ol>
+    <li><strong>Limit orders, almost always.</strong> Market orders are acceptable only for small amounts on giant liquid stocks. Everywhere else, you set the price or you don't trade.</li>
+    <li><strong>Frequency is the silent killer.</strong> The market gives ~7% a year; trading a Belgian portfolio monthly costs ~38% a year. Nothing you learn later matters if this one number is against you.</li>
+    <li><strong>A stop order is a tripwire, not insurance.</strong> It works in slow declines and fails in gaps. Real protection is position size — coming in Lesson 6.</li>
+  </ol>
+</div>
+
+<h2>10. Homework — place real (paper) orders</h2>
+<div class="homework">
+  <h3>Field exercise (~2 hours, zero risk — paper money)</h3>
+  <p><strong>Step 1 — open the account (the important step).</strong> Create an Interactive Brokers account and activate <em>paper trading</em> mode (simulated money, real market data). This account becomes our laboratory for the whole curriculum. Any broker demo works if IBKR is too much paperwork this week.</p>
+  <p><strong>Step 2 — run these four experiments</strong> during market hours, and write down every fill price next to the bid/ask you saw at that moment:</p>
+  <ul>
+    <li>Market BUY 5 shares of a US giant (e.g. Microsoft). Note: fill price vs. the ask you saw. How much did you lose to the spread?</li>
+    <li>Limit BUY the same stock 1% below the current price, DAY order. Did it fill by the end of the day?</li>
+    <li>Limit BUY a Belgian stock (e.g. Kinepolis) at the current bid. How long until it fills — if at all? First: check on euronext.com whether it trades continuously or by auction, and note the auction times.</li>
+    <li>Set a stop-sell 5% below your Microsoft position. Then look at the stock's recent daily moves and answer: is this stop inside the random noise?</li>
+  </ul>
+  <p><strong>Step 3 —</strong> compute the full round-trip cost of your Belgian trade: spread you paid + 2 × 0.35% TOB + commission. Compare it to the US trade. This number is yours now — you measured it.</p>
+  <p>Bring the fills and the two cost numbers to the next session.</p>
+</div>
+
+<footer>
+  <span>Lesson 2 of 8 · Part 1: Understanding Trading</span>
+  <span>Next: <span class="cmd">start lesson 3</span> — Reading a company: financial statements without pain</span>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var ASKS0 = [[20.15, 800], [20.10, 500], [20.05, 300]]; // display top-down
+  var BIDS0 = [[19.95, 400], [19.90, 600], [19.85, 1000]];
+  var MAXQ = 1000;
+  var state;
+
+  function fmtEUR(x, dec) { return "€" + x.toFixed(dec === undefined ? 2 : dec); }
+
+  function render() {
+    var asksEl = document.getElementById("ob-asks");
+    var bidsEl = document.getElementById("ob-bids");
+    asksEl.innerHTML = ""; bidsEl.innerHTML = "";
+    state.asks.forEach(function (r) {
+      if (r.q <= 0) { return; }
+      asksEl.appendChild(row(r, "ask"));
+    });
+    state.bids.forEach(function (r) {
+      if (r.q <= 0) { return; }
+      bidsEl.appendChild(row(r, "bid"));
+    });
+    document.getElementById("st-bid").textContent = state.bids.length ? fmtEUR(state.bids[0].p) : "—";
+    document.getElementById("st-ask").textContent = state.asks.length ? fmtEUR(bestAsk()) : "—";
+    document.getElementById("st-last").textContent = fmtEUR(state.last);
+  }
+  function bestAsk() {
+    for (var i = state.asks.length - 1; i >= 0; i--) if (state.asks[i].q > 0) return state.asks[i].p;
+    return NaN;
+  }
+  function row(r, cls) {
+    var d = document.createElement("div");
+    d.className = "ob-row";
+    var w = Math.min(r.q, MAXQ) / MAXQ * 100;
+    var tag = "";
+    if (r.mineQ) {
+      tag = ' &nbsp;<span class="fill-tag">' + (r.mineNote || ("your " + r.mineQ + " waiting")) + "</span>";
+    } else if (r.taken) {
+      tag = ' &nbsp;<span class="fill-tag">← you took ' + r.taken.toLocaleString() + "</span>";
+    }
+    d.innerHTML =
+      '<span class="ob-price">' + fmtEUR(r.p) + "</span>" +
+      '<span class="ob-track"><span class="ob-bar ' + cls + (r.mineQ ? " mine" : "") + '" style="width:' + w + '%"></span></span>' +
+      '<span class="ob-size">' + r.q.toLocaleString() + " sh" + tag + "</span>";
+    return d;
+  }
+
+  function reset() {
+    state = {
+      asks: ASKS0.map(function (r) { return { p: r[0], q: r[1] }; }),
+      bids: BIDS0.map(function (r) { return { p: r[0], q: r[1] }; }),
+      last: 20.00, done: false
+    };
+    ["btn-mkt", "btn-lim1", "btn-lim2"].forEach(function (id) { document.getElementById(id).disabled = false; });
+    var rep = document.getElementById("ob-report");
+    rep.className = "ob-report"; rep.innerHTML = "";
+    render();
+  }
+
+  function lock() {
+    state.done = true;
+    ["btn-mkt", "btn-lim1", "btn-lim2"].forEach(function (id) { document.getElementById(id).disabled = true; });
+  }
+
+  function show(html) {
+    var rep = document.getElementById("ob-report");
+    rep.innerHTML = html;
+    rep.className = "ob-report show";
+  }
+
+  function marketBuy() {
+    if (state.done) return; lock();
+    var want = 600, fills = [];
+    function step() {
+      var idx = -1;
+      for (var i = state.asks.length - 1; i >= 0; i--) if (state.asks[i].q > 0) { idx = i; break; }
+      if (want <= 0 || idx < 0) return report();
+      var lvl = state.asks[idx];
+      var take = Math.min(want, lvl.q);
+      lvl.q -= take; lvl.taken = (lvl.taken || 0) + take; want -= take;
+      fills.push([lvl.p, take]);
+      state.last = lvl.p;
+      render();
+      if (want > 0) { reduced ? step() : setTimeout(step, 700); } else { reduced ? report() : setTimeout(report, 500); }
+    }
+    function report() {
+      var qty = 0, cost = 0;
+      fills.forEach(function (f) { qty += f[1]; cost += f[0] * f[1]; });
+      var avg = cost / qty;
+      show(
+        '<div class="rline"><strong>Market order: all 600 filled instantly.</strong> ' +
+        fills.map(function (f) { return f[1] + " @ " + fmtEUR(f[0]); }).join(" + ") + "</div>" +
+        '<div class="rline">Average <strong class="mono">' + fmtEUR(avg, 3) + '</strong> — you paid <strong class="mono">' + fmtEUR(cost - 20.00 * qty, 0) +
+        " extra</strong> vs the €20.00 midpoint. Speed has a price.</div>" +
+        '<div class="rline">Last price jumped to <strong class="mono">' + fmtEUR(state.last) + "</strong>. You moved the market. Again.</div>"
+      );
+    }
+    step();
+  }
+
+  function limitBuy2005() {
+    if (state.done) return; lock();
+    // take the 300 @ 20.05
+    var lvl = state.asks[2]; // 20.05
+    lvl.q = 0; lvl.taken = 300;
+    state.last = 20.05;
+    // remaining 300 becomes new best bid at 20.05
+    state.bids.unshift({ p: 20.05, q: 300, mineQ: 300, mineNote: "YOUR order, waiting" });
+    render();
+    show(
+      '<div class="rline"><strong>Limit @ €20.05: only 300 filled.</strong> There was exactly one seller at your price: <span class="mono">300 × €20.05 = €6,015</span>. Never a cent more than you allowed.</div>' +
+      '<div class="rline">Your other 300 did not disappear — look at the book: <strong>you are now the green bar at €20.05</strong>, the best buyer in the market, waiting.</div>' +
+      '<div class="rline">Maybe a seller comes down to you in an hour. Maybe never. <em>Price certain, fill uncertain</em> — that is the limit order trade-off.</div>'
+    );
+  }
+
+  function limitBuy1995() {
+    if (state.done) return; lock();
+    var b = state.bids[0]; // 19.95 level
+    b.q += 600; b.mineQ = 600; b.mineNote = "your 600, in line behind 400";
+    render();
+    show(
+      '<div class="rline"><strong>Limit @ €19.95: nothing filled.</strong> Every seller wants €20.05 or more. Your price is below all of them — so you wait.</div>' +
+      '<div class="rline">Your 600 joined the queue at €19.95 — <strong>behind</strong> the 400 shares that were already there. First come, first served.</div>' +
+      '<div class="rline">You will only buy if the price comes down to you. Patient, cheap — and possibly never. This is how professionals buy small Belgian stocks.</div>'
+    );
+  }
+
+  document.getElementById("btn-mkt").addEventListener("click", marketBuy);
+  document.getElementById("btn-lim1").addEventListener("click", limitBuy2005);
+  document.getElementById("btn-lim2").addEventListener("click", limitBuy1995);
+  document.getElementById("btn-reset").addEventListener("click", reset);
+  reset();
+})();
+</script>
+
+</html>

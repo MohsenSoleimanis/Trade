@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 7 — The Strategy Landscape: How People Actually Beat Markets</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-pre: #2a78d6; --c-post: #d03b3b; --c-ok: #1baf7a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-pre: #3987e5; --c-post: #e66767; --c-ok: #199e70;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-pre: #3987e5; --c-post: #e66767; --c-ok: #199e70;
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-pre: #2a78d6; --c-post: #d03b3b; --c-ok: #1baf7a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.75; margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 52px 0 30px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 60ch; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 30px 0 4px; }
+  p { margin: 12px 0; font-size: 16px; }
+  li { font-size: 16px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .idea { background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px; font-size: 16px; }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .steps { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 22px; margin: 20px 0; box-shadow: var(--shadow); }
+  .steps .s-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .steps ol { margin: 6px 0 0; padding-left: 22px; }
+  .steps li { font-size: 15px; margin: 9px 0; }
+  .steps .m { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  figure.viz { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); margin: 26px 0; padding: 20px 22px 16px; }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* family cards */
+  .fam { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); margin: 18px 0; padding: 18px 22px; }
+  .fam .f-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .fam h3 { margin: 0; }
+  .fam .f-one { font-size: 13.5px; color: var(--accent); font-style: italic; font-family: Cambria, Georgia, serif; }
+  .fam .f-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 8px 18px; margin-top: 12px; }
+  .fam .f-cell { font-size: 14px; }
+  .fam .f-cell b { font-family: Consolas, "Cascadia Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: block; font-weight: 600; margin-bottom: 2px; }
+  .fit { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; padding: 2px 9px; border-radius: 10px; font-weight: 700; white-space: nowrap; }
+  .fit.good { background: rgba(27,175,122,.15); color: var(--c-ok); }
+  .fit.mid { background: rgba(237,161,0,.15); color: #a97400; }
+  :root[data-theme="dark"] .fit.mid, :root:not([data-theme="light"]) .fit.mid { color: #c98500; }
+  .fit.hard { background: rgba(208,59,59,.13); color: var(--c-post); }
+
+  /* decay pairs */
+  .pair-row { display: grid; grid-template-columns: 150px 1fr; align-items: center; gap: 12px; margin: 12px 0; }
+  .pair-row .lab { font-size: 13px; text-align: right; line-height: 1.3; }
+  .pair-row .lab small { color: var(--muted); display: block; font-size: 11.5px; }
+  .pair-bars { display: grid; gap: 3px; }
+  .pbar-track { position: relative; height: 15px; }
+  .pbar { height: 15px; border-radius: 0 4px 4px 0; min-width: 2px; display: inline-flex; align-items: center; }
+  .pbar-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; color: var(--ink); margin-left: 7px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .baseline { border-left: 2px solid var(--line); }
+
+  /* mix tool */
+  .tool { display: grid; gap: 14px; }
+  .q-row { display: grid; grid-template-columns: 1fr; gap: 4px; }
+  .q-row label { font-size: 14.5px; font-weight: 600; }
+  .q-row select {
+    font: 14px "Segoe UI", system-ui, sans-serif; color: var(--ink); background: var(--code-bg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; max-width: 560px;
+  }
+  .q-row select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .mix-out { background: var(--accent-soft); border-radius: 6px; padding: 14px 18px; font-size: 14.5px; }
+  .mix-out b { display: block; margin-bottom: 4px; }
+
+  .example { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 18px 22px; margin: 22px 0; box-shadow: var(--shadow); }
+  .example .ex-label, .trap .ex-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px; }
+  .example .ex-label { color: var(--accent); }
+  .example p, .example li { font-size: 15px; }
+  .trap { background: var(--trap-soft); border: 1px solid var(--line); border-left: 3px solid var(--trap); border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 22px 0; }
+  .trap .ex-label { color: var(--trap); }
+  .trap p { font-size: 15px; margin: 8px 0 0; }
+  .trap p:first-of-type { margin-top: 0; }
+
+  .tablebox { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; }
+
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .quiz summary { padding: 13px 18px; cursor: pointer; font-size: 15px; font-weight: 600; list-style: none; }
+  .quiz summary::-webkit-details-marker { display: none; }
+  .quiz summary::before { content: "Q · "; font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); font-weight: 700; }
+  .quiz summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .quiz .answer { padding: 12px 18px 15px; font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); margin: 0; }
+
+  .keyterms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 18px; }
+  .keyterms > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; font-size: 14px; }
+  .keyterms b { color: var(--accent); }
+
+  .homework { background: var(--accent-soft); border-radius: 8px; padding: 22px 26px; margin-top: 24px; }
+  .homework h3 { margin-top: 0; }
+  .homework p, .homework li { font-size: 15px; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 · Understanding Trading · Lesson 7 of 8</div>
+  <h1>The Strategy Landscape: How People Actually Beat Markets</h1>
+  <p class="subtitle">You now know what prices are, how trading works, how to read and value a company, what moves the tide, and how to survive being wrong. Time for the map: the handful of documented strategy families that have beaten markets, why they work, what each one costs to hold — and which ones fit a person in Belgium with a day job.</p>
+  <div class="lesson-meta"><span>reading: ~50 min</span><span>homework: ~1 hr</span><span>prerequisite: Lessons 1–6</span><span>interactive: yes — find your mix</span></div>
+</header>
+
+<h2>1. The baseline nobody beats by accident</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>The default is the broad ETF at ~7%/year for zero effort — every strategy is a claim to beat it, and every claim must explain who is paying you and why.</div>
+
+<p>Lesson 1 gave you the three-item list: to beat the market you need <em>information others don't have, an interpretation others haven't made, or patience others can't afford</em>. A "strategy" is simply one of those three, organized into rules you can repeat. And from Lesson 1 you also know trading is person-against-person — so every strategy that works must answer an uncomfortable question: <strong>who is on the losing side, and why do they keep showing up?</strong></p>
+<p>That gives us a four-question test. Hold every strategy you ever meet — in this lesson, on YouTube, in your own head — against it:</p>
+
+<div class="steps">
+  <span class="s-label">The four questions — your strategy lie detector, forever</span>
+  <ol>
+    <li><strong>Evidence:</strong> has it worked across decades and countries — or only in one lucky backtest window?</li>
+    <li><strong>Why does it exist:</strong> what human behavior or institutional constraint creates it? Who keeps paying, and why don't they stop?</li>
+    <li><strong>Why does it survive:</strong> what pain (drawdowns, career risk, boredom, effort) stops smart money from arbitraging it away?</li>
+    <li><strong>Can YOU run it:</strong> after Belgian TOB, spreads, taxes, and your real hours per week — does anything remain?</li>
+  </ol>
+</div>
+<p>Notice question 3. It's the strangest and most important: <strong>a strategy with no pain attached cannot keep working</strong> — painless free money gets crowded until it's gone. The pain is not a bug. The pain is the moat.</p>
+
+<h2>2. The families</h2>
+<p>Six families cover almost everything real. Each card: what it is, the evidence, who's paying, the pain that guards it, and a fit score for <em>your</em> situation (long horizon, Belgian costs, day job).</p>
+
+<div class="fam">
+  <div class="f-head"><h3>Value</h3><span class="fit good">FIT: GOOD</span></div>
+  <p class="f-one">"Buy businesses for less than they're worth; wait for the weighing machine."</p>
+  <div class="f-grid">
+    <div class="f-cell"><b>What it is</b>Lesson 4, systematized: buy low-multiple stocks whose implied pessimism is exaggerated. Your P/E decoder + margin of safety, applied over and over.</div>
+    <div class="f-cell"><b>Evidence</b>A century of data, most countries. Honest footnote: it had a brutal losing decade in the 2010s — then recovered. It breathes in decade-long waves.</div>
+    <div class="f-cell"><b>Who pays you</b>People overreacting to bad news, and professionals who can't buy ugly stocks — explaining a boring cement company to clients is a career risk. You have no clients.</div>
+    <div class="f-cell"><b>The pain (= the moat)</b>Value traps you must check one by one (Lesson 4), and droughts lasting <em>years</em> where everyone calls you an idiot. Most people break.</div>
+    <div class="f-cell"><b>For you</b>Low turnover → survives Belgian costs (Lesson 2). Uses your Lesson 3–4 skills directly. The patience requirement is real — that's the price of entry.</div>
+  </div>
+</div>
+
+<div class="fam">
+  <div class="f-head"><h3>Momentum</h3><span class="fit mid">FIT: PARTIAL</span></div>
+  <p class="f-one">"What has been winning for 6–12 months tends to keep winning a while longer."</p>
+  <div class="f-grid">
+    <div class="f-cell"><b>What it is</b>Buy the strongest stocks of the past ~year, hold a month or a few, refresh. Sounds absurdly simple. It is — and it's the single most documented anomaly in finance.</div>
+    <div class="f-cell"><b>Evidence</b>The strongest of all: 200+ years, every asset class, every country tested — including Belgium. The academics who believe nothing believe this one.</div>
+    <div class="f-cell"><b>Who pays you</b>Human slowness: information spreads gradually, people anchor to old prices and disbelieve trends ("it can't go higher"), then chase late. You harvest their hesitation.</div>
+    <div class="f-cell"><b>The pain (= the moat)</b>"Momentum crashes": when the market whips around (2009), momentum portfolios can lose 30–50% in weeks. And it needs constant rebalancing — turnover.</div>
+    <div class="f-cell"><b>For you</b>The turnover is the problem: monthly rebalancing on Belgian stocks dies by TOB + spreads (Lesson 2's chart). Practical route: a cheap momentum <em>ETF</em>, or momentum applied only inside the liquid-US part of a portfolio. Never hand-rolled on small caps.</div>
+  </div>
+</div>
+
+<div class="fam">
+  <div class="f-head"><h3>Quality</h3><span class="fit good">FIT: GOOD</span></div>
+  <p class="f-one">"Boring excellence compounds: high returns on equity, low debt, stable margins."</p>
+  <div class="f-grid">
+    <div class="f-cell"><b>What it is</b>Lesson 3's toolkit as a filter: consistently high ROE, honest cash conversion, low debt-to-equity. Buy the durable, ignore the exciting.</div>
+    <div class="f-cell"><b>Evidence</b>Robust across markets ("profitability factor"). Quality + a sane price (quality-value blend) is one of the best-documented long-horizon combinations.</div>
+    <div class="f-cell"><b>Who pays you</b>Excitement-seekers. Lottery-ticket stocks are systematically overpriced because gamblers love them; sturdy compounders are underpriced because nobody brags about owning them.</div>
+    <div class="f-cell"><b>The pain (= the moat)</b>Mild but real: quality often <em>looks</em> expensive (fair P/E for a great business feels high — Lesson 4), and it lags violently fun markets. Boredom is the cost.</div>
+    <div class="f-cell"><b>For you</b>Near-perfect: very low turnover, uses your statement-reading skills, sleeps well at Belgian tax rates. The natural tilt for your long-horizon core.</div>
+  </div>
+</div>
+
+<div class="fam">
+  <div class="f-head"><h3>Dividend / income</h3><span class="fit hard">FIT: POOR (in Belgium)</span></div>
+  <p class="f-one">"Own steady payers, live off the stream" — beloved, and mostly a tax mistake here.</p>
+  <div class="f-grid">
+    <div class="f-cell"><b>What it is</b>Selecting stocks for high, stable dividends. Psychologically lovely: money arrives.</div>
+    <div class="f-cell"><b>Evidence</b>Mostly a rougher version of value+quality — the dividend itself adds little that those factors don't already capture.</div>
+    <div class="f-cell"><b>The Belgian problem</b>Lesson 2's math: 30% withholding domestically, the 15%+30% chain on US payers — roughly a third to 40% of the stream is gone before it reaches you. The same return taken as <em>price growth</em> inside an accumulating ETF compounds untaxed for decades (verify current rules — the 2026 changes matter here).</div>
+    <div class="f-cell"><b>For you</b>If you like the companies, own them for value/quality reasons. Chasing the dividend itself, from Belgium, is voluntarily paying an extra tax. Skip — with the one exception of genuinely needing cash income.</div>
+  </div>
+</div>
+
+<div class="fam">
+  <div class="f-head"><h3>Events &amp; special situations</h3><span class="fit good">FIT: YOUR NICHE</span></div>
+  <p class="f-one">"Profit from situations where someone must trade and cannot care about the price."</p>
+  <div class="f-grid">
+    <div class="f-cell"><b>What it is</b>Spin-offs (funds dump shares of the small company they were given), forced index-change selling, insider buying clusters, and under-covered small caps priced lazily because nobody looks.</div>
+    <div class="f-cell"><b>Evidence</b>Good, and — crucially — <em>structural</em>: these edges come from rules and size limits, not psychology, so they decay slower.</div>
+    <div class="f-cell"><b>Who pays you</b>Institutions forced by mandate: the index fund MUST sell on rebalance day; the big fund CANNOT hold the €80M spin-off. They pay for speed and size with price. You have neither constraint.</div>
+    <div class="f-cell"><b>The pain (= the moat)</b>Effort. Reading filings (Lesson 3), one situation at a time, often in Dutch or French, in stocks with scary spreads (Lesson 2: limit orders, small sizes). No shortcut exists — which is exactly why it still works.</div>
+    <div class="f-cell"><b>For you</b>This is Book B from our master plan: Belgian small caps that no analyst covers, read via NBB filings — later with your AI agents doing the heavy reading. The one place a solo Belgian has a real structural advantage.</div>
+  </div>
+</div>
+
+<div class="fam">
+  <div class="f-head"><h3>Passive + rebalancing</h3><span class="fit good">FIT: THE CORE</span></div>
+  <p class="f-one">"Own everything cheaply, rebalance on a calendar, let compounding work."</p>
+  <div class="f-grid">
+    <div class="f-cell"><b>What it is</b>Broad accumulating ETFs + a fixed allocation (stocks/bonds/cash from your Risk Constitution), rebalanced once or twice a year — which quietly forces you to buy low and sell high.</div>
+    <div class="f-cell"><b>Evidence</b>Overwhelming: after costs, it beats the large majority of professionals over 10+ years. It is the benchmark for a reason.</div>
+    <div class="f-cell"><b>Who pays you</b>Nobody — that's the point. You're not extracting edge; you're collecting the market's built-in reward for owning productive businesses and enduring the tide.</div>
+    <div class="f-cell"><b>The pain (= the moat)</b>Only psychological: it's boring, and you must hold through −30% seasons doing nothing. Most people can't. You have a signed constitution.</div>
+    <div class="f-cell"><b>For you</b>The foundation everything else sits on. Money not powering a deliberate, tested edge lives here (Lesson 1's "honest default") — and it's the benchmark your system must beat to justify existing.</div>
+  </div>
+</div>
+
+<h2>3. Alpha decay — why edges rot, and which survive</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Once an edge is published and crowded, a third to half of it evaporates — what remains is whatever is guarded by pain, structure, or effort.</div>
+
+<p>Researchers (McLean &amp; Pontiff) tracked ~100 published market anomalies: how did each perform <em>after</em> the academic paper announcing it? On average, returns dropped roughly a third to a half. The pattern, illustrated:</p>
+
+<figure class="viz" aria-label="Paired bars showing strategy returns before and after publication">
+  <p class="fig-title">The edge, before and after everyone knows</p>
+  <p class="fig-sub">Illustrative pattern based on published research — exact numbers vary per anomaly.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-pre)"></span>excess return before publication</span>
+    <span class="chip"><span class="sw" style="background:var(--c-post)"></span>after publication &amp; crowding</span>
+  </div>
+  <div class="pair-row"><div class="lab">Typical published anomaly</div><div class="pair-bars">
+    <div class="pbar-track baseline"><div class="pbar" style="width:60%; background:var(--c-pre)"></div><span class="pbar-val">+6%/yr</span></div>
+    <div class="pbar-track baseline"><div class="pbar" style="width:33%; background:var(--c-post)"></div><span class="pbar-val">+3.3%/yr &nbsp;(−45%)</span></div>
+  </div></div>
+  <div class="pair-row"><div class="lab">Easy-to-trade anomaly<small>liquid stocks, no pain</small></div><div class="pair-bars">
+    <div class="pbar-track baseline"><div class="pbar" style="width:50%; background:var(--c-pre)"></div><span class="pbar-val">+5%/yr</span></div>
+    <div class="pbar-track baseline"><div class="pbar" style="width:10%; background:var(--c-post)"></div><span class="pbar-val">≈ +1%/yr &nbsp;(mostly gone)</span></div>
+  </div></div>
+  <div class="pair-row"><div class="lab">Pain-guarded anomaly<small>drawdowns, small caps, effort</small></div><div class="pair-bars">
+    <div class="pbar-track baseline"><div class="pbar" style="width:55%; background:var(--c-pre)"></div><span class="pbar-val">+5.5%/yr</span></div>
+    <div class="pbar-track baseline"><div class="pbar" style="width:40%; background:var(--c-post)"></div><span class="pbar-val">+4%/yr &nbsp;(most survives)</span></div>
+  </div></div>
+  <figcaption class="fig-note">Read the third row carefully — it is your whole strategy in one bar. Edges survive in proportion to how unpleasant they are to harvest: multi-year droughts (value), terrifying crashes (momentum), stocks too small for funds, filings in Dutch nobody reads (your Book B). When you meet a strategy online, ask: <em>what pain guards this?</em> If the answer is "none — it's easy money", the edge is already gone, and the person selling it to you knows.</figcaption>
+</figure>
+
+<h2>4. Every family has a nightmare — know yours before it arrives</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>All real strategies spend years looking broken — the drought is the admission price, and quitting during it is how most people pay the price without collecting the reward.</div>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Family</th><th>Its historical nightmare</th><th>What it felt like</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Value</strong></td><td class="num">~2010–2020</td><td>A full decade behind the market while tech soared. Famous value investors retired, mocked. Then it turned.</td></tr>
+      <tr><td><strong>Momentum</strong></td><td class="num">2009 (and echoes)</td><td>−50%+ in weeks as the market whipsawed at the crisis bottom. Years of gains erased in a season.</td></tr>
+      <tr><td><strong>Quality</strong></td><td class="num">every mania (1999, 2021)</td><td>Watching profitless "story stocks" triple while your sturdy compounders crawl. Feeling like a fool for years.</td></tr>
+      <tr><td><strong>Events / small caps</strong></td><td class="num">every liquidity panic</td><td>Spreads blow out, tiny stocks fall hardest, nothing can be sold at sane prices. Paper losses look apocalyptic.</td></tr>
+      <tr><td><strong>Passive</strong></td><td class="num">2000–2009</td><td>The "lost decade": ten years of world stocks going roughly nowhere. Patience tested to destruction.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #1 — strategy hopping (the invisible portfolio killer)</span>
+  <p>Watch the death spiral: you pick value. Three years of drought — you switch to momentum, <em>right before</em> a momentum crash. Burned, you switch to dividend stocks... Each switch happens after the old strategy's worst stretch (you sell its bottom) and into the new strategy's best-looking recent past (you buy its top). You systematically collect every family's nightmare and none of its recovery.</p>
+  <p>The fix is brutal and simple: pick strategies whose nightmare you have <em>already imagined surviving</em> — in euros, per your Risk Constitution — and then give them <strong>a minimum of 5 years or a written reason</strong>. The strategy statement you'll write in the homework exists precisely for the 2 a.m. moment when you want to hop.</p>
+</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #2 — choosing a strategy from its best chart</span>
+  <p>Every strategy pitch shows you its golden window: tech momentum 2019–2021 (+40%/yr!), dividend stocks 2000–2009, AI stocks since 2023. The four questions expose it: run question 1 (does it hold <em>across</em> decades?) and question 4 (after YOUR costs?) and the golden chart usually dies on the spot. A strategy is what survives its worst window, not what dazzled in its best.</p>
+  <p>Corollary — complexity worship: the pitch with 14 indicators and a secret sauce is not more sophisticated, it's more <em>overfitted</em> (your Lesson 3-in-Part-2 coin-flip demonstration will make this mathematical). Every real family above fits in one sentence. Simple and endured beats clever and abandoned, every decade.</p>
+</div>
+
+<h2>5. Find your mix — the honest allocator</h2>
+<p>The right strategy is a compromise between the evidence and your life. Answer honestly — especially the middle one, remembering the euros from your Risk Constitution:</p>
+
+<figure class="viz" aria-label="Interactive tool: three questions produce a suggested strategy mix">
+  <p class="fig-title">Three questions → your starting mix</p>
+  <div class="tool">
+    <div class="q-row">
+      <label for="q-time">How many hours per week can you truly give to research — after work, family, and this curriculum?</label>
+      <select id="q-time">
+        <option value="low">Almost none — 1 hour or less</option>
+        <option value="mid" selected>A few — 2 to 5 hours</option>
+        <option value="high">Many — 6+ hours, it's my main hobby</option>
+      </select>
+    </div>
+    <div class="q-row">
+      <label for="q-pain">Your strategy is 3 years behind the simple ETF. Friends' index funds beat your careful work. What do you actually do?</label>
+      <select id="q-pain">
+        <option value="quit">Honestly? I'd probably abandon it</option>
+        <option value="wobble" selected>I'd hold, but it would eat at me</option>
+        <option value="hold">I'd hold — I understand droughts are the price</option>
+      </select>
+    </div>
+    <div class="q-row">
+      <label for="q-size">Portfolio size (be honest — costs and effort scale differently)</label>
+      <select id="q-size">
+        <option value="small">Under €10,000</option>
+        <option value="mid" selected>€10,000 – €50,000</option>
+        <option value="big">Over €50,000</option>
+      </select>
+    </div>
+    <div class="mix-out" id="mix-out" aria-live="polite"></div>
+  </div>
+  <figcaption class="fig-note">This is a starting point, not a prescription — argue with it. The pattern behind it: the core is always passive; tilts (quality/value) enter with patience; the Book B events niche enters with hours; momentum only ever enters as a cheap ETF. Nothing here requires predicting anything.</figcaption>
+</figure>
+
+<h2>6. Check yourself</h2>
+<div class="quiz">
+  <details><summary>Momentum has the best evidence of any strategy. Why is it still probably wrong for you to run by hand on Belgian stocks?</summary><p class="answer">Question 4 of the lie detector: implementation. Momentum needs monthly rebalancing — high turnover — and Lesson 2 showed Belgian round trips cost ~3%+ on small caps (TOB + spreads). Ten rebalances a year eats more than the strategy earns. Evidence answers "does it work?"; costs answer "does it work for YOU?". Different questions.</p></details>
+  <details><summary>Your value strategy is 3 years behind the market. When is quitting correct, and when is it the classic mistake?</summary><p class="answer">Quitting is correct only if something changed in the REASON: the edge's source disappeared, or your implementation was flawed. Quitting because of the drought itself is the classic mistake — droughts are the moat that keeps the edge alive, and hopping means selling each strategy at its bottom. That's why you write the strategy statement (and its abandonment conditions) before starting, exactly like the Risk Constitution.</p></details>
+  <details><summary>Why does a strategy's return typically fall 30–50% after the academic paper about it is published?</summary><p class="answer">Crowding: once known, money floods in, buying the same stocks earlier and bidding away the mispricing. What survives is protected by pain (crashes, droughts), structure (too small for funds), or effort (nobody wants to read Dutch filings). Painless, easy, liquid edges die first — remember this every time an influencer offers you one.</p></details>
+  <details><summary>A Belgian friend wants to build a dividend portfolio of US stocks yielding 4%. What does the tax math say?</summary><p class="answer">Lesson 2's chain: 15% US withholding, then 30% Belgian tax → 4% gross becomes ≈2.4% net, every year, forever. The same companies held via an accumulating ETF compound that cash internally without the annual tax haircut. If he likes the businesses, own them for value/quality reasons — chasing the dividend itself from Belgium is a voluntary extra tax.</p></details>
+  <details><summary>Why can a solo investor have a real edge in small Belgian stocks when hedge funds exist?</summary><p class="answer">Structure, not intelligence: a fund managing billions cannot buy a meaningful stake in an €80M company (it would move the price for months — Lesson 1), so no analyst covers it and lazy prices persist. Add the language barrier (NBB filings in Dutch/French) and the effort moat. You're not out-thinking Goldman; you're fishing where their boat physically doesn't fit. That's Book B.</p></details>
+  <details><summary>A YouTuber shows a strategy returning 40%/yr from 2019–2021. Apply the four questions out loud.</summary><p class="answer">(1) Evidence: three years, one regime — the golden-window trap; test across decades or it's noise. (2) Why: no story about who pays and why. (3) Survival: if it's real and painless, it's already crowded and gone. (4) You: after TOB, spreads, and taxes? Also — Lesson 3 of Part 2 will show 1,000 coin-flippers produce many 3-year geniuses by pure luck. Verdict: entertainment, not evidence.</p></details>
+</div>
+
+<h2>7. Key words from this lesson</h2>
+<div class="keyterms">
+  <div><b>Factor / anomaly</b> — a documented, repeatable pattern of excess returns (value, momentum, quality…).</div>
+  <div><b>Value</b> — buying implied pessimism that's exaggerated; the decoder + margin of safety, repeated.</div>
+  <div><b>Momentum</b> — recent 6–12 month winners keep winning a while; strongest evidence, highest turnover.</div>
+  <div><b>Quality</b> — durable profitability at a sane price; boring excellence, low turnover.</div>
+  <div><b>Event-driven</b> — profiting when someone must trade regardless of price (spin-offs, index changes).</div>
+  <div><b>Alpha decay</b> — edges shrinking after publication and crowding; ~⅓–½ on average.</div>
+  <div><b>Crowding</b> — too much money chasing one edge until the mispricing (and then some) is gone.</div>
+  <div><b>Drought</b> — a strategy's multi-year losing stretch; the admission price and the moat.</div>
+  <div><b>Strategy hopping</b> — switching families after each drought; collecting every nightmare, no recoveries.</div>
+  <div><b>Turnover</b> — how much you trade; the multiplier on every Belgian cost (Lesson 2).</div>
+  <div><b>Core–satellite</b> — passive foundation + small deliberate tilts/niches around it.</div>
+  <div><b>Accumulating ETF</b> — reinvests dividends internally; the tax-sane default for Belgians (verify current rules).</div>
+</div>
+
+<h2>8. If you remember only three things</h2>
+<div class="steps">
+  <ol>
+    <li><strong>Every real strategy names who pays and what pain guards it.</strong> No loser + no pain = no edge — just a backtest ghost or a sales pitch.</li>
+    <li><strong>The drought is the price of admission.</strong> Pick what you can hold through its historical nightmare (in euros), commit in writing, and never switch inside the pain.</li>
+    <li><strong>In Belgium, costs and taxes choose with you:</strong> low-turnover core (passive + quality/value tilt), momentum only as a cheap ETF, dividends mostly skipped — and the effort-guarded events niche as your Book B, where a solo player structurally wins.</li>
+  </ol>
+</div>
+
+<h2>9. Homework — write your strategy statement (~1 hr)</h2>
+<div class="homework">
+  <h3>Field exercise</h3>
+  <ul>
+    <li><strong>Run the lie detector twice:</strong> find one strategy claim in the wild (YouTube, Reddit, an ETF factsheet — "momentum", "dividend aristocrats", anything). Write its four-question answers in four sentences. Do it for a second, different family. This skill — not any single strategy — is the lesson.</li>
+    <li><strong>Classify your own stocks:</strong> your two companies from Lesson 1 — which family would own each, and why? (One is probably quality-ish; check the L3 numbers you'd need to confirm it.)</li>
+    <li><strong>Use the mix tool honestly</strong>, then write your <strong>Strategy Statement</strong> — one paragraph, added below your Risk Constitution in <span class="mono">risk-constitution.md</span>: your core, your tilt(s), your niche if any, and — most important — <em>the conditions under which you're allowed to change it</em> (minimum years + what evidence). This is the anti-hopping vaccine, written while calm.</li>
+    <li><strong>Bonus (15 min):</strong> find one accumulating world ETF available to Belgians (e.g. on justETF): note its ticker, total cost (TER), and fund size. This is your benchmark made concrete — the thing your whole future system has to beat.</li>
+  </ul>
+</div>
+
+<footer>
+  <span>Lesson 7 of 8 · Part 1: Understanding Trading</span>
+  <span>Next: <span class="cmd">start lesson 8</span> — Behavior: why most traders lose (it isn't intelligence)</span>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var qTime = document.getElementById("q-time"), qPain = document.getElementById("q-pain"), qSize = document.getElementById("q-size");
+  var out = document.getElementById("mix-out");
+
+  function render() {
+    var t = qTime.value, p = qPain.value, s = qSize.value;
+    var core, tilt, niche, note;
+
+    if (p === "quit") {
+      core = "90–100% broad accumulating ETF";
+      tilt = "no tilts yet — a tilt you'd abandon in a drought is worse than no tilt";
+      niche = "none for now";
+      note = "Nothing wrong with this answer — it's the most honest one on the list. Passive discipline beats abandoned cleverness. Revisit after you've held through your first real drawdown.";
+    } else {
+      var strongPatience = (p === "hold");
+      if (t === "low") {
+        core = strongPatience ? "80–90% broad ETF" : "85–95% broad ETF";
+        tilt = "a small quality or quality-value tilt via a factor ETF (no stock-picking time needed)";
+        niche = "none — the events niche needs hours you don't have";
+        note = "With little time, your edge is Lesson 1's third kind only: patience. Keep everything cheap and automatic.";
+      } else if (t === "mid") {
+        core = strongPatience ? "70–80% broad ETF" : "80% broad ETF";
+        tilt = "10–20% hand-picked quality/value positions (3–8 stocks, sized by your 1–2% risk budget)";
+        niche = (s === "small") ? "hold off on Book B until the portfolio grows — position sizes would be eaten by costs" : "up to 10% for the Belgian events/small-cap niche, one situation at a time";
+        note = "A few hours a week is enough for the tilt now, and to start training the Book B reading skills the system will later automate.";
+      } else {
+        core = strongPatience ? "60–70% broad ETF" : "75% broad ETF";
+        tilt = "15–25% quality/value stock-picking with full Lesson 3–4 analysis per name";
+        niche = (s === "small") ? "5% max in events — sizes stay tiny until capital grows" : "10–15% Belgian events/special situations — your structural edge, filings and all";
+        note = "With real hours, you can run the full two-book pattern by hand — which is exactly the apprenticeship for building the automated system in Part 2.";
+      }
+      if (s === "big" && p !== "quit") { note += " At your size, also split the core across more than one ETF provider — simple operational safety."; }
+    }
+    out.innerHTML = "<b>Suggested starting mix</b>" +
+      "Core: " + core + ".<br>Tilt: " + tilt + ".<br>Niche: " + niche + ".<br><span style='color:var(--muted)'>" + note + "</span>";
+  }
+  [qTime, qPain, qSize].forEach(function (el) { el.addEventListener("change", render); });
+  render();
+})();
+</script>
+
+</html>

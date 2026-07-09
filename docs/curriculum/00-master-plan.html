@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quant Trading Curriculum — Master Plan</title>
+<style>
+  :root {
+    --bg: #F6F8F6;
+    --surface: #FFFFFF;
+    --ink: #1B2420;
+    --muted: #5A6963;
+    --line: #DCE3DE;
+    --accent: #1E6B52;
+    --accent-soft: #E3EFE9;
+    --track-a: #3E5C76;
+    --track-b: #1E6B52;
+    --track-c: #8A5A2B;
+    --track-d: #6B4E8E;
+    --track-e: #9C4A3C;
+    --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815;
+      --surface: #1A211D;
+      --ink: #E7EDEA;
+      --muted: #96A49D;
+      --line: #2B342F;
+      --accent: #5CBB95;
+      --accent-soft: #1E3229;
+      --track-a: #82A7C7;
+      --track-b: #5CBB95;
+      --track-c: #C99A5F;
+      --track-d: #AC93CE;
+      --track-e: #CE8478;
+      --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815;
+    --surface: #1A211D;
+    --ink: #E7EDEA;
+    --muted: #96A49D;
+    --line: #2B342F;
+    --accent: #5CBB95;
+    --accent-soft: #1E3229;
+    --track-a: #82A7C7;
+    --track-b: #5CBB95;
+    --track-c: #C99A5F;
+    --track-d: #AC93CE;
+    --track-e: #CE8478;
+    --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6;
+    --surface: #FFFFFF;
+    --ink: #1B2420;
+    --muted: #5A6963;
+    --line: #DCE3DE;
+    --accent: #1E6B52;
+    --accent-soft: #E3EFE9;
+    --track-a: #3E5C76;
+    --track-b: #1E6B52;
+    --track-c: #8A5A2B;
+    --track-d: #6B4E8E;
+    --track-e: #9C4A3C;
+    --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.62;
+    margin: 0;
+    padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  h1, h2, h3 {
+    font-family: Cambria, Georgia, "Times New Roman", serif;
+    line-height: 1.2;
+    text-wrap: balance;
+    margin: 0;
+  }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  /* ---------- header ---------- */
+  header { padding: 56px 0 36px; border-bottom: 2px solid var(--ink); }
+  .eyebrow {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 12px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+  h1 { font-size: clamp(30px, 5.4vw, 44px); font-weight: 700; }
+  .subtitle {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 62ch;
+    margin: 14px 0 0;
+  }
+  .meta-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 28px;
+    margin-top: 26px;
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .meta-strip strong { color: var(--ink); font-weight: 600; }
+  #progress-label strong { color: var(--accent); }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 56px; }
+  h2 {
+    font-size: 26px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 8px;
+  }
+  .section-note { color: var(--muted); font-size: 15px; max-width: 68ch; margin: 10px 0 24px; }
+
+  /* ---------- how it works ---------- */
+  .loop {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 12px;
+    margin-top: 22px;
+  }
+  .loop-step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+  }
+  .loop-step .k {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 12px;
+    color: var(--accent);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .loop-step p { margin: 0; font-size: 14px; }
+  .cmd {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 1px 7px;
+    font-size: .92em;
+    white-space: nowrap;
+  }
+
+  /* ---------- rules ---------- */
+  .rules { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+  .rules li {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 13px 18px;
+    font-size: 15px;
+  }
+  .rules strong { font-weight: 600; }
+
+  /* ---------- layer map ---------- */
+  .layer-scroll { overflow-x: auto; margin-top: 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 14px; }
+  th {
+    text-align: left;
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--line);
+  }
+  td { padding: 10px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.lnum { font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); white-space: nowrap; font-weight: 600; }
+  td.lmod { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; color: var(--muted); }
+  td .why { color: var(--muted); font-size: 13px; }
+
+  /* ---------- tracks & modules ---------- */
+  .track-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 44px 0 6px;
+  }
+  .track-tag {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--bg);
+    padding: 3px 10px;
+    border-radius: 3px;
+  }
+  .track-head h3 { font-size: 21px; }
+  .track-desc { color: var(--muted); font-size: 14.5px; margin: 4px 0 18px; max-width: 68ch; }
+
+  .module {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    margin-bottom: 14px;
+    overflow: hidden;
+  }
+  .module summary {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 18px;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+  .module summary::-webkit-details-marker { display: none; }
+  .module summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .mnum {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    width: 42px;
+  }
+  .mtitle { font-weight: 600; font-size: 15.5px; flex: 1; }
+  .mtime {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .chev { color: var(--muted); font-size: 12px; transition: transform .15s; }
+  details[open] .chev { transform: rotate(90deg); }
+  @media (prefers-reduced-motion: reduce) { .chev { transition: none; } }
+
+  .mbody { padding: 4px 20px 20px 74px; }
+  @media (max-width: 560px) { .mbody { padding-left: 20px; } }
+  .mgoal { font-size: 14.5px; margin: 0 0 14px; color: var(--muted); font-style: italic; }
+  .mbody h4 {
+    font-family: Consolas, "Cascadia Mono", monospace;
+    font-size: 11.5px;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 18px 0 8px;
+  }
+  .mbody ul { margin: 0; padding-left: 20px; font-size: 14.5px; display: grid; gap: 5px; }
+  .mbody p { font-size: 14.5px; margin: 0; }
+  .deliv {
+    background: var(--accent-soft);
+    border-radius: 5px;
+    padding: 11px 14px;
+    font-size: 14px;
+  }
+  .layers-touched { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  .mcheck {
+    appearance: none;
+    width: 19px; height: 19px;
+    border: 2px solid var(--muted);
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    background: transparent;
+    margin: 0;
+  }
+  .mcheck:checked { background: var(--accent); border-color: var(--accent); }
+  .mcheck:checked::after {
+    content: "✓";
+    position: absolute;
+    color: var(--bg);
+    font-size: 13px;
+    font-weight: 700;
+    left: 2.5px; top: -2.5px;
+  }
+  .mcheck:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- timeline ---------- */
+  .timeline { margin-top: 22px; display: grid; gap: 0; }
+  .trow {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 18px;
+    padding: 13px 4px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14.5px;
+  }
+  .trow:last-child { border-bottom: none; }
+  .tmonth { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; color: var(--accent); font-weight: 600; }
+  .trow .twhat strong { font-weight: 600; }
+  .trow .tnote { color: var(--muted); font-size: 13.5px; }
+  @media (max-width: 560px) { .trow { grid-template-columns: 1fr; gap: 3px; } }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 2px solid var(--ink);
+    font-size: 14px;
+    color: var(--muted);
+  }
+  footer .cmd { color: var(--ink); }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Master Plan · Mohsen × Claude</div>
+  <h1>The Quant Trading Curriculum</h1>
+  <p class="subtitle">Everything you need to learn to build a systematic trading operation for the US and Belgian markets — ML ranking, an agentic research layer, mid/long horizon — organized the way a systematic fund would onboard you. Fifteen modules, five tracks, each one delivered as its own detailed lesson that we implement together.</p>
+  <div class="meta-strip">
+    <span><strong>15</strong> modules</span>
+    <span><strong>5</strong> tracks</span>
+    <span><strong>9–12</strong> months to full stack</span>
+    <span id="progress-label"><strong>0 / 15</strong> complete</span>
+  </div>
+</header>
+
+<section>
+  <h2>How we work</h2>
+  <p class="section-note">This page is the map, not the lessons. Each module becomes its own detailed HTML lesson — theory with real depth, the traps seniors know about, and code we build in your workspace. Tick a module's checkbox here when its deliverable is done; progress is saved in your browser.</p>
+  <div class="loop">
+    <div class="loop-step"><span class="k">1 · Request</span><p>Tell Claude <span class="cmd">start module 1</span> (or any number).</p></div>
+    <div class="loop-step"><span class="k">2 · Lesson</span><p>You get a full HTML lesson: concepts in depth, worked examples, the failure modes nobody blogs about.</p></div>
+    <div class="loop-step"><span class="k">3 · Build</span><p>We implement the module's deliverable together in your project, step by step.</p></div>
+    <div class="loop-step"><span class="k">4 · Verify</span><p>You explain the result back and pass the module's exit questions. Then, next module.</p></div>
+  </div>
+</section>
+
+<section>
+  <h2>Ground rules</h2>
+  <p class="section-note">These come from the debate we ran against the plan. They are the difference between a trading system and an expensive random number generator — every module enforces them.</p>
+  <ul class="rules">
+    <li><strong>Validation before sophistication.</strong> An honest simple backtest beats a dishonest clever one, always. Every hour making the backtest more truthful pays better than an hour making the model fancier.</li>
+    <li><strong>Costs are part of the strategy, not a footnote.</strong> Spread, slippage, Belgian TOB, taxes — modeled from day one. A signal that dies after costs was never a signal.</li>
+    <li><strong>Two books, not one.</strong> ML needs breadth — it trains on the wide US/pan-European universe. Belgium is a concentrated fundamental/event niche powered by reading filings, not by models.</li>
+    <li><strong>Agents propose, the risk layer disposes.</strong> LLM output enters the system only as a timestamped feature. Nothing statistical ever touches position sizing directly.</li>
+    <li><strong>Pre-registered kill criteria.</strong> The conditions for stopping a strategy are written before the first live euro, while you have no feelings about it.</li>
+    <li><strong>Expectation reset.</strong> The realistic year-one outcome is a disciplined, low-cost portfolio you fully understand plus a research capability in an under-fished niche — not a money printer. That outcome is worth having.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>The nine layers</h2>
+  <p class="section-note">The architecture we designed, and which modules teach each layer. Information flows upward only; each layer can be tested alone.</p>
+  <div class="layer-scroll">
+    <table>
+      <thead><tr><th>Layer</th><th>Job</th><th>Modules</th></tr></thead>
+      <tbody>
+        <tr><td class="lnum">L8</td><td>Research &amp; agents — filings readers, literature sweeps. <span class="why">No write access below L4.</span></td><td class="lmod">M12 M13</td></tr>
+        <tr><td class="lnum">L7</td><td>Monitoring &amp; governance — drift, divergence, kill criteria.</td><td class="lmod">M11</td></tr>
+        <tr><td class="lnum">L6</td><td>Execution — broker API, paper first. <span class="why">Verifies the pipeline, not the alpha.</span></td><td class="lmod">M10</td></tr>
+        <tr><td class="lnum">L5</td><td>Validation &amp; attribution — walk-forward, purged CV, factor-ETF regression.</td><td class="lmod">M6 M9</td></tr>
+        <tr><td class="lnum">L4</td><td>Portfolio &amp; risk — sizing, constraints, cost model. <span class="why">Deterministic; final say.</span></td><td class="lmod">M9</td></tr>
+        <tr><td class="lnum">L3</td><td>Signals — Book A: ML ranking (wide universe) · Book B: Belgian fundamental niche.</td><td class="lmod">M7 M8 M15</td></tr>
+        <tr><td class="lnum">L2</td><td>Features — timestamped predictors; LLM outputs enter here as features only.</td><td class="lmod">M7 M12</td></tr>
+        <tr><td class="lnum">L1</td><td>Data — point-in-time, survivorship-free, two timestamps per fact.</td><td class="lmod">M5 M14 M15</td></tr>
+        <tr><td class="lnum">L0</td><td>Universe &amp; reference — what was tradable, when, at what liquidity.</td><td class="lmod">M5 M14 M15</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>The modules</h2>
+  <p class="section-note">Click a module to see exactly what it covers, its deliverable, and its key resources. The numbering is the recommended order, with the parallel exceptions noted in the timeline below.</p>
+
+  <!-- ============ TRACK A ============ -->
+  <div class="track-head"><span class="track-tag" style="background:var(--track-a)">Track A</span><h3>Foundations</h3></div>
+  <p class="track-desc">Before any trading code. Skipping these is why most beginners' systems are wrong in ways they can't see.</p>
+
+  <details class="module" id="m1">
+    <summary><input type="checkbox" class="mcheck" data-m="1" aria-label="Mark module 1 complete"><span class="mnum" style="color:var(--track-a)">M01</span><span class="mtitle">How markets actually work</span><span class="mtime">~2 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: never be surprised by market mechanics again — fills, auctions, settlement, corporate actions.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Exchange structure: continuous trading vs opening/closing auctions (Euronext runs auctions that matter for your fills), market makers, who is on the other side of your trade.</li>
+        <li>Order types and the order book: market, limit, stop, MOC/LOC; spread, depth, and why the bid–ask spread is a real cost you pay twice.</li>
+        <li>Settlement (T+1 US, T+2 Europe), what actually happens after a fill, cash vs margin accounts.</li>
+        <li>Corporate actions: splits, dividends, rights issues, spin-offs, delistings — and how each silently corrupts naive price data.</li>
+        <li>Indices, ETFs, and adjusted vs unadjusted prices — what "the price" even means in a dataset.</li>
+        <li>Broker landscape and account setup; tax basics for a Belgian resident trading both markets (TOB, dividend withholding, W-8BEN, the 2026 capital-gains rules).</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">Open an Interactive Brokers paper account. Place one of every order type on a US and a Brussels-listed stock, and write down for each: what filled, at what price, and why.</p>
+      <h4>Key resources</h4>
+      <ul><li>IBKR paper account + its own docs; Euronext trading manual (free PDF); Chan, <em>Quantitative Trading</em> ch. 1–2.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: context for all · Prereq: none</p>
+    </div>
+  </details>
+
+  <details class="module" id="m2">
+    <summary><input type="checkbox" class="mcheck" data-m="2" aria-label="Mark module 2 complete"><span class="mnum" style="color:var(--track-a)">M02</span><span class="mtitle">Python &amp; tooling for data work</span><span class="mtime">~3 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: pandas fluency good enough that data manipulation never blocks your thinking.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Environment done right: Python via uv/venv, a real project layout (src/, tests/, config), git basics.</li>
+        <li>pandas deeply: indexing, groupby, merge/join semantics (and how a bad join silently duplicates rows), reshaping, rolling windows, MultiIndex for (date, ticker) panels.</li>
+        <li>Datetime discipline: timezones, exchange calendars, why "today's close" is ambiguous, and holiday handling for two markets at once.</li>
+        <li>NumPy vectorization vs loops; when performance matters and when it doesn't.</li>
+        <li>File formats: why parquet beats CSV for market data; intro to DuckDB for querying years of history on your desktop.</li>
+        <li>Jupyter for exploration vs scripts for pipelines — and why production code never lives in notebooks.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">A clean repo that downloads 20 years of daily prices for ~50 US tickers, adjusts them, stores parquet, and computes rolling returns/volatility — with tests that prove the joins and dates are right.</p>
+      <h4>Key resources</h4>
+      <ul><li>McKinney, <em>Python for Data Analysis</em> (the pandas author's book); pandas user guide sections on time series &amp; MultiIndex.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: tooling for all · Prereq: none</p>
+    </div>
+  </details>
+
+  <details class="module" id="m3">
+    <summary><input type="checkbox" class="mcheck" data-m="3" aria-label="Mark module 3 complete"><span class="mnum" style="color:var(--track-a)">M03</span><span class="mtitle">Statistics you will actually use</span><span class="mtime">~3 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: internalize how luck masquerades as skill — the single most protective idea in this whole field.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Distributions and fat tails: why market returns are not normal and what that breaks (hint: most risk formulas).</li>
+        <li>Sampling error and confidence intervals: how much data you need before a number means anything.</li>
+        <li>Hypothesis testing and p-hacking: what happens to "significance" when you test 200 strategy variants.</li>
+        <li>Regression: assumptions, residuals, and reading a regression table — you'll use this weekly for attribution.</li>
+        <li>Correlation vs causation vs coincidence; spurious correlation in trending time series (the classic trap).</li>
+        <li>Monte Carlo simulation as your everyday reasoning tool.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">Simulate 1,000 coin-flip "traders" over 10 years. Find how many look like geniuses (Sharpe &gt; 1) by pure luck. Then compute how many years of live returns you'd need to statistically confirm a real Sharpe 1.0 strategy. Frame the answer above your desk.</p>
+      <h4>Key resources</h4>
+      <ul><li><em>Think Stats</em> (free); López de Prado ch. 1 (why most quant funds fail); "Deflated Sharpe Ratio" paper (skim now, master in M6).</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L5 foundations · Prereq: M2</p>
+    </div>
+  </details>
+
+  <!-- ============ TRACK B ============ -->
+  <div class="track-head"><span class="track-tag" style="background:var(--track-b)">Track B</span><h3>The quant core</h3></div>
+  <p class="track-desc">The heart of the curriculum: data engineering, honest backtesting, signals, ML, and portfolio construction — Layers 0 through 5.</p>
+
+  <details class="module" id="m4">
+    <summary><input type="checkbox" class="mcheck" data-m="4" aria-label="Mark module 4 complete"><span class="mnum" style="color:var(--track-b)">M04</span><span class="mtitle">Returns, risk &amp; time series</span><span class="mtime">~2 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: own the vocabulary of performance — compute every metric from scratch once, so no library is ever a black box.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Simple vs log returns, compounding, and the exact places mixing them up corrupts results.</li>
+        <li>Volatility: estimation, annualization (and why √252 is an approximation), volatility clustering.</li>
+        <li>Drawdowns, Sharpe, Sortino, Calmar — what each hides, and Sharpe's sensitivity to measurement window.</li>
+        <li>Stationarity and autocorrelation: why price levels are nearly unpredictable but cross-sectional <em>ranks</em> can be predictable.</li>
+        <li>Benchmarks and excess returns: performance is always relative to something you could have bought passively.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">Your own metrics library (returns, vol, drawdown, Sharpe, rolling versions) built from scratch with tests — this exact code gets reused by every later module.</p>
+      <h4>Key resources</h4>
+      <ul><li>Chan, <em>Quantitative Trading</em> ch. 3; Ilmanen, <em>Expected Returns</em> intro chapters (why anything earns a return at all).</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L5 · Prereq: M3</p>
+    </div>
+  </details>
+
+  <details class="module" id="m5">
+    <summary><input type="checkbox" class="mcheck" data-m="5" aria-label="Mark module 5 complete"><span class="mnum" style="color:var(--track-b)">M05</span><span class="mtitle">Data engineering: build Layers 0–1</span><span class="mtime">~4 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: build the foundation everything sits on. This is where 60% of real quant work lives, and where every fake backtest is born.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Point-in-time data: the two-timestamp design (when a fact is <em>about</em> vs when it became <em>knowable</em>) and why a Q1 earnings number doesn't exist on March 31.</li>
+        <li>Survivorship bias: building a universe table that includes delisted names, and measuring how badly its absence inflates results.</li>
+        <li>Corporate-action adjustment done correctly (back-adjustment, dividend treatment) and validating it against known splits.</li>
+        <li>Source landscape: free tiers (yfinance, Stooq, EDGAR) vs paid EOD vendors (Norgate, Sharadar, EODHD) — what each is trustworthy for.</li>
+        <li>Storage and pipelines: parquet + DuckDB schema for prices/fundamentals/universe; idempotent daily ingestion jobs; automated data-quality checks (gaps, spikes, stale series).</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">Your production Layer 0–1: universe table, adjusted price store, ingestion pipeline with quality checks — the actual foundation of your system, not an exercise.</p>
+      <h4>Key resources</h4>
+      <ul><li>López de Prado ch. 2 (financial data structures); Norgate/Sharadar docs on survivorship; your own M2 repo, upgraded.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L0 L1 · Prereq: M2, M4 · Runs alongside M14</p>
+    </div>
+  </details>
+
+  <details class="module" id="m6">
+    <summary><input type="checkbox" class="mcheck" data-m="6" aria-label="Mark module 6 complete"><span class="mnum" style="color:var(--track-b)">M06</span><span class="mtitle">Honest backtesting</span><span class="mtime">~4 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: build one backtest you can defend line by line against a hostile senior. The most important module in the curriculum.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>The seven deadly sins: lookahead, survivorship, ignored costs, overfitting, data snooping, single-regime testing, capacity blindness — with a live demonstration of each inflating the same strategy.</li>
+        <li>Event-driven vs vectorized backtests, and the exact bug class each hides.</li>
+        <li>Cost modeling: spread, slippage, commissions, Belgian TOB — and turnover as the tax on every idea.</li>
+        <li>Walk-forward testing; in-sample vs out-of-sample discipline; keeping an experiment ledger that counts every variant you ever tried.</li>
+        <li>Deflated Sharpe ratio: correcting your best result for how many things you tried.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">A 12-1 month momentum backtest on your survivorship-free US universe, with full costs, walk-forward, and a written defense of every assumption. This becomes your permanent baseline.</p>
+      <h4>Key resources</h4>
+      <ul><li>López de Prado ch. 11–14 (backtesting dangers); Bailey &amp; López de Prado, "The Deflated Sharpe Ratio"; vectorbt / zipline-reloaded source as reference implementations.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L5 · Prereq: M5</p>
+    </div>
+  </details>
+
+  <details class="module" id="m7">
+    <summary><input type="checkbox" class="mcheck" data-m="7" aria-label="Mark module 7 complete"><span class="mnum" style="color:var(--track-b)">M07</span><span class="mtitle">Factors &amp; signals</span><span class="mtime">~3 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: know the signals with a century of evidence behind them — the economic raw material your ML will combine.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>The canon: momentum, value, quality/profitability, low-volatility, size — the evidence, and the economic story for <em>why each exists and who is on the other side</em>.</li>
+        <li>Alpha decay: McLean &amp; Pontiff's result that published anomalies lose 30–50% post-publication, and how to calibrate expectations for anything you read.</li>
+        <li>Signal hygiene: z-scoring, ranking, winsorization, sector neutralization, information coefficient (IC) as the unit of signal quality.</li>
+        <li>Earnings revisions, insider/ownership signals, and event-driven signals — the mid-horizon menu.</li>
+        <li>Combining signals: why a simple average of good signals is brutally hard to beat.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">A cross-sectional factor study: momentum, value, and quality on your US universe — IC, decile spreads, decay curves — through your M6 harness.</p>
+      <h4>Key resources</h4>
+      <ul><li>Gray &amp; Vogel, <em>Quantitative Momentum</em>; Open Source Asset Pricing (Chen &amp; Zimmermann) dataset; AQR &amp; Alpha Architect factor publications.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L2 L3 · Prereq: M6</p>
+    </div>
+  </details>
+
+  <details class="module" id="m8">
+    <summary><input type="checkbox" class="mcheck" data-m="8" aria-label="Mark module 8 complete"><span class="mnum" style="color:var(--track-b)">M08</span><span class="mtitle">ML for cross-sectional ranking — Book A</span><span class="mtime">~5 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: use ML the way funds actually do — to combine signals efficiently on a wide universe — and prove whether it beats your simple baseline.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Problem formulation: predict cross-sectional <em>rank</em> next month, never price — and why breadth (thousands of names) is what gives the model statistical power.</li>
+        <li>LightGBM on tabular features: training, regularization, and why gradient-boosted trees beat deep learning at this data scale.</li>
+        <li>Purged &amp; embargoed cross-validation: why standard k-fold leaks the future in finance, and the correct alternative.</li>
+        <li>Feature importance that survives scrutiny: permutation importance, SHAP, and detecting when the model learned noise.</li>
+        <li>The verdict protocol: ML model vs M7's equal-weight signal average, after costs, deflated — with a pre-committed decision rule.</li>
+        <li>Study of Microsoft qlib: how a real open-source quant ML platform structures exactly this pipeline.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">A LightGBM ranker on the wide universe evaluated against the M7 baseline through identical costs and validation — plus your written verdict on whether it earns its complexity.</p>
+      <h4>Key resources</h4>
+      <ul><li>López de Prado ch. 6–9 (CV &amp; feature importance); qlib repo + docs; Kaggle time-series CV write-ups (good and bad, told apart with your M6 eyes).</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L3 Book A · Prereq: M7</p>
+    </div>
+  </details>
+
+  <details class="module" id="m9">
+    <summary><input type="checkbox" class="mcheck" data-m="9" aria-label="Mark module 9 complete"><span class="mnum" style="color:var(--track-b)">M09</span><span class="mtitle">Portfolio, risk &amp; attribution</span><span class="mtime">~3 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: turn rankings into positions deterministically, and build the layer that tells you whether your "alpha" is just beta in a costume.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Position sizing: equal weight vs volatility targeting vs risk parity; why Kelly is a ceiling, never a target.</li>
+        <li>Constraints as risk management: max weight per name, sector caps, turnover limits, liquidity/capacity caps (hard caps on thin Belgian names).</li>
+        <li>Transaction-cost-aware rebalancing: no-trade bands, and trading only when the expected edge clears the cost hurdle.</li>
+        <li>The attribution regression: your returns vs a handful of factor ETFs, monthly — the standing "why not just buy the ETF?" test.</li>
+        <li>Capital allocation between Book A (systematic) and Book B (Belgian niche) as an explicit, revisable decision.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">Your Layer 4: rankings in, orders out, all constraints enforced — plus the monthly attribution report as an automated script.</p>
+      <h4>Key resources</h4>
+      <ul><li>Grinold &amp; Kahn, <em>Active Portfolio Management</em> (the fundamental law: IR ≈ IC × √breadth); skfolio; Carhart four-factor model as the attribution starting point.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L4 L5 · Prereq: M8</p>
+    </div>
+  </details>
+
+  <!-- ============ TRACK C ============ -->
+  <div class="track-head"><span class="track-tag" style="background:var(--track-c)">Track C</span><h3>Engineering &amp; operations</h3></div>
+  <p class="track-desc">Where the backtest becomes a system that runs unattended every day — and where retail projects usually die.</p>
+
+  <details class="module" id="m10">
+    <summary><input type="checkbox" class="mcheck" data-m="10" aria-label="Mark module 10 complete"><span class="mnum" style="color:var(--track-c)">M10</span><span class="mtitle">Execution: the paper-trading harness</span><span class="mtime">~3 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: the full pipeline runs daily against an IBKR paper account — and you understand that this verifies plumbing, not alpha.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>The IBKR API (ib_insync-style workflow): contracts, symbol mapping across US and Euronext (a classic silent-failure zone), order placement, fills.</li>
+        <li>Order management: state machines for order lifecycle, partial fills, retries, idempotency (never send the same order twice after a crash).</li>
+        <li>Reconciliation: your system's belief of positions vs the broker's truth, checked every day.</li>
+        <li>Euronext specifics: auction participation, tick sizes, and why limit orders are non-negotiable on thin Belgian names.</li>
+        <li>Scheduling the daily run on Windows, with clean failure behavior when a data source is down.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">The complete loop — data → features → model → portfolio → paper orders — running unattended daily, with reconciliation and failure alerts.</p>
+      <h4>Key resources</h4>
+      <ul><li>IBKR API docs + paper account; ib_insync (or its maintained successor) examples; Euronext trading manual auction sections.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L6 · Prereq: M9</p>
+    </div>
+  </details>
+
+  <details class="module" id="m11">
+    <summary><input type="checkbox" class="mcheck" data-m="11" aria-label="Mark module 11 complete"><span class="mnum" style="color:var(--track-c)">M11</span><span class="mtitle">Monitoring, governance &amp; kill criteria</span><span class="mtime">~2 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: the system watches itself, and the rules for stopping it exist in writing before you have feelings about it.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Data health monitoring: stale feeds, gaps, spikes, schema drift — a system silently fed garbage will happily trade garbage.</li>
+        <li>Live-vs-backtest divergence tracking: expected vs realized fills, costs, and returns, with alert thresholds.</li>
+        <li>Feature and prediction drift: detecting when the world your model learned no longer exists.</li>
+        <li>Kill criteria: pre-registering drawdown limits, divergence limits, and data-quality conditions that halt a book — and the runbook for what happens next.</li>
+        <li>Logging and audit: reconstructing any past decision the system made, months later.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">A monitoring dashboard + alerting, and your signed one-page kill-criteria document for each book.</p>
+      <h4>Key resources</h4>
+      <ul><li>Your own M10 logs as the dataset; SRE-style runbook patterns; the M3 coin-flip result, re-read.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L7 · Prereq: M10</p>
+    </div>
+  </details>
+
+  <!-- ============ TRACK D ============ -->
+  <div class="track-head"><span class="track-tag" style="background:var(--track-d)">Track D</span><h3>The agentic layer</h3></div>
+  <p class="track-desc">LLM agents as research infrastructure — readable from Module 6 onward, in parallel with Track B. Agents propose; the risk layer disposes.</p>
+
+  <details class="module" id="m12">
+    <summary><input type="checkbox" class="mcheck" data-m="12" aria-label="Mark module 12 complete"><span class="mnum" style="color:var(--track-d)">M12</span><span class="mtitle">LLMs for finance work</span><span class="mtime">~3 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: treat an LLM like any other model — measured, evaluated, and never trusted on vibes.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>LLM APIs properly: structured outputs (JSON schemas), tool use, batching, cost control.</li>
+        <li>Extraction over generation: pulling facts from filings into typed fields, with citations back to the source text.</li>
+        <li>Evaluation as a first-class step: hand-label a gold set, measure extraction accuracy, and set acceptance thresholds — an unevaluated LLM feature is a rumor, not a feature.</li>
+        <li>Hallucination containment: constrained outputs, "answer only from the document," and refusing to emit a value when unsure.</li>
+        <li>The feature contract: LLM output enters Layer 2 as a timestamped feature row and passes the same validation as any price ratio.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">An EDGAR filing extractor (e.g., 8-K events → structured fields) with a measured accuracy score on a hand-labeled gold set.</p>
+      <h4>Key resources</h4>
+      <ul><li>Anthropic API docs (structured outputs, tool use); SEC EDGAR full-text search &amp; APIs; your M3 statistics, applied to your own eval set.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L2 L8 · Prereq: M2 · Parallel from M6</p>
+    </div>
+  </details>
+
+  <details class="module" id="m13">
+    <summary><input type="checkbox" class="mcheck" data-m="13" aria-label="Mark module 13 complete"><span class="mnum" style="color:var(--track-d)">M13</span><span class="mtitle">Research agents — Layer 8</span><span class="mtime">~4 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: build the research capability that is your actual edge — including the deep-source sweeps you asked for on day one.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>The literature-sweep agent: citation-graph walking (Semantic Scholar, SSRN, arXiv q-fin) plus forums, scoring every source against the evaluation checklist (out-of-sample? costs? experiment count disclosed?) — substance over polish, automated.</li>
+        <li>The filings pipeline for Belgium: NBB Balance Sheet Centre and FSMA disclosures in Dutch/French → structured features. The under-fished corner where a language-capable solo player has a real advantage.</li>
+        <li>News and event monitors with strict deduplication and timestamping (an event is only tradable if you know when it became knowable).</li>
+        <li>Agent architecture: orchestration, retries, human-review queues for low-confidence output, and the hard wall — no write access below Layer 4, ever.</li>
+        <li>Measuring the research layer itself: are its features earning IC? Are its reading lists actually good? Agents get attribution too.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">Two running agents: the literature sweep producing ranked, red-flag-annotated reading lists; and the Belgian filings pipeline producing timestamped features for Book B.</p>
+      <h4>Key resources</h4>
+      <ul><li>Claude Agent SDK; Semantic Scholar API; NBB Balance Sheet Centre &amp; FSMA portals; your M12 evaluation discipline.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L8 L2 · Prereq: M12</p>
+    </div>
+  </details>
+
+  <!-- ============ TRACK E ============ -->
+  <div class="track-head"><span class="track-tag" style="background:var(--track-e)">Track E</span><h3>Market deep dives</h3></div>
+  <p class="track-desc">The two markets as specific places with specific rules, data, and quirks — not abstractions.</p>
+
+  <details class="module" id="m14">
+    <summary><input type="checkbox" class="mcheck" data-m="14" aria-label="Mark module 14 complete"><span class="mnum" style="color:var(--track-e)">M14</span><span class="mtitle">United States deep dive</span><span class="mtime">~2 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: master the best-documented market in the world — your training ground and Book A's home.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>SEC EDGAR mastery: 10-K/10-Q/8-K/13-F filings, what each contains, full-text search, and programmatic access.</li>
+        <li>Universe construction: exchanges, share classes, ADRs, REITs — what to include and exclude and why.</li>
+        <li>Data vendor evaluation for US equities and fundamentals; mapping CIK ↔ ticker ↔ ISIN without silent mismatches.</li>
+        <li>US market structure essentials for a mid-horizon trader; regulatory basics that actually apply to you.</li>
+        <li>Tax mechanics for a Belgian resident: W-8BEN, the 15% treaty dividend withholding, and how it interacts with Belgian tax.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">US universe + fundamentals ingestion feeding your Layer 1, with point-in-time fundamentals verified against three known earnings dates.</p>
+      <h4>Key resources</h4>
+      <ul><li>EDGAR developer docs; Sharadar/Norgate documentation; your M5 pipeline extended.</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L0 L1 · Prereq: M5 (runs alongside it)</p>
+    </div>
+  </details>
+
+  <details class="module" id="m15">
+    <summary><input type="checkbox" class="mcheck" data-m="15" aria-label="Mark module 15 complete"><span class="mnum" style="color:var(--track-e)">M15</span><span class="mtitle">Belgium deep dive — Book B</span><span class="mtime">~3 wks</span><span class="chev">▶</span></summary>
+    <div class="mbody">
+      <p class="mgoal">Goal: turn Belgium from "my home market" into a researched niche: small, illiquid, under-covered — and yours.</p>
+      <h4>You will learn</h4>
+      <ul>
+        <li>Euronext Brussels mechanics: BEL 20/Mid/Small indices, the continuous vs double-auction segments (many small caps trade by auction only), tick sizes, liquidity reality.</li>
+        <li>The cost stack that shapes everything: TOB per transaction, 30% dividend withholding, the 2026 capital-gains regime — verified against current FSMA/FOD Finance rules, not blog posts.</li>
+        <li>Primary sources nobody mines: NBB Balance Sheet Centre (every Belgian company's accounts), FSMA shareholding notifications, KBO/BCE registry, Euronext notices.</li>
+        <li>Why backtests on thin names are hints, not forecasts: your order <em>is</em> the market; sizing and limit-order discipline as the only honest response.</li>
+        <li>Book B's process: screening → filing deep-reads (LLM-assisted, human-judged) → a concentrated watchlist with written theses and position caps.</li>
+      </ul>
+      <h4>Deliverable</h4>
+      <p class="deliv">Belgian universe with liquidity tiers in Layer 0; the filings inventory wired to your M13 pipeline; a first Book B watchlist of 5–10 names with one-page theses.</p>
+      <h4>Key resources</h4>
+      <ul><li>Euronext Brussels rulebook; NBB &amp; FSMA portals; current Belgian tax guidance (verify — rules changed in 2026).</li></ul>
+      <p class="layers-touched" style="margin-top:14px">Layers: L0 L1 L3 Book B · Prereq: M5, M13 helpful</p>
+    </div>
+  </details>
+</section>
+
+<section>
+  <h2>Suggested timeline</h2>
+  <p class="section-note">Sequential through Track B's spine, with Track D running in parallel once the core is moving. Paper trading overlaps everything from month 8 — a minimum of 6 months of it before any real money beyond token size.</p>
+  <div class="timeline">
+    <div class="trow"><span class="tmonth">Months 1–2</span><div class="twhat"><strong>M01 → M03</strong> foundations<div class="tnote">Markets, Python, statistics. Boring is the point — this is the anti-overfitting vaccine.</div></div></div>
+    <div class="trow"><span class="tmonth">Months 3–4</span><div class="twhat"><strong>M04 → M06</strong> + <strong>M14</strong><div class="tnote">Metrics, the real data layer, and the honest momentum baseline. US deep dive rides along with M05.</div></div></div>
+    <div class="trow"><span class="tmonth">Months 5–6</span><div class="twhat"><strong>M07 → M08</strong>, start <strong>M12</strong> in parallel<div class="tnote">Factors, then ML ranking vs baseline. The LLM extractor starts on the side.</div></div></div>
+    <div class="trow"><span class="tmonth">Month 7</span><div class="twhat"><strong>M09</strong> + <strong>M13</strong> in parallel<div class="tnote">Portfolio &amp; attribution; research agents come online.</div></div></div>
+    <div class="trow"><span class="tmonth">Month 8</span><div class="twhat"><strong>M10 → M11</strong><div class="tnote">Paper trading begins; monitoring and kill criteria signed before it counts.</div></div></div>
+    <div class="trow"><span class="tmonth">Months 9+</span><div class="twhat"><strong>M15</strong> + paper trading continues<div class="tnote">Book B research while ≥6 months of paper results accumulate. Real money only after that, small.</div></div></div>
+  </div>
+</section>
+
+<footer>
+  <p>This is a living document — modules get re-scoped as we learn what you need. Next step: tell Claude <span class="cmd">start module 1</span>.</p>
+</footer>
+</div>
+
+<script>
+(function () {
+  var KEY = "quant-curriculum-progress";
+  var boxes = document.querySelectorAll(".mcheck");
+  var label = document.getElementById("progress-label");
+  var saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+  function refresh() {
+    var done = 0;
+    boxes.forEach(function (b) { if (b.checked) done++; });
+    label.innerHTML = "<strong>" + done + " / " + boxes.length + "</strong> complete";
+  }
+  boxes.forEach(function (b) {
+    if (saved[b.dataset.m]) b.checked = true;
+    b.addEventListener("click", function (ev) { ev.stopPropagation(); });
+    b.addEventListener("change", function () {
+      saved[b.dataset.m] = b.checked;
+      try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {}
+      refresh();
+    });
+  });
+  refresh();
+})();
+</script>
+
+</html>

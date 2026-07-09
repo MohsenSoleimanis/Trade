@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>De Waag — System Blueprint v1</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --warn: #9C4A3C; --warn-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-blue: #2a78d6; --c-green: #1baf7a; --c-red: #d03b3b; --c-violet: #4a3aa7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --warn: #CE8478; --warn-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-blue: #3987e5; --c-green: #199e70; --c-red: #e66767; --c-violet: #9085e9;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --warn: #CE8478; --warn-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-blue: #3987e5; --c-green: #199e70; --c-red: #e66767; --c-violet: #9085e9;
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --warn: #9C4A3C; --warn-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-blue: #2a78d6; --c-green: #1baf7a; --c-red: #d03b3b; --c-violet: #4a3aa7;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.7; margin: 0; padding: 0 20px 90px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 54px 0 32px; border-bottom: 2px solid var(--ink); }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(30px, 5.2vw, 44px); margin: 0; }
+  .subtitle { font-size: 17px; color: var(--muted); margin: 14px 0 0; max-width: 64ch; }
+  .meta-strip { display: flex; flex-wrap: wrap; gap: 8px 26px; margin-top: 22px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+  .meta-strip strong { color: var(--ink); }
+
+  h2 { font-size: 26px; margin: 54px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 28px 0 4px; }
+  p { margin: 12px 0; font-size: 15.5px; }
+  li { font-size: 15.5px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .idea { background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px; font-size: 15.5px; }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .why { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 14px 20px; margin: 16px 0; box-shadow: var(--shadow); font-size: 14.5px; }
+  .why .w-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 5px; }
+
+  .honest { background: var(--warn-soft); border: 1px solid var(--line); border-left: 3px solid var(--warn); border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 20px 0; }
+  .honest .w-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--warn); font-weight: 700; display: block; margin-bottom: 5px; }
+  .honest p { font-size: 14.5px; margin: 7px 0; }
+
+  .tablebox { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  td.num, td.mono { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; }
+
+  /* ---------- UI mockups ---------- */
+  .mock {
+    border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    box-shadow: var(--shadow); margin: 20px 0; background: var(--surface);
+    font-size: 11.5px;
+  }
+  .mock-titlebar { background: var(--code-bg); padding: 7px 14px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--line); }
+  .mock-titlebar .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
+  .mock-titlebar .t { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; color: var(--muted); margin-left: 6px; }
+  .mock-body { display: grid; grid-template-columns: 148px 1fr; min-height: 340px; }
+  .mock-nav { background: var(--code-bg); border-right: 1px solid var(--line); padding: 10px 0; }
+  .mock-nav .brand { font-family: Cambria, Georgia, serif; font-weight: 700; font-size: 13.5px; padding: 4px 14px 10px; }
+  .mock-nav a { display: block; padding: 6px 14px; color: var(--muted); text-decoration: none; }
+  .mock-nav a.on { color: var(--ink); background: var(--surface); border-left: 3px solid var(--accent); font-weight: 600; }
+  .mock-main { padding: 14px 16px; }
+  .mock-h { font-weight: 700; font-size: 14px; margin-bottom: 2px; }
+  .mock-sub { color: var(--muted); margin-bottom: 12px; }
+  .mock-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 12px; }
+  .mcard { background: var(--code-bg); border-radius: 6px; padding: 8px 11px; }
+  .mcard .k { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; }
+  .mcard .v { font-family: Consolas, "Cascadia Mono", monospace; font-size: 15px; font-weight: 700; }
+  .mcard .s { font-size: 10px; color: var(--muted); }
+  .g { color: var(--c-green); } .r { color: var(--c-red); }
+  .mock-row { display: grid; grid-template-columns: 1fr 240px; gap: 10px; }
+  .mock-panel { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+  .mock-panel .ph { font-weight: 600; margin-bottom: 6px; }
+  .mock-panel .ln { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px dashed var(--line); }
+  .mock-panel .ln:last-child { border-bottom: none; }
+  .mock-panel .ln .mono { font-variant-numeric: tabular-nums; }
+  .whydrawer { background: var(--accent-soft); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; }
+  .whydrawer .wt { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 4px; }
+  .whydrawer p { font-size: 11px; margin: 5px 0; line-height: 1.55; }
+  .badge { display: inline-block; font-family: Consolas, "Cascadia Mono", monospace; font-size: 9.5px; padding: 1px 7px; border-radius: 9px; font-weight: 700; }
+  .badge.ok { background: rgba(27,175,122,.15); color: var(--c-green); }
+  .badge.block { background: rgba(208,59,59,.15); color: var(--c-red); }
+
+  /* architecture diagram */
+  .chartbox svg { display: block; width: 100%; height: auto; }
+  figure.viz { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); margin: 22px 0; padding: 20px 22px 16px; }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 14px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+
+  .phase { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); margin: 14px 0; padding: 16px 20px; }
+  .phase .p-head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .phase h3 { margin: 0; font-size: 16.5px; }
+  .phase .p-tag { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; color: var(--accent); font-weight: 700; }
+  .phase .p-time { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; color: var(--muted); margin-left: auto; }
+  .phase p { font-size: 14px; margin: 8px 0 4px; }
+  .phase ul { margin: 6px 0; }
+  .phase li { font-size: 13.5px; margin: 4px 0; }
+  .phase .learns { font-size: 12.5px; color: var(--muted); border-top: 1px dashed var(--line); margin-top: 10px; padding-top: 8px; }
+
+  footer { margin-top: 64px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">System Blueprint · v1 · July 2026</div>
+  <h1>De Waag — your personal quant workstation</h1>
+  <p class="subtitle">"De Waag" — the weigh house — is the old Flemish building where merchants weighed goods before trading them. This is a production-grade personal trading system that weighs before it trades: research workbench, risk engine, backtest lab, paper-trading desk, and an AI research floor — with a teaching layer that shows the <em>why</em> behind every number on every screen.</p>
+  <div class="meta-strip">
+    <span><strong>7</strong> modules</span>
+    <span><strong>9</strong> layers implemented</span>
+    <span><strong>7</strong> build phases ≈ 6–9 months part-time</span>
+    <span>local-first · paper-first · <strong>your</strong> data</span>
+  </div>
+</header>
+
+<h2>1. What this is — and the honest frame</h2>
+<div class="idea"><span class="i-label">Product definition</span>De Waag is the class of software that real firms build and sell — a research platform + order/risk management + analytics (think Bloomberg terminal, FactSet, a fund's internal risk console) — scaled to one intelligent owner, wired to <em>your</em> Risk Constitution, and instrumented to teach while you use it.</div>
+
+<div class="honest">
+  <span class="w-label">The honest frame — read before anything else</span>
+  <p>Companies that "developed trading systems for years and sell them" sell exactly three kinds of things: <strong>(1)</strong> research &amp; data platforms (Bloomberg, FactSet — $25k/year/seat), <strong>(2)</strong> execution &amp; risk infrastructure (order management systems), and <strong>(3)</strong> backtesting/analytics engines (QuantConnect, in-house at funds). <strong>Nobody sane sells a machine that prints money</strong> — anything sold as one fails your Lesson 7 lie detector instantly (a real edge sold cheap = no edge).</p>
+  <p>So De Waag is those three real things, built for you. Its promise is professional: <em>better decisions, enforced discipline, honest measurement, compounding research skill</em> — not predictions. The alpha, if any, comes from where our master plan said: patience, quality/value discipline, and the under-fished Belgian niche. The system is the factory, not the gold.</p>
+</div>
+
+<h3>Product principles (every design decision below follows from these)</h3>
+<ul>
+  <li><strong>Weigh before trading.</strong> No order ticket exists without a thesis, a size computed from the risk budget, and a cost preview. The software physically enforces Lessons 2, 4, 6.</li>
+  <li><strong>Teach the why, everywhere.</strong> Every metric, every screen, every block has a "why?" drawer: the logic, the lesson it comes from, the trap it prevents. Using the system <em>is</em> the practice you asked for.</li>
+  <li><strong>Deterministic core, advisory AI.</strong> Agents read, extract, summarize, and propose. Only the deterministic risk layer touches sizes and orders. (Master plan, Layer 8 rule.)</li>
+  <li><strong>Benchmark honesty built in.</strong> The dashboard's first number is always you-vs-the-ETF. If the system can't beat the free alternative, it must say so to your face, monthly.</li>
+  <li><strong>Local-first and private.</strong> Runs on your machine; your data, theses, and mistakes stay yours. No cloud dependency for the core.</li>
+  <li><strong>Paper until proven.</strong> Live trading unlocks only when pre-registered criteria are met (months of paper history + constitution compliance). The system enforces its own kill criteria.</li>
+</ul>
+
+<h2>2. The product — seven modules, one app</h2>
+<p>One local web app, seven modules in a sidebar. Every module maps to layers of our master-plan architecture and to lessons you've done — the right column of the table is the teaching contract:</p>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Module</th><th>What it does</th><th>Layers</th><th>Practices</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Dashboard</strong></td><td>Portfolio, P&amp;L vs ETF benchmark, attribution, constitution status, alerts.</td><td class="mono">L5 L7</td><td class="mono">L1 L6</td></tr>
+      <tr><td><strong>Research</strong></td><td>Company pages: statements → auto-ratios, valuation decoder with sliders, filing reader with agent summaries + citations.</td><td class="mono">L1 L2 L8</td><td class="mono">L3 L4</td></tr>
+      <tr><td><strong>Screener</strong></td><td>Factor lenses (quality/value/momentum) over the universe; every screen labeled with its family card + fit warnings.</td><td class="mono">L2 L3</td><td class="mono">L7</td></tr>
+      <tr><td><strong>Risk Console</strong></td><td>Position sizer (backwards method), exposure map, drawdown-in-euros meter, leverage hard-block, kill-criteria board.</td><td class="mono">L4 L7</td><td class="mono">L6</td></tr>
+      <tr><td><strong>Trading Desk</strong></td><td>Gated order tickets → IBKR paper: thesis required, size auto-checked, cost preview (spread+TOB), limit-order default, auction awareness for Belgian names.</td><td class="mono">L6</td><td class="mono">L2</td></tr>
+      <tr><td><strong>Backtest Lab</strong></td><td>Honest engine: point-in-time data, costs mandatory, walk-forward, experiment ledger that counts every variant you try, deflated statistics.</td><td class="mono">L5</td><td class="mono">Part 2</td></tr>
+      <tr><td><strong>Agent Floor</strong></td><td>Claude-powered research agents: EDGAR/NBB filing extraction with measured accuracy, literature sweeps with the four-question scoring, news/event monitors. Output = features &amp; briefs, never orders.</td><td class="mono">L8 L2</td><td class="mono">L3 L7</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>What it looks like — Dashboard</h3>
+<div class="mock" role="img" aria-label="Mockup of the De Waag dashboard: sidebar with seven modules, stat cards, positions panel and an attribution panel">
+  <div class="mock-titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="t">De Waag — localhost:8420</span></div>
+  <div class="mock-body">
+    <nav class="mock-nav">
+      <span class="brand">⚖ De Waag</span>
+      <a class="on" href="#">Dashboard</a><a href="#">Research</a><a href="#">Screener</a><a href="#">Risk Console</a><a href="#">Trading Desk</a><a href="#">Backtest Lab</a><a href="#">Agent Floor</a>
+    </nav>
+    <div class="mock-main">
+      <div class="mock-h">Good morning. Paper portfolio, day 84.</div>
+      <div class="mock-sub">Data fresh as of 08:31 · next job: EDGAR sweep 12:00 · constitution: <span class="badge ok">COMPLIANT</span></div>
+      <div class="mock-cards">
+        <div class="mcard"><span class="k">portfolio</span><span class="v">€10,412</span><span class="s g">+4.1% since start</span></div>
+        <div class="mcard"><span class="k">vs benchmark ETF</span><span class="v r">−1.2%</span><span class="s">IWDA +5.3% — it's winning</span></div>
+        <div class="mcard"><span class="k">drawdown used</span><span class="v">€312</span><span class="s">of your €1,500 limit</span></div>
+        <div class="mcard"><span class="k">open risk</span><span class="v">4.2%</span><span class="s">sum of position risk budgets</span></div>
+      </div>
+      <div class="mock-row">
+        <div class="mock-panel">
+          <div class="ph">Positions (5)</div>
+          <div class="ln"><span>Lotus Bakeries <span class="badge ok">quality</span></span><span class="mono g">+6.2%</span></div>
+          <div class="ln"><span>Microsoft <span class="badge ok">quality</span></span><span class="mono g">+3.8%</span></div>
+          <div class="ln"><span>Kinepolis <span class="badge ok">book B</span></span><span class="mono r">−4.1%</span></div>
+          <div class="ln"><span>IWDA (core ETF)</span><span class="mono g">+5.3%</span></div>
+          <div class="ln"><span>Cash</span><span class="mono">18%</span></div>
+        </div>
+        <div class="whydrawer">
+          <span class="wt">why is “vs benchmark” the second card?</span>
+          <p>Lesson 1: every active result is judged against the free alternative. The dashboard shows it before your P&amp;L feels good — “I made 4.1%” means little when IWDA made 5.3%.</p>
+          <p>Lesson 6: drawdown is shown in <b>euros</b>, not %, against the number you signed in your Risk Constitution.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h3>What it looks like — a gated order ticket (Trading Desk)</h3>
+<div class="mock" role="img" aria-label="Mockup of a gated order ticket requiring a thesis and showing cost preview with a blocked submit button">
+  <div class="mock-titlebar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="t">De Waag — Trading Desk · new order</span></div>
+  <div class="mock-body">
+    <nav class="mock-nav">
+      <span class="brand">⚖ De Waag</span>
+      <a href="#">Dashboard</a><a href="#">Research</a><a href="#">Screener</a><a href="#">Risk Console</a><a class="on" href="#">Trading Desk</a><a href="#">Backtest Lab</a><a href="#">Agent Floor</a>
+    </nav>
+    <div class="mock-main">
+      <div class="mock-h">BUY — Melexis (MELE.BR) · Euronext Brussels</div>
+      <div class="mock-sub">Trading mode: continuous · closing auction 17:30 · spread now 0.48%</div>
+      <div class="mock-row">
+        <div class="mock-panel">
+          <div class="ln"><span>Thesis (required)</span><span class="badge ok">WRITTEN ✓</span></div>
+          <div class="ln"><span>“I am wrong if…”</span><span class="mono">falls to €68 (−22%)</span></div>
+          <div class="ln"><span>Risk budget check</span><span class="mono">1.4% of portfolio ✓</span></div>
+          <div class="ln"><span>Computed size</span><span class="mono">7 shares ≈ €610</span></div>
+          <div class="ln"><span>Order type</span><span class="mono">LIMIT €87.20 · DAY</span></div>
+          <div class="ln"><span>Cost preview</span><span class="mono">spread €2.9 + TOB €2.1 + fee €3</span></div>
+          <div class="ln"><span>Submit to IBKR paper</span><span class="badge ok">ENABLED</span></div>
+        </div>
+        <div class="whydrawer">
+          <span class="wt">why can’t I just click buy?</span>
+          <p>Lesson 6: size is computed backwards from your risk budget — conviction never enters the formula. The ticket refuses market orders on Belgian names (Lesson 2) and shows costs before commitment (they’re invisible everywhere else).</p>
+          <p>If the thesis box is empty or size exceeds budget, submit is <span class="badge block">BLOCKED</span> — the software is your calm self, enforcing rules on your excited self.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>3. Architecture &amp; stack — every choice with its why</h2>
+
+<figure class="viz" aria-label="Architecture diagram of De Waag">
+  <p class="fig-title">The system, one picture</p>
+  <div class="chartbox">
+    <svg viewBox="0 0 760 400" role="img" aria-label="Architecture: a React frontend talks to a FastAPI backend which contains the deterministic engine and reads a DuckDB and Parquet data vault fed by ingestion jobs from Yahoo, Stooq, EDGAR, NBB and Euronext. The engine talks to IBKR paper trading. An agent floor powered by the Claude API feeds features and briefs into the data vault. A scheduler runs daily jobs. The risk constitution config gates the trading desk.">
+      <defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L7 4 L0 8 z" fill="var(--muted)"/></marker></defs>
+      <g font-family="'Segoe UI', system-ui, sans-serif" font-size="12.5" font-weight="600" fill="var(--ink)" text-anchor="middle">
+        <!-- frontend -->
+        <rect x="270" y="14" width="220" height="46" rx="8" fill="var(--accent-soft)"/>
+        <text x="380" y="33">Web UI — React + TS</text>
+        <text x="380" y="49" font-size="10.5" font-weight="400" fill="var(--muted)">7 modules · why-drawers · charts</text>
+        <!-- api -->
+        <rect x="270" y="92" width="220" height="46" rx="8" fill="var(--code-bg)"/>
+        <text x="380" y="111">API — FastAPI (Python)</text>
+        <text x="380" y="127" font-size="10.5" font-weight="400" fill="var(--muted)">auth-free local · one process</text>
+        <!-- engine -->
+        <rect x="150" y="170" width="220" height="60" rx="8" fill="var(--code-bg)"/>
+        <text x="260" y="191">Deterministic Engine</text>
+        <text x="260" y="207" font-size="10.5" font-weight="400" fill="var(--muted)">ratios · valuation · sizing · backtests</text>
+        <text x="260" y="221" font-size="10.5" font-weight="400" fill="var(--muted)">pandas · numpy · vectorbt-style</text>
+        <!-- vault -->
+        <rect x="150" y="262" width="220" height="56" rx="8" fill="var(--accent-soft)"/>
+        <text x="260" y="283">Data Vault — DuckDB + Parquet</text>
+        <text x="260" y="299" font-size="10.5" font-weight="400" fill="var(--muted)">point-in-time · two timestamps per fact</text>
+        <!-- ingestion -->
+        <rect x="20" y="340" width="480" height="44" rx="8" fill="var(--code-bg)"/>
+        <text x="260" y="359">Ingestion jobs — yfinance/Stooq · EDGAR · NBB · Euronext refs</text>
+        <text x="260" y="374" font-size="10.5" font-weight="400" fill="var(--muted)">daily, idempotent, with data-quality checks that can block the pipeline</text>
+        <!-- ibkr -->
+        <rect x="560" y="170" width="180" height="60" rx="8" fill="var(--code-bg)"/>
+        <text x="650" y="191">IBKR Gateway</text>
+        <text x="650" y="207" font-size="10.5" font-weight="400" fill="var(--muted)">paper account · ib_async</text>
+        <text x="650" y="221" font-size="10.5" font-weight="400" fill="var(--muted)">orders + reconciliation</text>
+        <!-- agents -->
+        <rect x="430" y="262" width="180" height="56" rx="8" fill="var(--accent-soft)"/>
+        <text x="520" y="283">Agent Floor</text>
+        <text x="520" y="299" font-size="10.5" font-weight="400" fill="var(--muted)">Claude API · structured output</text>
+        <!-- constitution -->
+        <rect x="560" y="92" width="180" height="46" rx="8" fill="var(--warn-soft)"/>
+        <text x="650" y="111">risk-constitution.yaml</text>
+        <text x="650" y="127" font-size="10.5" font-weight="400" fill="var(--muted)">gates every order · kill criteria</text>
+        <!-- scheduler -->
+        <rect x="20" y="92" width="180" height="46" rx="8" fill="var(--code-bg)"/>
+        <text x="110" y="111">Scheduler</text>
+        <text x="110" y="127" font-size="10.5" font-weight="400" fill="var(--muted)">daily runs · health alerts</text>
+      </g>
+      <g stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#a2)">
+        <path d="M380 60 V88"/>
+        <path d="M330 138 Q300 152 275 166"/>
+        <path d="M260 230 V258"/>
+        <path d="M260 336 V322"/>
+        <path d="M370 196 H556"/>
+        <path d="M520 258 Q520 240 500 225 Q470 205 374 200"/>
+        <path d="M650 138 V166"/>
+        <path d="M200 115 H266"/>
+      </g>
+      <text x="452" y="188" font-family="Consolas, monospace" font-size="10" fill="var(--muted)" text-anchor="middle">orders (gated)</text>
+      <text x="435" y="247" font-family="Consolas, monospace" font-size="10" fill="var(--muted)" text-anchor="middle">features &amp; briefs only</text>
+    </svg>
+  </div>
+  <figcaption class="fig-note">The two colored arrows tell the whole governance story: agents write <em>into the vault</em> (features, briefs — data), never to the broker; and every order passes the constitution gate before IBKR sees it. This is the master plan's "agents propose, risk disposes", as wiring.</figcaption>
+</figure>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Choice</th><th>Pick</th><th>Why this and not the alternatives</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">Language (engine)</td><td><strong>Python 3.12</strong></td><td>The entire quant ecosystem lives here (pandas, DuckDB, LightGBM, backtesting libs). Any other language means rebuilding tools professionals already battle-tested. Speed is irrelevant at daily horizon.</td></tr>
+      <tr><td class="mono">Storage</td><td><strong>Parquet + DuckDB</strong></td><td>No database server to babysit; files you can open and inspect (debuggable = trustable); DuckDB queries 20 years of prices in milliseconds. Postgres would add ops burden for zero benefit at this scale. Schema enforces the two-timestamp point-in-time rule from day one.</td></tr>
+      <tr><td class="mono">API layer</td><td><strong>FastAPI</strong></td><td>One Python process serves both the engine and the UI — no microservice theater. Typed request/response models double as documentation you'll learn from.</td></tr>
+      <tr><td class="mono">Frontend</td><td><strong>React + TypeScript + Vite</strong></td><td>The industry standard you'd meet in any fintech; component model fits the module/why-drawer design; TS types catch mistakes a beginner would otherwise ship. Charts: TradingView's open-source lightweight-charts for prices, custom SVG (like your lessons) for the rest.</td></tr>
+      <tr><td class="mono">Broker</td><td><strong>IBKR + ib_async</strong></td><td>Only retail broker with a real API covering both US and Euronext Brussels (master plan requirement), free paper mode, and the same API later for live — nothing to rewrite when trust is earned.</td></tr>
+      <tr><td class="mono">Agents</td><td><strong>Claude API</strong> (Sonnet default, Opus/Fable for deep reads)</td><td>Structured outputs with JSON schemas make agent answers machine-checkable; Dutch/French filing comprehension is exactly the frontier-model strength your Book B niche needs. Every extractor ships with a hand-labeled gold set and a measured accuracy score — an unevaluated LLM feature stays out of the vault (Lesson 12 discipline).</td></tr>
+      <tr><td class="mono">Data (start)</td><td><strong>yfinance + Stooq + EDGAR + NBB</strong></td><td>Free tiers are enough to build and learn on; the vault's schema is provider-agnostic, so upgrading later (Norgate/EODHD for survivorship-free history, ~€30/mo) is a config change, not a rebuild.</td></tr>
+      <tr><td class="mono">Scheduler</td><td><strong>Windows Task Scheduler → supervisor</strong></td><td>Start with what your machine has; graduate to a small supervising process when jobs multiply. A €5/mo VPS only if you ever want it running while the PC sleeps.</td></tr>
+      <tr><td class="mono">Testing</td><td><strong>pytest + data-quality gates</strong></td><td>Professional-grade means: the sizing math has unit tests, and a data check that fails <em>blocks</em> the pipeline (Lesson: a system silently fed garbage happily trades garbage).</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>4. The teaching layer — how the system trains you while you use it</h2>
+<div class="idea"><span class="i-label">The contract</span>Every screen answers three questions on demand: what is this number, why does it matter (which lesson, which trap), and what would a professional check next. You asked to be shown the logic — the logic is a first-class feature.</div>
+
+<ul>
+  <li><strong>Why-drawers everywhere.</strong> Every metric and every block/warning has the ⓘ drawer you saw in the mockups: definition → lesson link → the mistake it prevents. Content comes from your curriculum files, so the app and the lessons stay one system.</li>
+  <li><strong>Gates as teachers.</strong> When the ticket blocks a market order on a thin Belgian stock, the drawer replays Lesson 2's €45 simulation with <em>this stock's</em> real spread. Blocks are never silent — each one is a micro-lesson at the exact moment you're motivated to learn it.</li>
+  <li><strong>The decision journal.</strong> Every order stores its thesis, the "I'm wrong if", and the why-now. Every closed position generates a review card: outcome vs thesis, luck vs skill self-rating. After 20 trades the journal page shows your personal bias statistics — Lesson 8, measured on you.</li>
+  <li><strong>Tutor mode.</strong> A toggle that adds Claude-generated walk-throughs on any page: "explain this company's dashboard like Lesson 3" — using your actual portfolio as the teaching material. Off by default; never between you and the raw numbers.</li>
+  <li><strong>The experiment ledger.</strong> The Backtest Lab refuses to show you a result without logging the attempt — because the deadliest lie in quant is forgetting how many things you tried (coming in Part 2, Lesson: deflated Sharpe).</li>
+</ul>
+
+<h2>5. Build roadmap — seven phases, each one usable and each one a lesson</h2>
+<p>Professional software ships in increments that are each independently valuable. Same here — and each phase is the practical half of a Part 2 module, so building De Waag <em>is</em> the rest of your curriculum:</p>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 0</span><h3>Foundation</h3><span class="p-time">~1 week</span></div>
+  <p>Fresh git repo <span class="cmd">dewaag/</span>, Python + Node toolchain, project skeleton, config system, and your <span class="cmd">risk-constitution.yaml</span> — the Lesson 6 document, now as machine-enforceable config.</p>
+  <div class="learns">You learn: professional project structure, git, why config &gt; hardcoding. Deliverable: the app boots and shows your constitution.</div>
+</div>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 1</span><h3>Data Vault (Layers 0–1)</h3><span class="p-time">~3–4 weeks</span></div>
+  <p>Universe tables (US large caps + all Euronext Brussels), daily price ingestion, corporate-action adjustment, EDGAR + NBB document fetchers, the two-timestamp schema, and data-quality gates that block on gaps/spikes.</p>
+  <ul><li>Deliverable: 20 years of clean history queryable in milliseconds; a daily job that keeps it fresh unattended.</li></ul>
+  <div class="learns">You learn: point-in-time discipline, survivorship bias hands-on, why data engineering is 60% of real quant work. (= master plan M05/M14.)</div>
+</div>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 2</span><h3>Research Workbench</h3><span class="p-time">~3 weeks</span></div>
+  <p>Company pages: price chart, auto-computed Lesson 3 toolkit (margins, ROE, debt, cash conversion — with trend arrows), the Lesson 4 valuation decoder with sliders on <em>real</em> numbers, quote decoding, why-drawers throughout.</p>
+  <ul><li>Deliverable: open any of your stocks and do a full L3+L4 analysis in ten minutes instead of ninety.</li></ul>
+  <div class="learns">You practice: statements and valuation on every company you ever look at, forever. The homework you owe me becomes a two-click habit.</div>
+</div>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 3</span><h3>Risk Console + Trading Desk</h3><span class="p-time">~3–4 weeks</span></div>
+  <p>The backwards position sizer, exposure/drawdown-in-euros meters, constitution gates, the thesis-required order ticket with cost preview, IBKR paper connection, nightly reconciliation, Euronext auction awareness.</p>
+  <ul><li>Deliverable: your paper portfolio runs through De Waag with every Lesson 2 + 6 rule physically enforced.</li></ul>
+  <div class="learns">You practice: sizing, order types, costs — on every single trade, with the software as referee. (= M10 first half.)</div>
+</div>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 4</span><h3>Backtest Lab</h3><span class="p-time">~4–5 weeks</span></div>
+  <p>The honest engine: walk-forward, mandatory cost model (incl. TOB), the experiment ledger, deflated statistics, and the first canonical test — the 12-1 momentum baseline on the US universe.</p>
+  <ul><li>Deliverable: a backtest you can defend line by line, and the tooling to test every idea you'll ever have.</li></ul>
+  <div class="learns">You learn: the seven deadly sins of backtesting by building the defenses yourself. (= M06, the most important module of Part 2.)</div>
+</div>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 5</span><h3>Screener + Book A signals</h3><span class="p-time">~4 weeks</span></div>
+  <p>Factor lenses (quality/value/momentum) as transparent, inspectable screens over the vault; signal combination; monthly rebalance proposals for the systematic sleeve — every proposal passing through Risk Console gates. LightGBM ranking comes later, only after the simple average of signals sets the bar (master-plan verdict protocol).</p>
+  <ul><li>Deliverable: a monthly Book A proposal email: "here's the target portfolio, here's why, here's the cost to get there."</li></ul>
+  <div class="learns">You learn: factors as living code instead of blog words; why simple baselines are brutally hard to beat. (= M07, M08 later.)</div>
+</div>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 6</span><h3>Agent Floor</h3><span class="p-time">~4–5 weeks</span></div>
+  <p>Claude-powered pipelines: EDGAR 8-K event extractor (with gold-set accuracy score), the NBB/FSMA Dutch-French filing reader for Book B, the literature sweeper that scores sources with your four-question checklist, and news monitors. All output lands in the vault as timestamped features and readable briefs with citations.</p>
+  <ul><li>Deliverable: a morning brief — "what happened in your universe, what's worth reading, here are the extracted facts with sources."</li></ul>
+  <div class="learns">You learn: LLM engineering with evaluation discipline — the skill that makes Book B scale beyond your reading hours. (= M12, M13.)</div>
+</div>
+
+<div class="phase">
+  <div class="p-head"><span class="p-tag">PHASE 7</span><h3>Governance &amp; the long run</h3><span class="p-time">~2–3 weeks, then forever</span></div>
+  <p>Monitoring dashboards (data health, live-vs-expected divergence), the kill-criteria board, monthly attribution report vs the ETF (the "why does this system deserve to exist" page), and the live-trading unlock checklist — which stays locked until months of paper history satisfy the pre-registered criteria.</p>
+  <div class="learns">You learn: operations, the unglamorous 20% that separates systems that survive from projects that rot. (= M11.)</div>
+</div>
+
+<h2>6. Costs — honest and complete</h2>
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Item</th><th>Now (build &amp; paper)</th><th>Later (optional upgrades)</th></tr></thead>
+    <tbody>
+      <tr><td>Market data</td><td class="num">€0 (yfinance/Stooq/EDGAR/NBB)</td><td class="num">~€30/mo survivorship-free history (Norgate/EODHD) when Backtest Lab gets serious</td></tr>
+      <tr><td>Broker</td><td class="num">€0 (IBKR paper)</td><td class="num">live commissions only when/if unlocked</td></tr>
+      <tr><td>Claude API (agents)</td><td class="num">€0 until Phase 6</td><td class="num">~€10–40/mo depending on filing volume</td></tr>
+      <tr><td>Hosting</td><td class="num">€0 (your PC)</td><td class="num">~€5–10/mo VPS if you want 24/7 jobs</td></tr>
+      <tr><td>Software licenses</td><td class="num">€0 — full open-source stack</td><td class="num">€0</td></tr>
+      <tr><td><strong>Total</strong></td><td class="num"><strong>€0/mo</strong></td><td class="num"><strong>~€45–80/mo at full power</strong></td></tr>
+    </tbody>
+  </table>
+</div>
+<p>Compare: a single Bloomberg seat is ~€2,000/month. You're not getting Bloomberg — but you're getting the 15% of it you'd actually use, shaped exactly to your process, plus things Bloomberg doesn't have: your constitution as law, and a teacher inside every screen.</p>
+
+<h2>7. What I need from you</h2>
+<ul>
+  <li><strong>Now:</strong> a green light, and ~5 hours/week alongside it. We build together — I write most of the code, you review each piece with me explaining the why (that's the deal, and it's non-negotiable: code you don't understand is a system you can't trust).</li>
+  <li><strong>Phase 3:</strong> the IBKR account with paper mode enabled (the Lesson 2 homework, now load-bearing).</li>
+  <li><strong>Phase 6:</strong> an Anthropic API key (console.anthropic.com) with a small monthly budget cap.</li>
+  <li><strong>Throughout:</strong> Lesson 8 still happens (the behavior lesson — the system's journal module is literally built on it), and your homework numbers become test data for the Research Workbench.</li>
+</ul>
+
+<footer>
+  <p><strong>Next step:</strong> say <span class="cmd">build phase 0</span> and we scaffold the repo, or ask for changes to this blueprint first — it's a living document. Lesson 8 (<span class="cmd">start lesson 8</span>) remains open and feeds directly into the journal module.</p>
+</footer>
+</div>
+
+</html>

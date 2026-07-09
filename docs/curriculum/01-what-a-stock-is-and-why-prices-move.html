@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 1 — What a Stock Is and Why Prices Move</title>
+<style>
+  :root {
+    --bg: #F6F8F6;
+    --surface: #FFFFFF;
+    --ink: #1B2420;
+    --muted: #5A6963;
+    --line: #DCE3DE;
+    --grid: #E4E9E5;
+    --accent: #1E6B52;
+    --accent-soft: #E3EFE9;
+    --trap: #9C4A3C;
+    --trap-soft: #F6E9E6;
+    --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-buy: #1baf7a;
+    --c-sell: #d03b3b;
+    --c-price: #2a78d6;
+    --c-value: #1baf7a;
+    --c-spread: #2a78d6;
+    --c-slip: #eda100;
+    --c-tob: #4a3aa7;
+    --c-comm: #eb6834;
+    --c-noise: #898781;
+    --c-senti: #4a3aa7;
+    --c-biz: #2a78d6;
+    --buy-soft: rgba(27,175,122,.14);
+    --sell-soft: rgba(208,59,59,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-buy: #199e70; --c-sell: #e66767; --c-price: #3987e5; --c-value: #199e70;
+      --c-spread: #3987e5; --c-slip: #c98500; --c-tob: #9085e9; --c-comm: #d95926;
+      --c-noise: #898781; --c-senti: #9085e9; --c-biz: #3987e5;
+      --buy-soft: rgba(25,158,112,.18); --sell-soft: rgba(230,103,103,.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-buy: #199e70; --c-sell: #e66767; --c-price: #3987e5; --c-value: #199e70;
+    --c-spread: #3987e5; --c-slip: #c98500; --c-tob: #9085e9; --c-comm: #d95926;
+    --c-noise: #898781; --c-senti: #9085e9; --c-biz: #3987e5;
+    --buy-soft: rgba(25,158,112,.18); --sell-soft: rgba(230,103,103,.15);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-buy: #1baf7a; --c-sell: #d03b3b; --c-price: #2a78d6; --c-value: #1baf7a;
+    --c-spread: #2a78d6; --c-slip: #eda100; --c-tob: #4a3aa7; --c-comm: #eb6834;
+    --c-noise: #898781; --c-senti: #4a3aa7; --c-biz: #2a78d6;
+    --buy-soft: rgba(27,175,122,.14); --sell-soft: rgba(208,59,59,.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.75; margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 52px 0 30px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 60ch; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 30px 0 4px; }
+  p { margin: 12px 0; font-size: 16px; }
+  li { font-size: 16px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  /* the idea in one sentence */
+  .idea {
+    background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px;
+    font-size: 16px;
+  }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  /* step-by-step math */
+  .steps {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 16px 22px 16px; margin: 20px 0; box-shadow: var(--shadow);
+  }
+  .steps .s-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .steps ol { margin: 6px 0 0; padding-left: 22px; }
+  .steps li { font-size: 15px; margin: 9px 0; }
+  .steps .m { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  /* figures */
+  figure.viz {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    box-shadow: var(--shadow); margin: 26px 0; padding: 20px 22px 16px;
+  }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  .hbar-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; margin: 9px 0; }
+  .hbar-row .lab { font-size: 13px; color: var(--ink); text-align: right; line-height: 1.3; }
+  .hbar-row .lab small { color: var(--muted); display: block; font-size: 11.5px; }
+  .hbar-track { position: relative; height: 22px; }
+  .hbar { height: 22px; border-radius: 0 4px 4px 0; min-width: 2px; display: inline-flex; align-items: center; }
+  .hbar-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; color: var(--ink); margin-left: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .baseline { border-left: 2px solid var(--line); }
+
+  .ob-stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+  .stat { background: var(--code-bg); border-radius: 6px; padding: 8px 14px; flex: 1; min-width: 110px; }
+  .stat .s-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-family: Consolas, "Cascadia Mono", monospace; }
+  .stat .s-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .ob-grid { display: grid; gap: 3px; }
+  .ob-row { display: grid; grid-template-columns: 64px 1fr 150px; align-items: center; gap: 10px; min-height: 24px; }
+  .ob-price { font-family: Consolas, "Cascadia Mono", monospace; font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .ob-track { position: relative; display: block; height: 20px; background: transparent; border-left: 2px solid var(--line); }
+  .ob-bar { display: block; height: 20px; border-radius: 0 4px 4px 0; transition: width .5s ease; }
+  @media (prefers-reduced-motion: reduce) { .ob-bar { transition: none; } }
+  .ob-bar.ask { background: var(--c-sell); }
+  .ob-bar.bid { background: var(--c-buy); }
+  .ob-size { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .ob-size .fill-tag { color: var(--ink); font-weight: 700; }
+  .ob-spread {
+    display: flex; align-items: center; gap: 10px; margin: 6px 0; padding: 5px 0 5px 74px;
+    font-size: 12px; color: var(--muted); font-style: italic;
+  }
+  .ob-spread::before, .ob-spread::after { content: ""; flex: 1; border-top: 1px dashed var(--line); }
+  .ob-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; align-items: center; }
+  button.viz-btn {
+    font: 600 14px "Segoe UI", system-ui, sans-serif; color: var(--bg);
+    background: var(--accent); border: none; border-radius: 6px; padding: 9px 18px; cursor: pointer;
+  }
+  button.viz-btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+  button.viz-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.viz-btn[disabled] { opacity: .45; cursor: default; }
+  .ob-report { margin-top: 14px; font-size: 14px; background: var(--accent-soft); border-radius: 6px; padding: 12px 16px; display: none; }
+  .ob-report.show { display: block; }
+  .ob-report .rline { margin: 3px 0; }
+  .ob-report .mono { font-variant-numeric: tabular-nums; }
+
+  .stack-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; margin: 10px 0; }
+  .stack-row .lab { font-size: 13px; text-align: right; line-height: 1.3; }
+  .stack-row .lab small { color: var(--muted); display: block; font-size: 11.5px; }
+  .stack-track { display: flex; gap: 2px; align-items: center; height: 24px; border-left: 2px solid var(--line); }
+  .seg { height: 24px; min-width: 2px; }
+  .seg.last { border-radius: 0 4px 4px 0; }
+  .stack-total { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; font-weight: 700; margin-left: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .seg-inlabel { font-size: 11px; color: #fff; font-family: Consolas, "Cascadia Mono", monospace; padding-left: 6px; line-height: 24px; white-space: nowrap; overflow: hidden; display: block; }
+
+  .chartbox { position: relative; }
+  .chartbox svg { display: block; width: 100%; height: auto; }
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--ink); color: var(--bg);
+    font: 12px Consolas, "Cascadia Mono", monospace; padding: 6px 10px; border-radius: 5px;
+    white-space: nowrap; display: none; z-index: 3; font-variant-numeric: tabular-nums;
+  }
+
+  .example {
+    background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0; padding: 18px 22px; margin: 22px 0; box-shadow: var(--shadow);
+  }
+  .example .ex-label, .trap .ex-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px; }
+  .example .ex-label { color: var(--accent); }
+  .example p, .example li { font-size: 15px; }
+  .example p:last-child { margin-bottom: 0; }
+  .trap {
+    background: var(--trap-soft); border: 1px solid var(--line); border-left: 3px solid var(--trap);
+    border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 22px 0;
+  }
+  .trap .ex-label { color: var(--trap); }
+  .trap p { font-size: 15px; margin: 8px 0 0; }
+  .trap p:first-of-type { margin-top: 0; }
+
+  .tablebox { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 8px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .quiz summary { padding: 13px 18px; cursor: pointer; font-size: 15px; font-weight: 600; list-style: none; }
+  .quiz summary::-webkit-details-marker { display: none; }
+  .quiz summary::before { content: "Q · "; font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); font-weight: 700; }
+  .quiz summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .quiz .answer { padding: 12px 18px 15px; font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); margin: 0; }
+
+  .keyterms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 18px; }
+  .keyterms > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; font-size: 14px; }
+  .keyterms b { color: var(--accent); }
+
+  .homework { background: var(--accent-soft); border-radius: 8px; padding: 22px 26px; margin-top: 24px; }
+  .homework h3 { margin-top: 0; }
+  .homework p, .homework li { font-size: 15px; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 · Understanding Trading · Lesson 1 of 8</div>
+  <h1>What a Stock Is and Why Prices Move</h1>
+  <p class="subtitle">This lesson answers three questions. What exactly do you buy, when you buy a share? Who decides the price? And why does the price change? Understand these three deeply, and you are already ahead of most beginners.</p>
+  <div class="lesson-meta"><span>reading: ~45 min</span><span>homework: ~1 hr</span><span>prerequisite: none</span><span>interactive: yes — press the buttons</span></div>
+</header>
+
+<h2>1. A share is a piece of a real business</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>A share is a small piece of a real company — and when the company earns money, part of that money belongs to you.</div>
+
+<p>Someone says: "I bought Apple stock." What did they actually buy? Not a symbol on a screen. Not a bet. They bought a small piece of the real company Apple — a legal piece of its factories, its brand, its cash, and its future profits.</p>
+<p>It works like this. A company cuts its ownership into equal pieces. Each piece is called a <dfn>share</dfn>. Small example: a company is cut into 100 shares. You buy 1 share. Now you own 1% of that company. If the company earns €1,000,000 profit this year, then €10,000 of that profit belongs to you — because 1% of €1,000,000 is €10,000.</p>
+<p>How does that profit reach you? Only two ways exist:</p>
+<ul>
+  <li><dfn>Dividend</dfn> — the company sends part of the profit to the owners as cash. Real money arrives in your broker account, usually once or twice per year.</li>
+  <li><dfn>Reinvestment</dfn> — the company keeps the profit and uses it to grow: new stores, new products. You receive nothing today. But your piece is now a piece of a <em>bigger</em> company. That is what pushes the value up over time.</li>
+</ul>
+
+<div class="example">
+  <span class="ex-label">Story — the bakery</span>
+  <p>Your neighbor owns a bakery. Every year it earns €100,000 profit, very reliably. She offers to sell you 10% of the bakery. What price is fair?</p>
+</div>
+
+<div class="steps">
+  <span class="s-label">The bakery math — step by step</span>
+  <ol>
+    <li>The bakery earns <span class="m">€100,000</span> profit per year.</li>
+    <li>You would own 10%. So your part of the profit is <span class="m">€100,000 × 10% = €10,000</span> per year.</li>
+    <li>If you pay <span class="m">€50,000</span>: you get your money back in <span class="m">€50,000 ÷ €10,000 = 5 years</span>. After that, everything is gain. Great deal.</li>
+    <li>If you pay <span class="m">€100,000</span>: money back in <span class="m">10 years</span>. Reasonable.</li>
+    <li>If you pay <span class="m">€500,000</span>: money back in <span class="m">50 years</span>. Almost certainly a bad deal.</li>
+  </ol>
+</div>
+
+<figure class="viz" aria-label="Bar chart: years to earn back your investment at three different prices">
+  <p class="fig-title">The same bakery at three prices</p>
+  <p class="fig-sub">Same business, same profit. Only the price changes — and the price decides if the deal is good.</p>
+  <div class="hbar-row">
+    <div class="lab">Pay €50,000<small>a bargain</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:10%; background:var(--c-price)"></div><span class="hbar-val">5 yrs to get money back</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Pay €100,000<small>reasonable</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:20%; background:var(--c-price)"></div><span class="hbar-val">10 yrs</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Pay €500,000<small>almost surely bad</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:100%; background:var(--c-price)"></div></div>
+  </div>
+  <div class="hbar-row"><div class="lab"></div><div style="font-family:Consolas,monospace;font-size:12px;color:var(--muted)">50 yrs — only good if the bakery grows a lot</div></div>
+  <figcaption class="fig-note"><strong>This chart is the whole stock market.</strong> Every stock price is someone's answer to the question: "how many years of this company's profit am I willing to pay?"</figcaption>
+</figure>
+
+<p>The stock market uses the exact same idea, with two special words:</p>
+<div class="steps">
+  <span class="s-label">From the bakery to a real stock — the two words you'll see every day</span>
+  <ol>
+    <li><dfn>EPS</dfn> ("earnings per share") = the company's profit, divided by the number of shares. Example: profit <span class="m">€5,000,000</span>, shares <span class="m">1,000,000</span> → EPS = <span class="m">€5</span>. Meaning: each share "earned" €5 this year.</li>
+    <li><dfn>P/E</dfn> ("price to earnings") = the share price, divided by EPS. Example: price <span class="m">€100</span>, EPS <span class="m">€5</span> → P/E = <span class="m">20</span>. Meaning: you are paying 20 years of today's profit. Exactly like the bakery.</li>
+  </ol>
+</div>
+<div class="idea"><span class="i-label">In simple words</span>P/E answers: "how many years of profit am I paying for?" A high P/E means the market believes profit will <em>grow</em> (you pay extra for the future). A low P/E usually means the market believes profit will <em>fall</em>. So high is not always expensive, and low is not always cheap — the price always contains a belief about the future.</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #1 — a "cheap" share price does not exist</span>
+  <p>A €5 share is not cheaper than a €500 share. Why? The share price depends on how many pieces the company was cut into. Cut one €500 share into 100 pieces, and each piece costs €5 — but nothing about the company changed.</p>
+  <p>The number that matters is <dfn>market cap</dfn>: share price × number of shares = the value of the whole company. Always ask: "is the whole company worth that?" Never: "is €5 a low number?"</p>
+</div>
+
+<h2>2. Who decides the price? Nobody — it's a live negotiation</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>The stock price is simply the last deal between one buyer and one seller — nothing more.</div>
+
+<p>Nobody decides that Microsoft costs $420. There is no committee, no government office. The price on your screen only means: <em>this is the price of the most recent deal.</em></p>
+<p>Think of a fruit market. Sellers shout: "tomatoes, €3 per kilo!" Buyers answer: "I'll pay €2.80, not more." No deal happens until one side gives in. When someone finally says "fine, €2.90" — that deal becomes "the price of tomatoes" for a moment. The stock market is exactly this, but a computer keeps everyone's offers in two lists.</p>
+<p>That computer is the <dfn>exchange</dfn> (Nasdaq and NYSE in the US, Euronext for Brussels). Your <dfn>broker</dfn> is the company that sends your orders to it. And the two lists of offers together are called the <dfn>order book</dfn>. Here is a real one, live. First learn to read it, then press the button:</p>
+<ul>
+  <li>Every row is one price.</li>
+  <li><span style="color:var(--c-sell);font-weight:600">Red bars (top)</span> = people who want to <strong>sell</strong>, and the price they demand.</li>
+  <li><span style="color:var(--c-buy);font-weight:600">Green bars (bottom)</span> = people who want to <strong>buy</strong>, and the price they offer.</li>
+  <li>The longer the bar, the more shares are offered at that price.</li>
+  <li>The empty space in the middle = prices where nobody agrees. That gap is called the <dfn>spread</dfn>.</li>
+</ul>
+
+<figure class="viz" aria-label="Interactive order book: press buy and watch sellers get consumed">
+  <p class="fig-title">Live order book — "Sint-Anna Brewing" (invented company), last deal at €20.00</p>
+  <p class="fig-sub">Press the button. Watch which sellers you take, and what happens to the price.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-sell)"></span>sellers (asks)</span>
+    <span class="chip"><span class="sw" style="background:var(--c-buy)"></span>buyers (bids)</span>
+  </div>
+  <div class="ob-stats">
+    <div class="stat"><div class="s-label">best buyer</div><div class="s-val" id="st-bid">€19.95</div></div>
+    <div class="stat"><div class="s-label">best seller</div><div class="s-val" id="st-ask">€20.05</div></div>
+    <div class="stat"><div class="s-label">spread (gap)</div><div class="s-val" id="st-spread">€0.10 · 0.5%</div></div>
+    <div class="stat"><div class="s-label">last price</div><div class="s-val" id="st-last">€20.00</div></div>
+  </div>
+  <div class="ob-grid" id="ob-asks"></div>
+  <div class="ob-spread">the spread — nobody agrees here</div>
+  <div class="ob-grid" id="ob-bids"></div>
+  <div class="ob-actions">
+    <button class="viz-btn" id="btn-buy" type="button">Send market order: BUY 600</button>
+    <button class="viz-btn secondary" id="btn-reset" type="button">Reset book</button>
+  </div>
+  <div class="ob-report" id="ob-report"></div>
+  <figcaption class="fig-note">"The price is €20.00" is a small lie. The truth: you can sell right now at €19.95, or buy right now at €20.05. There is no €20.00 for you.</figcaption>
+</figure>
+
+<p>Did you press it? Here is exactly what happened, in slow motion:</p>
+<div class="steps">
+  <span class="s-label">Your order, step by step</span>
+  <ol>
+    <li>You asked for 600 shares "at any available price". This is called a <dfn>market order</dfn>.</li>
+    <li>The cheapest seller only had 300 shares, at €20.05. You took all of them: <span class="m">300 × €20.05 = €6,015</span>.</li>
+    <li>You still needed 300 more. The next seller wanted €20.10: <span class="m">300 × €20.10 = €6,030</span>.</li>
+    <li>Total: <span class="m">€12,045</span> for 600 shares. Average price: <span class="m">€12,045 ÷ 600 = €20.075</span> per share.</li>
+    <li>The fair middle price was €20.00. At €20.00, 600 shares would cost <span class="m">€12,000</span>. You paid <span class="m">€45 extra</span>. That €45 is the hidden cost of trading — no bank statement will ever show it as a "fee".</li>
+    <li>And notice the last price: it is now <strong>€20.10</strong>. The chart went up. But there was no news. The company did not change. <em>You were the only reason.</em> Remember this every time you see a price wiggle.</li>
+  </ol>
+</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #2 — always check the volume before you buy</span>
+  <p><dfn>Volume</dfn> = how many shares are traded per day. Multiply by the price and you get the money flowing through the stock daily. Apple: about $10 billion per day. A small Belgian stock: sometimes only €50,000 per day.</p>
+  <p>On that small stock, even €5,000 of buying visibly pushes the price up (like your button just did). And when you want to <em>sell</em> in a hurry — for example in a panic, when everyone sells — there may simply be no buyers near the current price. Before buying anything, ask: <strong>"could I sell my whole position in one day, without destroying the price?"</strong></p>
+</div>
+
+<p>Now let's add up what one full trade — buying and later selling ("a round trip") — really costs you. For a Belgian investor there are four costs, including a Belgian tax on every stock transaction called the <dfn>TOB</dfn> (about 0.35% when you buy, and again 0.35% when you sell):</p>
+
+<figure class="viz" aria-label="Stacked bar chart comparing round-trip trading costs on a US mega-cap versus a Belgian small-cap">
+  <p class="fig-title">What one round trip (buy + sell) really costs</p>
+  <p class="fig-sub">Example €5,000 order. Each colored piece is one type of cost, as % of your money.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-spread)"></span>spread</span>
+    <span class="chip"><span class="sw" style="background:var(--c-slip)"></span>slippage</span>
+    <span class="chip"><span class="sw" style="background:var(--c-tob)"></span>TOB tax</span>
+    <span class="chip"><span class="sw" style="background:var(--c-comm)"></span>commission</span>
+  </div>
+  <div class="stack-row">
+    <div class="lab">US mega-cap<small>e.g. Microsoft</small></div>
+    <div style="display:flex;align-items:center">
+      <div class="stack-track" style="flex:1">
+        <div class="seg" style="width:1.6%; background:var(--c-spread)"></div>
+        <div class="seg" style="width:0.6%; background:var(--c-slip)"></div>
+        <div class="seg" style="width:21.9%; background:var(--c-tob)"><span class="seg-inlabel">0.70%</span></div>
+        <div class="seg last" style="width:1.6%; background:var(--c-comm)"></div>
+      </div>
+      <span class="stack-total">≈ 0.82%</span>
+    </div>
+  </div>
+  <div class="stack-row">
+    <div class="lab">Belgian small-cap<small>low volume</small></div>
+    <div style="display:flex;align-items:center">
+      <div class="stack-track" style="flex:1">
+        <div class="seg" style="width:62.5%; background:var(--c-spread)"><span class="seg-inlabel">2.00%</span></div>
+        <div class="seg" style="width:12.5%; background:var(--c-slip)"><span class="seg-inlabel">0.40%</span></div>
+        <div class="seg" style="width:21.9%; background:var(--c-tob)"><span class="seg-inlabel">0.70%</span></div>
+        <div class="seg last" style="width:3.1%; background:var(--c-comm)"></div>
+      </div>
+      <span class="stack-total">≈ 3.20%</span>
+    </div>
+  </div>
+  <figcaption class="fig-note">Do the math: 10 trades per year on Belgian small-caps ≈ <span class="mono">10 × 3.2% = 32%</span> of your money gone in one year — <strong>only from costs</strong>, before you were right or wrong even once. The market pays you for being right. It never pays you for being busy.</figcaption>
+</figure>
+
+<h2>3. Why prices move: the surprise machine</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Prices do not move because news is good or bad. Prices move when the news is <em>different from what people expected</em>.</div>
+
+<p>Start with something familiar. Your friend always scores 9/10 on every exam. Today he scores 7/10. Is 7/10 a good grade? Yes. But everyone is disappointed — because they <em>expected</em> 9. Now the reverse: a weak student who always fails suddenly scores 6/10. A worse grade than your friend's! But everyone celebrates. The reaction follows the <em>surprise</em>, not the grade itself.</p>
+<p>Stock prices work exactly like this, and here is why. If everyone believes a company's profit will grow 25% next year, they don't wait — they buy the stock <em>today</em>. All that buying pushes the price up <em>today</em>. So by the time the real results arrive, the 25% growth is already inside the price. People say the news is "priced in".</p>
+<p>Then the real number arrives, and only one thing matters: is it better or worse than the 25% everyone assumed?</p>
+
+<figure class="viz" aria-label="Diagram: expected profit growth versus actual, and the resulting price reaction">
+  <p class="fig-title">The surprise machine — good news, falling price</p>
+  <p class="fig-sub">A company reports profit +15%. That is objectively good news. The stock falls −6%. Watch the mechanics:</p>
+  <div class="chartbox">
+    <svg viewBox="0 0 700 220" role="img" aria-label="Number line from 0 to 30 percent profit growth showing the actual result at 15 percent, the market expectation at 25 percent, the negative surprise gap between them, and the resulting price drop of 6 percent">
+      <line x1="60" y1="90" x2="660" y2="90" stroke="var(--line)" stroke-width="2"/>
+      <g font-family="Consolas, monospace" font-size="12" fill="var(--muted)" text-anchor="middle">
+        <text x="60"  y="112">0%</text><text x="160" y="112">+5%</text><text x="260" y="112">+10%</text>
+        <text x="360" y="112">+15%</text><text x="460" y="112">+20%</text><text x="560" y="112">+25%</text><text x="660" y="112">+30%</text>
+      </g>
+      <g stroke="var(--grid)" stroke-width="1">
+        <line x1="160" y1="84" x2="160" y2="96"/><line x1="260" y1="84" x2="260" y2="96"/>
+        <line x1="360" y1="84" x2="360" y2="96"/><line x1="460" y1="84" x2="460" y2="96"/>
+        <line x1="560" y1="84" x2="560" y2="96"/>
+      </g>
+      <text x="60" y="30" font-family="Consolas, monospace" font-size="11" fill="var(--muted)" letter-spacing="2">REPORTED PROFIT GROWTH</text>
+      <rect x="360" y="82" width="200" height="16" fill="var(--sell-soft)"/>
+      <line x1="360" y1="58" x2="360" y2="98" stroke="var(--c-price)" stroke-width="3"/>
+      <circle cx="360" cy="90" r="6" fill="var(--c-price)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="360" y="50" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">what arrived: +15%</text>
+      <line x1="560" y1="58" x2="560" y2="98" stroke="var(--c-sell)" stroke-width="3" stroke-dasharray="5 3"/>
+      <text x="560" y="50" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">what was expected: +25%</text>
+      <path d="M 365 135 H 555" stroke="var(--c-sell)" stroke-width="1.5" marker-start="url(#tickL)" marker-end="url(#tickR)"/>
+      <defs>
+        <marker id="tickL" markerWidth="6" markerHeight="10" refX="1" refY="5"><path d="M1 0 V10" stroke="var(--c-sell)" stroke-width="2"/></marker>
+        <marker id="tickR" markerWidth="6" markerHeight="10" refX="1" refY="5"><path d="M1 0 V10" stroke="var(--c-sell)" stroke-width="2"/></marker>
+      </defs>
+      <text x="460" y="155" font-size="13" fill="var(--ink)" text-anchor="middle">the surprise: <tspan font-weight="700">−10 points</tspan> below expectation</text>
+      <text x="460" y="192" font-size="14" fill="var(--ink)" text-anchor="middle">→ the price falls to match the new, lower belief: <tspan font-weight="700" fill="var(--c-sell)">−6%</tspan></text>
+    </svg>
+  </div>
+  <figcaption class="fig-note">The old price only made sense if profit grew ~25%. The market pre-paid for 25% and received 15%. Good news, negative surprise, falling price. The reverse also happens: "the company lost less money than feared" → price jumps +10%. Headlines like "stock falls despite record profit" are not strange — they are the machine working normally.</figcaption>
+</figure>
+
+<p>This idea has a famous name: the <dfn>efficient market</dfn> idea. It says: everything that everyone knows is already inside the price. In its extreme version ("nobody can ever beat the market") it is too strong — later lessons show the known exceptions. But as your default assumption, it protects you, because three practical rules follow from it:</p>
+<ul>
+  <li>News you read on a website is already in the price. Computers traded it within milliseconds, hours before you saw it.</li>
+  <li>Facts that everybody knows ("this company is great", "AI is the future") are already in the price. Being right about what everyone knows earns you nothing.</li>
+  <li>To beat the market you need one of three things: information others don't have, an interpretation others didn't make, or patience others can't afford. There is no fourth option.</li>
+</ul>
+
+<h3>So what pushes prices, hour by hour and year by year?</h3>
+<p>Several forces: profit surprises (the machine above), interest rates and economic news, <dfn>flows</dfn> (big funds that must buy or sell for reasons that have nothing to do with the company — for example an index fund rebalancing), <dfn>sentiment</dfn> (waves of group greed and group fear), and — most of the time — pure randomness, like your 600-share order. The mix depends completely on the time period you look at:</p>
+
+<figure class="viz" aria-label="Stacked bars showing which forces dominate price moves at different time horizons">
+  <p class="fig-title">What is really moving the price? — depends how long you hold</p>
+  <p class="fig-sub">Each bar = 100% of the price movement over that period. Rough illustration — the pattern is the point.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-noise)"></span>random noise</span>
+    <span class="chip"><span class="sw" style="background:var(--c-senti)"></span>feelings &amp; forced flows</span>
+    <span class="chip"><span class="sw" style="background:var(--c-biz)"></span>real business results</span>
+  </div>
+  <div class="stack-row"><div class="lab">1 day</div>
+    <div class="stack-track" style="flex:1">
+      <div class="seg" style="width:85%; background:var(--c-noise)"><span class="seg-inlabel">85</span></div>
+      <div class="seg" style="width:12%; background:var(--c-senti)"><span class="seg-inlabel">12</span></div>
+      <div class="seg last" style="width:3%; background:var(--c-biz)"></div>
+    </div></div>
+  <div class="stack-row"><div class="lab">1 month</div>
+    <div class="stack-track" style="flex:1">
+      <div class="seg" style="width:55%; background:var(--c-noise)"><span class="seg-inlabel">55</span></div>
+      <div class="seg" style="width:30%; background:var(--c-senti)"><span class="seg-inlabel">30</span></div>
+      <div class="seg last" style="width:15%; background:var(--c-biz)"><span class="seg-inlabel">15</span></div>
+    </div></div>
+  <div class="stack-row"><div class="lab">1 year</div>
+    <div class="stack-track" style="flex:1">
+      <div class="seg" style="width:25%; background:var(--c-noise)"><span class="seg-inlabel">25</span></div>
+      <div class="seg" style="width:30%; background:var(--c-senti)"><span class="seg-inlabel">30</span></div>
+      <div class="seg last" style="width:45%; background:var(--c-biz)"><span class="seg-inlabel">45</span></div>
+    </div></div>
+  <div class="stack-row"><div class="lab">5+ years</div>
+    <div class="stack-track" style="flex:1">
+      <div class="seg" style="width:8%; background:var(--c-noise)"></div>
+      <div class="seg" style="width:17%; background:var(--c-senti)"><span class="seg-inlabel">17</span></div>
+      <div class="seg last" style="width:75%; background:var(--c-biz)"><span class="seg-inlabel">75</span></div>
+    </div></div>
+  <figcaption class="fig-note">Read it like this: if your stock moved ±1% today, it means almost nothing — the 1-day bar is mostly gray noise. But over 5 years, the blue part wins: real profits decide. <strong>This is exactly why our plan trades on months and years, not minutes:</strong> we choose the time period where the analyzable force is the strongest.</figcaption>
+</figure>
+
+<p>A famous investor said it in one sentence: <em>"In the short run the market is a voting machine; in the long run it is a weighing machine."</em> Meaning: short term, the price = what people <em>feel</em>. Long term, the price = what the business <em>earns</em>. Watch it happen — move your mouse over the chart:</p>
+
+<figure class="viz" aria-label="Line chart of a noisy market price oscillating around a smooth business value line over ten years">
+  <p class="fig-title">Feelings vs earnings — 10 simulated years</p>
+  <p class="fig-sub">Green line = what the business is really worth (its profits, growing ~7%/year). Blue line = the market price, wandering around it.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-price)"></span>market price</span>
+    <span class="chip"><span class="sw" style="background:var(--c-value)"></span>business value (from earnings)</span>
+  </div>
+  <div class="chartbox" id="vw-box">
+    <svg id="vw-svg" viewBox="0 0 700 320" role="img" aria-label="Simulated chart: the market price line swings above and below the smooth business value line, sometimes by 30 percent, but always returns to it over the ten year period"></svg>
+    <div class="tooltip" id="vw-tip"></div>
+  </div>
+  <figcaption class="fig-note">Notice: the price stays wrong for <em>years</em> — too high when people are euphoric, too low when people are afraid. But it always gets pulled back to the green line, like gravity. Short-term traders fight the feelings. Long-term investors let the earnings work. (Simulated data, same for everyone.)</figcaption>
+</figure>
+
+<h2>4. Who is selling to you, when you buy?</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Every euro you win in trading comes from another person — so before every trade, ask who is on the other side and why you would beat them.</div>
+
+<p>Trading is not shopping. In a shop, the cashier is neutral. In trading, when you buy, a real counterparty sells to you — and one of you will turn out to be wrong. So it is worth knowing who sits at the table:</p>
+
+<figure class="viz" aria-label="Bar chart of approximate shares of US stock trading volume by participant type">
+  <p class="fig-title">Who you are trading against — share of US stock trading volume</p>
+  <p class="fig-sub">Rough proportions; exact numbers differ per study and year.</p>
+  <div class="hbar-row">
+    <div class="lab">Market makers<small>&amp; high-speed firms</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:71%; background:var(--c-price)"></div><span class="hbar-val">~50%</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Institutions<small>pension funds, insurers</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:50%; background:var(--c-price)"></div><span class="hbar-val">~35%</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Retail<small>people like you</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:21%; background:var(--c-price)"></div><span class="hbar-val">~15%</span></div>
+  </div>
+</figure>
+
+<ul>
+  <li><strong>Market makers</strong> — companies whose computers stand in the order book all day, on both sides. They sell to you at €20.05 and buy from you at €19.95, pocketing the spread thousands of times per day. They are why you can always trade instantly. On small Belgian stocks, few of them bother — that's why the spread there is wide.</li>
+  <li><strong>Institutions</strong> — pension funds and insurers moving huge amounts slowly. Important: they often <em>must</em> trade (new pension money arrives, a fund must copy an index) no matter the price. A trader who must trade can lose to you without being stupid — they are rare and valuable counterparties.</li>
+  <li><strong>Quant funds</strong> — the professional computer traders. They dominate all fast patterns. Competing with them on speed is hopeless — one more reason our plan uses long horizons.</li>
+  <li><strong>Retail</strong> — private people. Studies keep finding the same result: people who trade often lose against the market, mostly by paying the spread again and again, and by buying whatever is exciting this week.</li>
+</ul>
+
+<p>So, the question to ask before every single trade, for the rest of your life: <em>"the person selling to me — do they know something I don't, or do they need something I don't? Why is my side of this deal the smart side?"</em> If you have no answer, your trade is a coin flip — minus costs.</p>
+
+<h2>5. "The market" — indices and ETFs</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>An ETF lets you buy hundreds of companies in one purchase, almost for free — and it is the score you must beat before your trading means anything.</div>
+
+<p>When the news says "the market went up today," it means an <dfn>index</dfn>: a list of stocks with a formula. The <span class="mono">S&amp;P 500</span> is a list of the 500 biggest US companies. The <span class="mono">BEL 20</span> is a list of the 20 biggest in Brussels — careful: it is dominated by a few giants (AB InBev, KBC, UCB…), so it is less diversified than "20 companies" sounds.</p>
+<p>You cannot buy a list. But an <dfn>ETF</dfn> is a product that contains all the stocks from the list, and it trades like a normal share. One purchase = 500 companies. Cost: as low as ~0.1% per year. Two reasons this matters enormously to you:</p>
+<ul>
+  <li><strong>The ETF is your score to beat.</strong> A world-stock ETF earned roughly 6–8% per year on average, over long periods, for zero effort. So if your active trading made 8% in a year when the ETF made 12%, your trading <em>lost</em> you 4%. Every result must be compared to this free alternative — this exact comparison will later be built into your system as an automatic report.</li>
+  <li><strong>The ETF is the honest default.</strong> Money that has not yet earned the right to be actively traded — through demonstrated, measured skill — belongs in a broad ETF. Professionals think this way. Gamblers don't.</li>
+</ul>
+
+<h2>6. Reading a real stock quote — every number decoded</h2>
+<p>Open any stock on Yahoo Finance or your broker, and you see a wall of numbers. Here is what each one tells you, with realistic values for a mid-size Belgian company. You now know enough to understand every row:</p>
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Field</th><th>Example</th><th>What it tells you</th></tr></thead>
+    <tbody>
+      <tr><td>Last price</td><td class="num">€64.20</td><td>The most recent deal. Not necessarily a price <em>you</em> can get.</td></tr>
+      <tr><td>Bid / Ask</td><td class="num">€64.00 / €64.40</td><td>What you can really sell at / buy at, right now. The spread here is 0.6% — quite expensive.</td></tr>
+      <tr><td>Volume</td><td class="num">18,400</td><td>Shares traded today → 18,400 × €64.20 ≈ €1.2M per day. Fine for small orders; a wall for large ones.</td></tr>
+      <tr><td>Market cap</td><td class="num">€2.6B</td><td>Value of the whole company — the number to reason about.</td></tr>
+      <tr><td>P/E (trailing)</td><td class="num">18.5</td><td>Paying 18.5 years of last year's profit. About average — the market expects moderate growth.</td></tr>
+      <tr><td>EPS</td><td class="num">€3.47</td><td>Profit per share, last year. Check: €64.20 ÷ €3.47 ≈ 18.5 — the P/E. It connects.</td></tr>
+      <tr><td>Dividend yield</td><td class="num">2.8%</td><td>Cash paid to you per year, as % of the price. Belgium takes 30% tax on it → you keep ≈ 1.96%.</td></tr>
+      <tr><td>52-week range</td><td class="num">€48.10 – €71.30</td><td>The lowest and highest price this year. Context only — "near its low" is NOT a reason to buy.</td></tr>
+      <tr><td>Beta</td><td class="num">0.85</td><td>How much it moves when the whole market moves 1%. Below 1 = calmer than the market.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #3 — trading a lot feels like progress. It isn't.</span>
+  <p>Look at the cost chart in section 2 one more time. Every single trade pays: spread + slippage + TOB tax + commission. The feeling of "doing something" is the most expensive feeling in finance. The market pays for being right — never for being active.</p>
+</div>
+
+<h2>7. Check yourself</h2>
+<p>Try to answer first. Then click to see the answer. If an answer surprises you, re-read that section — these six questions cover the ideas everything else will be built on.</p>
+<div class="quiz">
+  <details><summary>A share costs €3. Your friend says: "so cheap, it can easily double!" What is wrong with that?</summary><p class="answer">The price of one share means nothing by itself — it depends on how many shares exist. A €3 share × 10 billion shares = a €30 billion company. For the share to double, the market must decide the whole <em>company</em> is worth €60 billion. The right question is never "is €3 low?" — it is "is the whole company cheap compared to its profits?"</p></details>
+  <details><summary>A medicine company announces: our new drug is approved! The stock barely moves. Why?</summary><p class="answer">Everyone already expected the approval, so it was already inside the price ("priced in") — people bought weeks ago, and their buying already pushed the price up back then. No surprise → no move. Funny enough, a <em>rejection</em> would have moved the price a lot, because that would have been the surprise.</p></details>
+  <details><summary>You want to put €10,000 into a Belgian small-cap that trades €40,000 per day, with a 2% spread. What problems are waiting for you?</summary><p class="answer">Your order is a quarter of a full day's trading — buying will push the price up against you, like the BUY 600 button did. Selling later, especially in a panic when everyone sells, could take days or force you to accept bad prices. And the costs: ~2% spread + ~0.7% TOB before anything even happens. Small stocks demand small positions and lots of patience.</p></details>
+  <details><summary>Your stock went up 1.5% today. What did you learn about the company?</summary><p class="answer">Almost nothing. Look at the "1 day" bar in the horizon chart: daily moves are mostly random noise. Unless there was real news, a 1.5% day carries no information. Beginners who judge their decisions by daily moves teach themselves wrong lessons with great confidence.</p></details>
+  <details><summary>When you buy, who is probably selling to you — and why does it matter?</summary><p class="answer">Usually a market maker (earning the spread from you) or a big institution's algorithm. It matters because trading is person-against-person: to win repeatedly, you must know why the other side is losing to you — they are forced to trade, or slower, or thinking in a different time period. "I feel it will go up" has no answer to this question.</p></details>
+  <details><summary>You made 9% last year with active trading. A world ETF made 12%. How good was your year?</summary><p class="answer">Bad. The free, zero-effort alternative made 12% — your work and risk produced 3% <em>less</em> than doing nothing. "I made money" is not the test. "I beat the ETF" is the test. (Later we refine this: 9% with much lower risk can still be respectable — that's Lesson 6.)</p></details>
+</div>
+
+<h2>8. Key words from this lesson</h2>
+<div class="keyterms">
+  <div><b>Share</b> — one piece of ownership of a company, with a right to its profits.</div>
+  <div><b>Market cap</b> — share price × number of shares = value of the whole company.</div>
+  <div><b>EPS</b> — profit ÷ number of shares = how much one share "earned" this year.</div>
+  <div><b>P/E</b> — price ÷ EPS = how many years of profit you pay. The bakery question.</div>
+  <div><b>Dividend</b> — part of the profit paid to owners as cash.</div>
+  <div><b>Order book</b> — the live lists of everyone who wants to buy or sell, and at what price.</div>
+  <div><b>Bid / Ask / Spread</b> — best buyer / best seller / the gap between them (a cost you pay).</div>
+  <div><b>Market order</b> — "fill me now at any price". Fast, but pays spread + slippage.</div>
+  <div><b>Slippage</b> — the price moving against you because your own order ate the cheap offers.</div>
+  <div><b>Volume</b> — shares traded per day (× price = € per day). The measure of liquidity.</div>
+  <div><b>Priced in</b> — already expected by everyone, therefore already inside the price.</div>
+  <div><b>Index / ETF</b> — a list of stocks / a buyable product containing that whole list.</div>
+</div>
+
+<h2>9. If you remember only three things</h2>
+<div class="steps">
+  <ol>
+    <li><strong>A share is a piece of a real business.</strong> Its price is someone's answer to "how many years of this company's profit am I paying?" (that's the P/E). Think in market cap, never in price-per-share.</li>
+    <li><strong>Prices move on surprise, not on news.</strong> What everyone already knows is already inside the price. To profit, you need something others don't have: information, interpretation, or patience.</li>
+    <li><strong>Every trade costs money even when nothing moves</strong> — spread, slippage, TOB tax. Trading rarely and holding long is not laziness; it is an advantage, especially in Belgium.</li>
+  </ol>
+</div>
+
+<h2>10. Homework — touch the real thing</h2>
+<div class="homework">
+  <h3>Field exercise (~1 hour, no money involved)</h3>
+  <p>Pick <strong>two stocks</strong>: one huge US company you know (e.g. Microsoft or Coca-Cola), and one Belgian mid/small company (e.g. Lotus Bakeries, Melexis, or Kinepolis). For each one, on Yahoo Finance (free) or your broker:</p>
+  <ul>
+    <li>Write down: market cap, P/E, dividend yield, daily volume, and the bid–ask spread if you can see it.</li>
+    <li>Compute the <strong>money volume</strong>: volume × price. How many times bigger is the US one?</li>
+    <li>Answer in one sentence each: <em>Could I invest €5,000 without moving the price? What does this P/E say the market believes about future profit? How much % would one round trip cost me here (spread + TOB)?</em></li>
+    <li>Bonus: find one news headline about the Belgian stock from the last month. Write down what the market probably <em>expected</em> before that news. Then check: did the price reaction match the surprise machine?</li>
+  </ul>
+  <p>Bring your numbers to the next session — we check them together, and they become the first page of your research journal.</p>
+</div>
+
+<footer>
+  <span>Lesson 1 of 8 · Part 1: Understanding Trading</span>
+  <span>Next: <span class="cmd">start lesson 2</span> — How trading actually happens: orders, fills &amp; costs</span>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- interactive order book ---------- */
+  var ASKS = [[20.15, 800], [20.10, 500], [20.05, 300]];
+  var BIDS = [[19.95, 400], [19.90, 600], [19.85, 1000]];
+  var MAXQ = 1000;
+  var askEls = [], state;
+
+  function fmtEUR(x, dec) { return "€" + x.toFixed(dec === undefined ? 2 : dec); }
+
+  function renderSide(el, rows, cls, live) {
+    el.innerHTML = "";
+    var out = [];
+    rows.forEach(function (r) {
+      var row = document.createElement("div");
+      row.className = "ob-row";
+      row.innerHTML =
+        '<span class="ob-price">' + fmtEUR(r[0]) + "</span>" +
+        '<span class="ob-track"><span class="ob-bar ' + cls + '" style="width:' + (r[1] / MAXQ * 100) + '%"></span></span>' +
+        '<span class="ob-size">' + r[1].toLocaleString() + " sh</span>";
+      el.appendChild(row);
+      out.push(row);
+    });
+    if (live) askEls = out;
+  }
+
+  function resetBook() {
+    state = { asks: ASKS.map(function (r) { return r.slice(); }), last: 20.00, running: false };
+    renderSide(document.getElementById("ob-asks"), state.asks, "ask", true);
+    renderSide(document.getElementById("ob-bids"), BIDS, "bid", false);
+    document.getElementById("st-last").textContent = fmtEUR(20.00);
+    var rep = document.getElementById("ob-report");
+    rep.className = "ob-report"; rep.innerHTML = "";
+    document.getElementById("btn-buy").disabled = false;
+  }
+
+  function updateAskRow(i) {
+    var q = state.asks[i][1];
+    var row = askEls[i];
+    row.querySelector(".ob-bar").style.width = (q / MAXQ * 100) + "%";
+    var sizeEl = row.querySelector(".ob-size");
+    var filled = ASKS[i][1] - q;
+    sizeEl.innerHTML = q.toLocaleString() + " sh" +
+      (filled > 0 ? ' &nbsp;<span class="fill-tag">← you took ' + filled.toLocaleString() + "</span>" : "");
+  }
+
+  function buy600() {
+    if (state.running) return;
+    state.running = true;
+    document.getElementById("btn-buy").disabled = true;
+    var want = 600, fills = [], idx = state.asks.length - 1;
+    function step() {
+      if (want <= 0 || idx < 0) { return report(); }
+      var level = state.asks[idx];
+      var take = Math.min(want, level[1]);
+      level[1] -= take; want -= take;
+      fills.push([level[0], take]);
+      state.last = level[0];
+      updateAskRow(idx);
+      document.getElementById("st-last").textContent = fmtEUR(state.last);
+      if (level[1] === 0) idx--;
+      if (want > 0) { reduced ? step() : setTimeout(step, 700); } else { reduced ? report() : setTimeout(report, 500); }
+    }
+    function report() {
+      var qty = 0, cost = 0;
+      fills.forEach(function (f) { qty += f[1]; cost += f[0] * f[1]; });
+      var avg = cost / qty, mid = 20.00;
+      var rep = document.getElementById("ob-report");
+      rep.innerHTML =
+        '<div class="rline"><strong>You bought ' + qty + " shares</strong>, in pieces: " +
+        fills.map(function (f) { return f[1] + " @ " + fmtEUR(f[0]); }).join(" + ") + "</div>" +
+        '<div class="rline">Average price: <strong class="mono">' + fmtEUR(avg, 3) + "</strong>. The fair middle was €20.00 — you paid <strong class=\"mono\">" +
+        fmtEUR(cost - mid * qty, 0) + " extra</strong>. That extra is the hidden cost of trading (" +
+        ((avg / mid - 1) * 100).toFixed(2) + "% of your money).</div>" +
+        '<div class="rline">The last price is now <strong class="mono">' + fmtEUR(state.last) + "</strong> (+" +
+        ((state.last / mid - 1) * 100).toFixed(1) + "%). No news happened. <em>You were the news.</em></div>";
+      rep.className = "ob-report show";
+      state.running = false;
+    }
+    step();
+  }
+
+  document.getElementById("btn-buy").addEventListener("click", buy600);
+  document.getElementById("btn-reset").addEventListener("click", resetBook);
+  resetBook();
+
+  /* ---------- feelings vs earnings line chart ---------- */
+  function mulberry32(seed) {
+    return function () {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  var rnd = mulberry32(20260709);
+  var N = 121, value = [], price = [];
+  var sentiment = 0;
+  for (var i = 0; i < N; i++) {
+    var v = 100 * Math.pow(1.07, i / 12) * (1 + 0.03 * Math.sin(i / 22));
+    value.push(v);
+    sentiment = sentiment * 0.965 + (rnd() - 0.5) * 0.11;
+    var swing = 0.22 * Math.sin(i / 19 + 1.2) * Math.sin(i / 41);
+    price.push(v * Math.exp(sentiment + swing));
+  }
+
+  var svg = document.getElementById("vw-svg");
+  var W = 700, H = 320, padL = 52, padR = 96, padT = 16, padB = 34;
+  var xs = function (i) { return padL + (W - padL - padR) * i / (N - 1); };
+  var lo = Math.min.apply(null, price.concat(value)) * 0.95;
+  var hi = Math.max.apply(null, price.concat(value)) * 1.05;
+  var ys = function (v) { return padT + (H - padT - padB) * (1 - (v - lo) / (hi - lo)); };
+  function path(arr) {
+    return arr.map(function (v, i) { return (i ? "L" : "M") + xs(i).toFixed(1) + " " + ys(v).toFixed(1); }).join(" ");
+  }
+  var gridVals = [100, 140, 180, 220];
+  var g = "";
+  gridVals.forEach(function (v) {
+    if (v > lo && v < hi) {
+      g += '<line x1="' + padL + '" y1="' + ys(v).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + ys(v).toFixed(1) + '" stroke="var(--grid)" stroke-width="1"/>' +
+           '<text x="' + (padL - 8) + '" y="' + (ys(v) + 4).toFixed(1) + '" font-size="11" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="end">€' + v + "</text>";
+    }
+  });
+  for (var yr = 0; yr <= 10; yr += 2) {
+    g += '<text x="' + xs(yr * 12).toFixed(1) + '" y="' + (H - 10) + '" font-size="11" font-family="Consolas,monospace" fill="var(--muted)" text-anchor="middle">yr ' + yr + "</text>";
+  }
+  g += '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '" stroke="var(--line)" stroke-width="1.5"/>';
+  g += '<path d="' + path(value) + '" fill="none" stroke="var(--c-value)" stroke-width="2.5"/>';
+  g += '<path d="' + path(price) + '" fill="none" stroke="var(--c-price)" stroke-width="2"/>';
+  g += '<circle cx="' + xs(N - 1) + '" cy="' + ys(price[N - 1]) + '" r="4" fill="var(--c-price)" stroke="var(--surface)" stroke-width="2"/>';
+  g += '<circle cx="' + xs(N - 1) + '" cy="' + ys(value[N - 1]) + '" r="4" fill="var(--c-value)" stroke="var(--surface)" stroke-width="2"/>';
+  var lblPriceY = ys(price[N - 1]), lblValueY = ys(value[N - 1]);
+  if (Math.abs(lblPriceY - lblValueY) < 16) { if (lblPriceY < lblValueY) { lblPriceY -= 8; lblValueY += 8; } else { lblPriceY += 8; lblValueY -= 8; } }
+  g += '<text x="' + (xs(N - 1) + 9) + '" y="' + (lblPriceY + 4) + '" font-size="12" font-weight="600" fill="var(--ink)">price</text>';
+  g += '<text x="' + (xs(N - 1) + 9) + '" y="' + (lblValueY + 4) + '" font-size="12" font-weight="600" fill="var(--ink)">value</text>';
+  g += '<line id="vw-cross" x1="0" y1="' + padT + '" x2="0" y2="' + (H - padB) + '" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3" style="display:none"/>';
+  g += '<circle id="vw-dot-p" r="4" fill="var(--c-price)" stroke="var(--surface)" stroke-width="2" style="display:none"/>';
+  g += '<circle id="vw-dot-v" r="4" fill="var(--c-value)" stroke="var(--surface)" stroke-width="2" style="display:none"/>';
+  svg.innerHTML = g;
+
+  var box = document.getElementById("vw-box"), tip = document.getElementById("vw-tip");
+  var cross = svg.querySelector("#vw-cross"), dotP = svg.querySelector("#vw-dot-p"), dotV = svg.querySelector("#vw-dot-v");
+  function onMove(ev) {
+    var rect = svg.getBoundingClientRect();
+    var cx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - rect.left;
+    var frac = (cx / rect.width * W - padL) / (W - padL - padR);
+    var i = Math.round(frac * (N - 1));
+    if (i < 0 || i > N - 1) { onLeave(); return; }
+    var X = xs(i);
+    cross.setAttribute("x1", X); cross.setAttribute("x2", X); cross.style.display = "";
+    dotP.setAttribute("cx", X); dotP.setAttribute("cy", ys(price[i])); dotP.style.display = "";
+    dotV.setAttribute("cx", X); dotV.setAttribute("cy", ys(value[i])); dotV.style.display = "";
+    var gap = ((price[i] / value[i] - 1) * 100);
+    tip.innerHTML = "year " + (i / 12).toFixed(1) + "<br>price €" + price[i].toFixed(0) +
+      " · value €" + value[i].toFixed(0) + "<br>price is " + (gap >= 0 ? "+" : "") + gap.toFixed(0) + "% vs value";
+    tip.style.display = "block";
+    var bx = box.getBoundingClientRect();
+    var left = X / W * bx.width + 12;
+    if (left + 160 > bx.width) left -= 180;
+    tip.style.left = left + "px";
+    tip.style.top = (ys(Math.max(price[i], value[i])) / H * bx.height - 10) + "px";
+  }
+  function onLeave() {
+    tip.style.display = "none"; cross.style.display = "none";
+    dotP.style.display = "none"; dotV.style.display = "none";
+  }
+  svg.addEventListener("mousemove", onMove);
+  svg.addEventListener("touchmove", onMove, { passive: true });
+  svg.addEventListener("mouseleave", onLeave);
+  svg.addEventListener("touchend", onLeave);
+})();
+</script>
+
+</html>

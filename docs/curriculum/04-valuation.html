@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 4 — Valuation: What Is a Company Actually Worth?</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-good: #1baf7a; --c-bad: #d03b3b; --c-main: #2a78d6;
+    --good-soft: rgba(27,175,122,.14); --bad-soft: rgba(208,59,59,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-good: #199e70; --c-bad: #e66767; --c-main: #3987e5;
+      --good-soft: rgba(25,158,112,.18); --bad-soft: rgba(230,103,103,.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-good: #199e70; --c-bad: #e66767; --c-main: #3987e5;
+    --good-soft: rgba(25,158,112,.18); --bad-soft: rgba(230,103,103,.15);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-good: #1baf7a; --c-bad: #d03b3b; --c-main: #2a78d6;
+    --good-soft: rgba(27,175,122,.14); --bad-soft: rgba(208,59,59,.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.75; margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 52px 0 30px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 60ch; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 30px 0 4px; }
+  p { margin: 12px 0; font-size: 16px; }
+  li { font-size: 16px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .idea { background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px; font-size: 16px; }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .steps { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 22px; margin: 20px 0; box-shadow: var(--shadow); }
+  .steps .s-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .steps ol { margin: 6px 0 0; padding-left: 22px; }
+  .steps li { font-size: 15px; margin: 9px 0; }
+  .steps .m { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  figure.viz { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); margin: 26px 0; padding: 20px 22px 16px; }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* slider tool */
+  .tool { display: grid; gap: 18px; }
+  .slider-row { display: grid; grid-template-columns: 200px 1fr 90px; gap: 14px; align-items: center; }
+  .slider-row .sl-lab { font-size: 14px; text-align: right; line-height: 1.3; }
+  .slider-row .sl-lab small { display: block; color: var(--muted); font-size: 11.5px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); height: 22px; }
+  input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sl-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .tool-out { display: flex; flex-wrap: wrap; gap: 10px; }
+  .stat { background: var(--code-bg); border-radius: 6px; padding: 10px 16px; flex: 1; min-width: 140px; }
+  .stat .s-label { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-family: Consolas, "Cascadia Mono", monospace; }
+  .stat .s-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .s-sub { font-size: 11.5px; color: var(--muted); }
+  .val-track { position: relative; height: 26px; border-left: 2px solid var(--line); margin-top: 4px; }
+  .val-bar { height: 26px; background: var(--c-main); border-radius: 0 4px 4px 0; transition: width .25s ease; min-width: 3px; }
+  @media (prefers-reduced-motion: reduce) { .val-bar { transition: none; } }
+  .tool-warn { display: none; background: var(--bad-soft); border-radius: 6px; padding: 10px 16px; font-size: 14px; }
+  .tool-warn.show { display: block; }
+
+  /* bars */
+  .hbar-row { display: grid; grid-template-columns: 190px 1fr; align-items: center; gap: 12px; margin: 9px 0; }
+  .hbar-row .lab { font-size: 13px; color: var(--ink); text-align: right; line-height: 1.3; }
+  .hbar-row .lab small { color: var(--muted); display: block; font-size: 11.5px; }
+  .hbar-track { position: relative; height: 22px; }
+  .hbar { height: 22px; border-radius: 0 4px 4px 0; min-width: 2px; display: inline-flex; align-items: center; }
+  .hbar-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; color: var(--ink); margin-left: 8px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .baseline { border-left: 2px solid var(--line); }
+
+  .chartbox { position: relative; }
+  .chartbox svg { display: block; width: 100%; height: auto; }
+
+  .example { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 18px 22px; margin: 22px 0; box-shadow: var(--shadow); }
+  .example .ex-label, .trap .ex-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px; }
+  .example .ex-label { color: var(--accent); }
+  .example p, .example li { font-size: 15px; }
+  .example p:last-child { margin-bottom: 0; }
+  .trap { background: var(--trap-soft); border: 1px solid var(--line); border-left: 3px solid var(--trap); border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 22px 0; }
+  .trap .ex-label { color: var(--trap); }
+  .trap p { font-size: 15px; margin: 8px 0 0; }
+  .trap p:first-of-type { margin-top: 0; }
+
+  .tablebox { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; }
+  tr.hl td { background: var(--accent-soft); font-weight: 600; }
+
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .quiz summary { padding: 13px 18px; cursor: pointer; font-size: 15px; font-weight: 600; list-style: none; }
+  .quiz summary::-webkit-details-marker { display: none; }
+  .quiz summary::before { content: "Q · "; font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); font-weight: 700; }
+  .quiz summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .quiz .answer { padding: 12px 18px 15px; font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); margin: 0; }
+
+  .keyterms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 18px; }
+  .keyterms > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; font-size: 14px; }
+  .keyterms b { color: var(--accent); }
+
+  .homework { background: var(--accent-soft); border-radius: 8px; padding: 22px 26px; margin-top: 24px; }
+  .homework h3 { margin-top: 0; }
+  .homework p, .homework li { font-size: 15px; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 · Understanding Trading · Lesson 4 of 8</div>
+  <h1>Valuation: What Is a Company Actually Worth?</h1>
+  <p class="subtitle">In Lesson 1 you asked the bakery question: "how many years of profit am I paying?" This lesson gives that question its full machinery: how professionals put a number on a business, why that number is always a range, and how to read what the market secretly believes inside any price.</p>
+  <div class="lesson-meta"><span>reading: ~45 min</span><span>homework: ~1 hr</span><span>prerequisite: Lessons 1 &amp; 3</span><span>interactive: yes — a value machine with sliders</span></div>
+</header>
+
+<h2>1. €100 today is not €100 next year</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Money in the future is worth less than money today — and "how much less" is the key that unlocks all valuation.</div>
+
+<p>Simple question: would you rather receive €100 today, or €100 in one year?</p>
+<p>Today, obviously. If you get €100 today, you can put it in a safe government bond paying, say, 5%, and have €105 next year. So "€100 today" and "€105 next year" are the <em>same thing</em>. Which means: <strong>"€100 next year" is worth less than €100 today.</strong> How much exactly?</p>
+
+<div class="steps">
+  <span class="s-label">Translating future money into today's money — this is called discounting</span>
+  <ol>
+    <li>Safe interest rate: <span class="m">5%</span> per year.</li>
+    <li>€100 arriving in 1 year is worth today: <span class="m">€100 ÷ 1.05 = €95.24</span>. (Check it: €95.24 growing at 5% for a year = €100. Same thing.)</li>
+    <li>€100 arriving in 2 years: divide twice: <span class="m">€100 ÷ 1.05 ÷ 1.05 = €90.70</span>.</li>
+    <li>€100 arriving in 10 years: <span class="m">€100 ÷ 1.05¹⁰ = €61.39</span>. Far money is small money.</li>
+  </ol>
+</div>
+
+<p>This translation is called <dfn>discounting</dfn>, and the interest rate used is the <dfn>discount rate</dfn>. One more thing before we use it: for a <em>risky</em> promise, you demand more than 5%. A government almost certainly pays; a brewery might not. So for a company you might demand 8% or 10% per year to accept the risk. Higher risk → higher discount rate → future profits worth <em>less</em> today. Hold that thought — it becomes the punchline of this lesson.</p>
+
+<h2>2. The value machine — a company is its discounted future profits</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>A company's value = all the profits it will ever make, each one translated into today's money — and one small formula captures it.</div>
+
+<p>Remember what a share is (Lesson 1): a claim on all future profits. So valuing a company means: estimate the future profits, discount each one to today, add them all up. Done by hand this is called a <dfn>DCF</dfn> ("discounted cash flow"). For a stable company there is a beautiful shortcut — one line:</p>
+
+<div class="steps">
+  <span class="s-label">The shortcut formula (worth memorizing — it's the whole lesson)</span>
+  <ol>
+    <li><strong>Value = next year's profit ÷ (discount rate − growth rate)</strong></li>
+    <li>Sint-Anna Brewing earns <span class="m">€1.25M</span>, growing ~<span class="m">3%</span> per year. You demand <span class="m">8%</span> for the risk.</li>
+    <li>Value = <span class="m">€1.25M ÷ (0.08 − 0.03) = €1.25M ÷ 0.05 = €25M</span>.</li>
+    <li>Sanity check with Lesson 1: value ÷ profit = <span class="m">€25M ÷ €1.25M = 20</span>. That's a P/E of 20 — the formula and the bakery question are the same idea. Fair P/E = <span class="m">1 ÷ (rate − growth)</span>.</li>
+  </ol>
+</div>
+
+<p>Now the important part. Play with the machine below. Move the sliders gently and watch the value:</p>
+
+<figure class="viz" aria-label="Interactive valuation calculator with sliders for growth and discount rate">
+  <p class="fig-title">The value machine — Sint-Anna Brewing (€1.25M profit)</p>
+  <p class="fig-sub">Two assumptions in, one value out. Move each slider a little and watch how violently the value reacts.</p>
+  <div class="tool">
+    <div class="slider-row">
+      <div class="sl-lab">Growth of profits<small>how fast will profit grow, forever?</small></div>
+      <input type="range" id="sl-g" min="0" max="7" step="0.5" value="3" aria-label="growth rate percent">
+      <span class="sl-val" id="sl-g-val">3.0%</span>
+    </div>
+    <div class="slider-row">
+      <div class="sl-lab">Return you demand<small>the discount rate — higher risk or higher interest rates = higher demand</small></div>
+      <input type="range" id="sl-r" min="5" max="12" step="0.5" value="8" aria-label="discount rate percent">
+      <span class="sl-val" id="sl-r-val">8.0%</span>
+    </div>
+    <div class="tool-out">
+      <div class="stat"><div class="s-label">company value</div><div class="s-val" id="out-val">€25.0M</div><div class="s-sub">profit ÷ (rate − growth)</div></div>
+      <div class="stat"><div class="s-label">implied fair P/E</div><div class="s-val" id="out-pe">20.0</div><div class="s-sub">years of profit you'd pay</div></div>
+    </div>
+    <div class="val-track"><div class="val-bar" id="out-bar" style="width:20%"></div></div>
+    <div class="tool-warn" id="out-warn">⚠ Growth is almost equal to the demanded return — the formula explodes toward infinity. No company grows faster than its discount rate <em>forever</em>. When you see a valuation that needs assumptions like these, someone is dreaming.</div>
+  </div>
+  <figcaption class="fig-note">Try this experiment: set the rate to 8%, then move growth from 3% to 5%. Value jumps from €25M to €41.7M — <strong>+67% from one percentage point of belief</strong>. Nothing about the brewery changed. Only the story changed. Now you know why analysts disagree so much, and why "the" value of a company doesn't exist — only a <em>range of values for a range of beliefs</em>.</figcaption>
+</figure>
+
+<h2>3. Reading the market's mind — what a P/E secretly says</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Since fair P/E = 1 ÷ (rate − growth), every P/E you see on a screen is a growth belief in disguise — and you can decode it.</div>
+
+<p>Flip the formula around. If the market demands ~8% from stocks, then each P/E level <em>implies</em> a growth expectation:</p>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>P/E you see</th><th>Implied belief (at 8% demanded return)</th><th>Translation</th></tr></thead>
+    <tbody>
+      <tr><td class="num">P/E 8</td><td class="num">growth ≈ −4.5% / yr</td><td>"This business is shrinking and will keep shrinking."</td></tr>
+      <tr><td class="num">P/E 12.5</td><td class="num">growth ≈ 0%</td><td>"Frozen — same profit forever."</td></tr>
+      <tr class="hl"><td class="num">P/E 20</td><td class="num">growth ≈ 3% / yr</td><td>"Grows a little faster than the economy." (Sint-Anna)</td></tr>
+      <tr><td class="num">P/E 33</td><td class="num">growth ≈ 5% / yr</td><td>"A durable winner — must out-grow the economy for decades."</td></tr>
+      <tr><td class="num">P/E 60</td><td class="num">growth ≈ 6.3% / yr, forever</td><td>"A near-miracle. Possible — a handful per generation manage it."</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>This is the decoder ring for the surprise machine from Lesson 1. A stock at P/E 60 isn't "expensive" by decree — it's a <em>promise</em>: profits must compound near-miraculously for decades. If reality delivers merely "very good", the price falls. A stock at P/E 8 is priced for decay; if the business merely <em>survives</em>, the price rises. <strong>Your job as an investor is never "is the P/E high?" — it is "is the promise inside this P/E reasonable?"</strong></p>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #1 — the value trap: cheap for a reason</span>
+  <p>A retail chain trades at P/E 6. "So cheap!" But decode it: P/E 6 implies the market expects profits to shrink ~8% per year — perhaps online shopping is eating it alive. If the market is <em>right</em>, that "cheap" stock is correctly priced or still too expensive. It gets cheaper every year, forever. This is a <dfn>value trap</dfn>.</p>
+  <p>A low multiple is not a bargain — it's a <em>diagnosis to verify</em>. The question is always: "the market expects decline — do I have a real reason to believe the market is wrong?" (Recall Lesson 1: information, interpretation, or patience. Which one do you have here?)</p>
+</div>
+
+<h2>4. The multiples family — five quick rulers</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Multiples are shortcut rulers: price compared to profit, assets, sales, or dividends — each useful somewhere, dangerous somewhere else.</div>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Multiple</th><th>Formula</th><th>Best for</th><th>Danger</th></tr></thead>
+    <tbody>
+      <tr><td><strong>P/E</strong></td><td class="num">price ÷ profit per share</td><td>Stable, profitable companies. Your default ruler.</td><td>Meaningless if profit is tiny, negative, or one-time-inflated (Lesson 3).</td></tr>
+      <tr><td><strong>P/B</strong></td><td class="num">price ÷ equity per share</td><td>Banks, insurers, asset-heavy firms — where the balance sheet IS the business.</td><td>Useless for software/brands: their real assets aren't on the books.</td></tr>
+      <tr><td><strong>P/S</strong></td><td class="num">price ÷ sales per share</td><td>Young companies with no profit yet.</td><td>Sales without profit can be bought at any price — remember TechnoBel (L3).</td></tr>
+      <tr><td><strong>Dividend yield</strong></td><td class="num">dividend ÷ price</td><td>Mature cash-payers; comparing to bond interest.</td><td>A giant yield often means the market expects the dividend to be cut. Judge on NET (L2 tax math).</td></tr>
+      <tr><td><strong>EV/EBITDA</strong></td><td class="num">(market cap + debt − cash) ÷ raw operating earnings</td><td>Comparing firms with different debt levels; used by professionals and buyers of whole companies.</td><td>EBITDA ignores real costs (machines wear out). "Earnings before the bad stuff."</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<p>How professionals actually use these: <strong>relative valuation</strong>. You never judge a multiple alone (Lesson 3's rule) — you compare it three ways:</p>
+<ul>
+  <li><strong>Against peers:</strong> Lotus Bakeries P/E vs. other premium food companies — not vs. banks or software.</li>
+  <li><strong>Against its own history:</strong> is it at the top or bottom of its usual 5-year range? A great company at its historically highest multiple has its greatness <em>more than</em> priced in.</li>
+  <li><strong>Against the decoded promise:</strong> use the table above — is the implied growth actually believable for <em>this</em> business?</li>
+</ul>
+
+<h2>5. Why interest rates move everything — the gravity of valuation</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>The discount rate contains the interest rate — so when central banks raise rates, every valuation on Earth falls, and the "expensive growth" stocks fall hardest.</div>
+
+<p>Look at the formula again: value = profit ÷ (<strong>rate</strong> − growth). Where does your demanded rate come from? It starts from the safe interest rate (what governments pay) plus extra for risk. When central banks raise interest rates, the safe rate rises, so <em>everyone's</em> discount rate rises, so <em>all</em> values mechanically fall — no company did anything wrong. Now watch who gets hurt most:</p>
+
+<div class="steps">
+  <span class="s-label">Rates rise from 6% to 9% — two companies, same profit of €1M</span>
+  <ol>
+    <li><strong>Slow &amp; steady</strong> (growth 1%): value at 6%: <span class="m">1 ÷ (0.06−0.01) = €20.0M</span>. At 9%: <span class="m">1 ÷ 0.08 = €12.5M</span>. Fall: <span class="m">−37%</span>. Painful.</li>
+    <li><strong>Fast grower</strong> (growth 5%): value at 6%: <span class="m">1 ÷ 0.01 = €100M</span>. At 9%: <span class="m">1 ÷ 0.04 = €25M</span>. Fall: <span class="m">−75%</span>. Catastrophic.</li>
+  </ol>
+</div>
+
+<figure class="viz" aria-label="Bar chart comparing value loss of a slow grower and fast grower when rates rise">
+  <p class="fig-title">Same rate rise, very different damage</p>
+  <p class="fig-sub">Interest rates 6% → 9%. Value lost, as % of the starting value.</p>
+  <div class="hbar-row">
+    <div class="lab">Slow &amp; steady company<small>growth 1%/yr</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:44%; background:var(--c-bad)"></div><span class="hbar-val">−37%</span></div>
+  </div>
+  <div class="hbar-row">
+    <div class="lab">Fast-growth company<small>growth 5%/yr</small></div>
+    <div class="hbar-track baseline"><div class="hbar" style="width:89%; background:var(--c-bad)"></div><span class="hbar-val">−75%</span></div>
+  </div>
+  <figcaption class="fig-note">Why the difference? The fast grower's profits live mostly in the <em>far future</em> — and section 1 taught you that far money gets discounted the hardest. This is exactly what happened in 2022: rates jumped, and profitless tech stocks fell 70–80% while boring dividend payers fell far less. <strong>Nothing about the companies changed. The gravity changed.</strong> This is the bridge to Lesson 5 — macro.</figcaption>
+</figure>
+
+<h2>6. The margin of safety — how professionals stay honest</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Because your value estimate is a range, only act when the price is far outside that range — the gap is your protection against your own errors.</div>
+
+<p>You've seen that moving one slider by one point swings the value by 30–70%. So your honest output is never "Sint-Anna is worth €25M" — it is "somewhere between €20M and €33M, if my beliefs about growth are roughly right." What do you do with a range? You demand a <dfn>margin of safety</dfn>: a big gap between price and even the <em>low end</em> of your estimate.</p>
+
+<figure class="viz" aria-label="Diagram of an estimate range with a buy zone below it">
+  <p class="fig-title">The margin of safety, drawn</p>
+  <div class="chartbox">
+    <svg viewBox="0 0 700 190" role="img" aria-label="A price line from 10 to 45 million euros. Your estimate range spans 20 to 33 million. The buy zone sits below 15 million, far under the lowest estimate. A price marker at 24 million sits inside the estimate range where no action is taken.">
+      <line x1="50" y1="110" x2="670" y2="110" stroke="var(--line)" stroke-width="2"/>
+      <g font-family="Consolas, monospace" font-size="12" fill="var(--muted)" text-anchor="middle">
+        <text x="50" y="132">€10M</text><text x="205" y="132">€20M</text><text x="360" y="132">€30M</text><text x="515" y="132">€40M</text>
+      </g>
+      <!-- estimate range band -->
+      <rect x="205" y="78" width="201" height="26" rx="4" fill="var(--good-soft)" stroke="var(--c-good)" stroke-width="1.5" stroke-dasharray="4 3"/>
+      <text x="305" y="68" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">your honest estimate: €20M – €33M</text>
+      <!-- buy zone -->
+      <rect x="50" y="78" width="105" height="26" rx="4" fill="var(--good-soft)"/>
+      <rect x="50" y="78" width="105" height="26" rx="4" fill="none" stroke="var(--c-good)" stroke-width="2"/>
+      <text x="102" y="160" font-size="13" font-weight="600" fill="var(--ink)" text-anchor="middle">buy zone: below ~€15M</text>
+      <path d="M102 140 V 108" stroke="var(--c-good)" stroke-width="1.5"/>
+      <!-- current price marker -->
+      <line x1="267" y1="40" x2="267" y2="110" stroke="var(--c-main)" stroke-width="3"/>
+      <circle cx="267" cy="110" r="5" fill="var(--c-main)" stroke="var(--surface)" stroke-width="2"/>
+      <text x="267" y="30" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">market price: €24M → do nothing</text>
+    </svg>
+  </div>
+  <figcaption class="fig-note">The price sits inside your estimate range → you have no edge, only noise. Action happens only when the price falls <em>far below your lowest honest number</em> — so that even if your growth guess was too optimistic, you still paid less than it's worth. "Do nothing" is the correct output of most valuations. Professionals say no hundreds of times per yes.</figcaption>
+</figure>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #2 — the precision illusion</span>
+  <p>A spreadsheet will happily tell you a company is worth "€47.32 per share". The decimals are a costume. Behind them sit two guessed numbers — growth and rate — and you watched with your own hands how one point of either swings the answer by 30–70%.</p>
+  <p>Rule: valuations are <strong>ranges with reasons</strong>, never points. Anyone quoting a company's value to the cent — analyst, YouTuber, or your own spreadsheet — has confused output formatting with knowledge.</p>
+</div>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #3 — paying any price for a great company</span>
+  <p>"It's an amazing business, so I'll just buy it" — the most expensive sentence in investing after 2021. An amazing business at P/E 60 must deliver near-miracle growth for decades <em>just to justify today's price</em> — greatness is necessary but not sufficient. The company can succeed AND the stock can lose half its value, simply because the promise was even bigger than the success. Great company ≠ great investment. Price decides which.</p>
+</div>
+
+<h2>7. Check yourself</h2>
+<p>Answer first, then click. Use the formula — it answers four of the six.</p>
+<div class="quiz">
+  <details><summary>You'll receive €1,000 in 5 years. Safe rates are 5%. What is that promise worth today, roughly?</summary><p class="answer">€1,000 ÷ 1.05⁵ ≈ €784. Divide by 1.05 five times. Far money is small money — and the higher the rate, the smaller it gets. This one operation is the atom of all valuation.</p></details>
+  <details><summary>Interest rates jump. Why do "exciting growth stocks" fall much harder than boring dividend payers?</summary><p class="answer">Growth stocks' profits live mostly in the far future, and discounting punishes far money hardest when rates rise. In the formula: their (rate − growth) gap is tiny, so a rate increase multiplies through violently (our example: −75% vs −37%). 2022 in one sentence.</p></details>
+  <details><summary>A supermarket trades at P/E 8, a software firm at P/E 25. Which is the better buy?</summary><p class="answer">Unknowable from the numbers alone. P/E 8 prices in decline; P/E 25 prices in solid growth. The right question is which <em>promise</em> is wrong: if the supermarket merely stays flat, it's a bargain; if the software grows slower than believed, it's a loss. Multiples are beliefs, not verdicts — decode, then judge the belief.</p></details>
+  <details><summary>A stock trades at P/E 60. Using the decoder (8% demanded return), what must you believe to buy it — and is that sane?</summary><p class="answer">1 ÷ 60 ≈ 0.0167, so rate − growth ≈ 1.7%, meaning growth ≈ 6.3% per year, forever — roughly triple the long-run economy, for decades. A handful of companies per generation deliver this. Possible? Yes. The default assumption? Never. You are betting on an exception; size the bet like it.</p></details>
+  <details><summary>Your analysis says a company is worth €40–€60 per share. It trades at €52. What do you do?</summary><p class="answer">Nothing. €52 sits inside your honest range — the market's guess and yours are the same guess. You act only with a margin of safety: for this range, interest starts far below €40 (say, under €30). "Do nothing" is the correct output of most valuations you'll ever do.</p></details>
+  <details><summary>A stock has a 9% dividend yield — triple the market. Free money?</summary><p class="answer">Almost never. A giant yield usually means the price already crashed because the market expects the dividend to be cut — the yield is high because the "d" in dividend ÷ price is about to shrink. Plus (Lesson 2) a Belgian investor keeps only ~59–70% of gross dividends after taxes. Decode first: what cut is priced in?</p></details>
+</div>
+
+<h2>8. Key words from this lesson</h2>
+<div class="keyterms">
+  <div><b>Discounting</b> — translating future money into today's money by dividing by (1 + rate) per year.</div>
+  <div><b>Present value</b> — what a future payment is worth today, after discounting.</div>
+  <div><b>Discount rate</b> — the yearly return you demand: safe interest rate + extra for risk.</div>
+  <div><b>DCF</b> — valuing a company by discounting all its future profits and adding them up.</div>
+  <div><b>The shortcut formula</b> — value = profit ÷ (rate − growth). Fair P/E = 1 ÷ (rate − growth).</div>
+  <div><b>Implied expectations</b> — the growth belief hidden inside any price; decode before judging.</div>
+  <div><b>Multiple</b> — a price-to-something ruler: P/E, P/B, P/S, EV/EBITDA, dividend yield.</div>
+  <div><b>Relative valuation</b> — judging multiples vs peers, own history, and the decoded promise.</div>
+  <div><b>Value trap</b> — a stock that looks cheap because the market correctly expects decay.</div>
+  <div><b>Margin of safety</b> — acting only when price is far below your <em>lowest</em> honest estimate.</div>
+  <div><b>Duration (of a stock)</b> — how far in the future its profits live; farther = more rate-sensitive.</div>
+  <div><b>EV</b> — enterprise value: market cap + debt − cash; the price of the <em>whole</em> business.</div>
+</div>
+
+<h2>9. If you remember only three things</h2>
+<div class="steps">
+  <ol>
+    <li><strong>Value = profit ÷ (rate − growth).</strong> One line holds the whole discipline: future profits, translated to today, with rates as gravity and growth as hope.</li>
+    <li><strong>Every price is a promise in disguise.</strong> Decode the implied growth before judging — "cheap" and "expensive" are statements about beliefs, not numbers.</li>
+    <li><strong>Valuation outputs a range, so demand a margin of safety.</strong> Act only far below your lowest honest number. "Do nothing" is the usual right answer.</li>
+  </ol>
+</div>
+
+<h2>10. Homework — decode a real price</h2>
+<div class="homework">
+  <h3>Field exercise (~1 hour) — uses your Lesson 3 numbers</h3>
+  <p>Take the Belgian company you analyzed in Lesson 3 (you have its net profit, and from Lesson 1 its P/E).</p>
+  <ul>
+    <li><strong>Decode the promise:</strong> from its P/E, compute the implied growth at an 8% demanded return: growth ≈ 8% − (1 ÷ P/E × 100). Write it down.</li>
+    <li><strong>Judge the promise:</strong> compare that implied growth to the actual revenue growth you computed in Lesson 3. Is the market's belief modest, fair, or heroic? One sentence.</li>
+    <li><strong>Feel the range:</strong> compute the value with growth one point higher and one point lower than your best guess. Write the range, not the middle.</li>
+    <li><strong>Hunt a value trap:</strong> on any stock screener, find one Belgian or US company with P/E below 8. Read one news story about it and answer: what decline is the market pricing in — and do you see any reason the market is wrong?</li>
+    <li><strong>Play:</strong> ten minutes with the value machine sliders. Find the settings that justify a P/E of 60. Look at them. Remember them.</li>
+  </ul>
+  <p>Bring the decoded growth, your range, and your value-trap candidate. From here on, you never look at a P/E the same way again.</p>
+</div>
+
+<footer>
+  <span>Lesson 4 of 8 · Part 1: Understanding Trading</span>
+  <span>Next: <span class="cmd">start lesson 5</span> — Macro: rates, inflation, and why everything moves together</span>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var PROFIT = 1.25; // €M
+  var slG = document.getElementById("sl-g"), slR = document.getElementById("sl-r");
+  var outVal = document.getElementById("out-val"), outPe = document.getElementById("out-pe");
+  var outBar = document.getElementById("out-bar"), outWarn = document.getElementById("out-warn");
+  var gLab = document.getElementById("sl-g-val"), rLab = document.getElementById("sl-r-val");
+
+  function update() {
+    var g = parseFloat(slG.value) / 100;
+    var r = parseFloat(slR.value) / 100;
+    gLab.textContent = (g * 100).toFixed(1) + "%";
+    rLab.textContent = (r * 100).toFixed(1) + "%";
+    var gap = r - g;
+    if (gap < 0.005) {
+      outVal.textContent = "∞ ?!";
+      outPe.textContent = "∞";
+      outBar.style.width = "100%";
+      outWarn.className = "tool-warn show";
+      return;
+    }
+    outWarn.className = "tool-warn";
+    var val = PROFIT / gap;
+    var pe = 1 / gap;
+    outVal.textContent = "€" + val.toFixed(1) + "M";
+    outPe.textContent = pe.toFixed(1);
+    // bar scale: €125M (g=7,r=8 → gap 1% → 125) as full width
+    outBar.style.width = Math.min(100, val / 125 * 100) + "%";
+  }
+  slG.addEventListener("input", update);
+  slR.addEventListener("input", update);
+  update();
+})();
+</script>
+
+</html>

@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 3 — Reading a Company: Financial Statements Without Pain</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-in: #1baf7a; --c-out: #d03b3b; --c-asset: #2a78d6;
+    --in-soft: rgba(27,175,122,.14); --out-soft: rgba(208,59,59,.12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+      --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+      --shadow: 0 1px 3px rgba(0,0,0,.3);
+      --c-in: #199e70; --c-out: #e66767; --c-asset: #3987e5;
+      --in-soft: rgba(25,158,112,.18); --out-soft: rgba(230,103,103,.15);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --grid: #27302B; --accent: #5CBB95; --accent-soft: #1E3229;
+    --trap: #CE8478; --trap-soft: #33211D; --code-bg: #232C27;
+    --shadow: 0 1px 3px rgba(0,0,0,.3);
+    --c-in: #199e70; --c-out: #e66767; --c-asset: #3987e5;
+    --in-soft: rgba(25,158,112,.18); --out-soft: rgba(230,103,103,.15);
+  }
+  :root[data-theme="light"] {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --grid: #E4E9E5; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --trap: #9C4A3C; --trap-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --shadow: 0 1px 3px rgba(27,36,32,.07);
+    --c-in: #1baf7a; --c-out: #d03b3b; --c-asset: #2a78d6;
+    --in-soft: rgba(27,175,122,.14); --out-soft: rgba(208,59,59,.12);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    line-height: 1.75; margin: 0; padding: 0 20px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, "Times New Roman", serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, "Cascadia Mono", monospace; }
+
+  header { padding: 52px 0 30px; border-bottom: 2px solid var(--ink); margin-bottom: 8px; }
+  .eyebrow { font-family: Consolas, "Cascadia Mono", monospace; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 60ch; }
+  .lesson-meta { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 20px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18.5px; margin: 30px 0 4px; }
+  p { margin: 12px 0; font-size: 16px; }
+  li { font-size: 16px; margin: 6px 0; }
+  dfn { font-style: normal; font-weight: 600; color: var(--accent); }
+
+  .idea { background: var(--accent-soft); border-radius: 6px; padding: 13px 18px; margin: 16px 0 20px; font-size: 16px; }
+  .idea .i-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 3px; }
+
+  .steps { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 22px; margin: 20px 0; box-shadow: var(--shadow); }
+  .steps .s-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); font-weight: 700; display: block; margin-bottom: 6px; }
+  .steps ol { margin: 6px 0 0; padding-left: 22px; }
+  .steps li { font-size: 15px; margin: 9px 0; }
+  .steps .m { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  figure.viz { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); margin: 26px 0; padding: 20px 22px 16px; }
+  .fig-title { font-weight: 600; font-size: 15px; margin: 0 0 2px; }
+  .fig-sub { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+  .fig-note { font-size: 12.5px; color: var(--muted); margin: 12px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+  .legend .chip { display: inline-flex; align-items: center; gap: 6px; }
+  .legend .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* three documents cards */
+  .docs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 6px; }
+  .doc { background: var(--code-bg); border-radius: 6px; padding: 14px 16px; }
+  .doc .d-name { font-weight: 600; font-size: 14.5px; display: block; }
+  .doc .d-q { font-family: Cambria, Georgia, serif; font-style: italic; font-size: 14.5px; color: var(--accent); display: block; margin: 4px 0 6px; }
+  .doc .d-like { font-size: 12.5px; color: var(--muted); display: block; }
+
+  /* €100 stacked bar */
+  .stack-row { display: grid; grid-template-columns: 120px 1fr; align-items: center; gap: 12px; margin: 10px 0; }
+  .stack-row .lab { font-size: 13px; text-align: right; line-height: 1.3; }
+  .stack-track { display: flex; gap: 2px; align-items: center; height: 26px; border-left: 2px solid var(--line); }
+  .seg { height: 26px; min-width: 2px; }
+  .seg.last { border-radius: 0 4px 4px 0; }
+  .seg-inlabel { font-size: 11px; color: #fff; font-family: Consolas, "Cascadia Mono", monospace; padding-left: 6px; line-height: 26px; white-space: nowrap; overflow: hidden; display: block; }
+  .seg-under { display: grid; grid-template-columns: 120px 1fr; gap: 12px; margin-top: 4px; }
+  .seg-under .names { display: flex; gap: 2px; font-size: 11px; color: var(--muted); font-family: Consolas, "Cascadia Mono", monospace; }
+
+  /* balance sheet towers */
+  .towers { display: flex; gap: 26px; justify-content: center; margin-top: 8px; flex-wrap: wrap; }
+  .tower { width: 200px; }
+  .tower .t-title { text-align: center; font-weight: 600; font-size: 13.5px; margin-bottom: 8px; }
+  .tower .t-stack { display: flex; flex-direction: column; gap: 2px; height: 300px; }
+  .tseg { border-radius: 4px; position: relative; display: flex; align-items: center; justify-content: center; flex-direction: column; color: #fff; text-align: center; }
+  .tseg .ts-name { font-size: 12px; font-weight: 600; line-height: 1.3; }
+  .tseg .ts-val { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; opacity: .9; }
+  .tower .t-total { text-align: center; font-family: Consolas, "Cascadia Mono", monospace; font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .equals { align-self: center; font-size: 28px; font-family: Cambria, Georgia, serif; color: var(--muted); }
+
+  /* cash flow panels */
+  .cf-panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .cf-panel { border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; }
+  .cf-panel .p-title { font-size: 13.5px; font-weight: 600; margin-bottom: 8px; }
+  .cf-row { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 8px; margin: 7px 0; }
+  .cf-row .lab { font-size: 12px; color: var(--muted); text-align: right; line-height: 1.25; }
+  .cf-track { position: relative; height: 20px; }
+  .cf-track::before { content: ""; position: absolute; left: 50%; top: -2px; bottom: -2px; border-left: 2px solid var(--line); }
+  .cf-bar { position: absolute; top: 0; height: 20px; }
+  .cf-bar.pos { left: 50%; background: var(--c-in); border-radius: 0 4px 4px 0; }
+  .cf-bar.neg { right: 50%; background: var(--c-out); border-radius: 4px 0 0 4px; }
+  .cf-val { position: absolute; top: 1px; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cf-verdict { font-size: 12.5px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+
+  /* the duel */
+  .duel { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 6px; }
+  .duel-card { border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; }
+  .duel-card .dc-name { font-weight: 700; font-size: 15px; }
+  .duel-card table { font-size: 13px; margin-top: 8px; }
+  .duel-card td { padding: 5px 8px; }
+  .duel-reveal { margin-top: 14px; }
+  .duel-answer { display: none; background: var(--accent-soft); border-radius: 6px; padding: 14px 18px; margin-top: 12px; font-size: 14.5px; }
+  .duel-answer.show { display: block; }
+
+  button.viz-btn { font: 600 13.5px "Segoe UI", system-ui, sans-serif; color: var(--bg); background: var(--accent); border: none; border-radius: 6px; padding: 9px 16px; cursor: pointer; }
+  button.viz-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .example { background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 18px 22px; margin: 22px 0; box-shadow: var(--shadow); }
+  .example .ex-label, .trap .ex-label { font-family: Consolas, "Cascadia Mono", monospace; font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700; display: block; margin-bottom: 8px; }
+  .example .ex-label { color: var(--accent); }
+  .example p, .example li { font-size: 15px; }
+  .example p:last-child { margin-bottom: 0; }
+  .trap { background: var(--trap-soft); border: 1px solid var(--line); border-left: 3px solid var(--trap); border-radius: 0 6px 6px 0; padding: 16px 22px; margin: 22px 0; }
+  .trap .ex-label { color: var(--trap); }
+  .trap p { font-size: 15px; margin: 8px 0 0; }
+  .trap p:first-of-type { margin-top: 0; }
+
+  .tablebox { overflow-x: auto; margin: 20px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 14.5px; }
+  th { text-align: left; font-family: Consolas, "Cascadia Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); font-weight: 600; }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num { font-family: Consolas, "Cascadia Mono", monospace; white-space: nowrap; }
+
+  .quiz details { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; box-shadow: var(--shadow); }
+  .quiz summary { padding: 13px 18px; cursor: pointer; font-size: 15px; font-weight: 600; list-style: none; }
+  .quiz summary::-webkit-details-marker { display: none; }
+  .quiz summary::before { content: "Q · "; font-family: Consolas, "Cascadia Mono", monospace; color: var(--accent); font-weight: 700; }
+  .quiz summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .quiz .answer { padding: 12px 18px 15px; font-size: 14.5px; color: var(--muted); border-top: 1px dashed var(--line); margin: 0; }
+
+  .keyterms { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-top: 18px; }
+  .keyterms > div { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 12px 16px; font-size: 14px; }
+  .keyterms b { color: var(--accent); }
+
+  .homework { background: var(--accent-soft); border-radius: 8px; padding: 22px 26px; margin-top: 24px; }
+  .homework h3 { margin-top: 0; }
+  .homework p, .homework li { font-size: 15px; }
+
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  .cmd { font-family: Consolas, "Cascadia Mono", monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; color: var(--ink); white-space: nowrap; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Part 1 · Understanding Trading · Lesson 3 of 8</div>
+  <h1>Reading a Company: Financial Statements Without Pain</h1>
+  <p class="subtitle">Lesson 1 taught you that in the long run, profits pull the price like gravity. This lesson teaches you where those profit numbers come from: the three documents every company must publish, how to read them in fifteen minutes, and how to spot the companies that are lying.</p>
+  <div class="lesson-meta"><span>reading: ~45 min</span><span>homework: ~1.5 hrs</span><span>prerequisite: Lessons 1–2</span><span>interactive: yes — one detective game</span></div>
+</header>
+
+<h2>1. Three documents, three questions</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Everything about a company's money fits in three documents, and each one answers exactly one question.</div>
+
+<p>Think about your own money for a moment. If a friend asked "how are you doing financially?", a complete answer has three parts:</p>
+<ul>
+  <li>"How much did you <strong>earn and spend</strong> this year?" — your salary and your expenses.</li>
+  <li>"What do you <strong>own and owe</strong> right now?" — your apartment, your savings, your car loan.</li>
+  <li>"What actually <strong>moved through your bank account</strong>?" — the real cash in and out.</li>
+</ul>
+<p>Companies answer the same three questions with three official documents, published every year (and in shorter form every quarter):</p>
+
+<figure class="viz" aria-label="The three financial statements as cards">
+  <p class="fig-title">The three statements</p>
+  <div class="docs">
+    <div class="doc">
+      <span class="d-name">Income statement</span>
+      <span class="d-q">"Did the company earn money this period?"</span>
+      <span class="d-like">Like your yearly overview: salary in, costs out, what's left.</span>
+    </div>
+    <div class="doc">
+      <span class="d-name">Balance sheet</span>
+      <span class="d-q">"What does it own and owe, today?"</span>
+      <span class="d-like">Like a photo of your wealth: apartment, savings, minus the mortgage.</span>
+    </div>
+    <div class="doc">
+      <span class="d-name">Cash flow statement</span>
+      <span class="d-q">"Where did real cash actually move?"</span>
+      <span class="d-like">Like your bank statement: only real money counts, no promises.</span>
+    </div>
+  </div>
+  <figcaption class="fig-note">The income statement is a <em>movie</em> of one year. The balance sheet is a <em>photo</em> of one day. The cash flow statement is the <em>lie detector</em> — you'll see why in section 4.</figcaption>
+</figure>
+
+<p>To learn them, we'll use one company through the whole lesson: <strong>Sint-Anna Brewing</strong> — our fictional Belgian brewery from the order book, now grown up. It sells €10 million of beer per year. Real company statements have more lines, but the skeleton is always exactly this.</p>
+
+<h2>2. The income statement — the story of €100 of beer</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>The income statement starts with everything the company sold, then subtracts costs layer by layer, until what's left is profit.</div>
+
+<p>Read every income statement top to bottom, as money flowing downhill. The easiest way: follow what happens to <strong>€100 of sales</strong>:</p>
+
+<div class="steps">
+  <span class="s-label">Sint-Anna Brewing — €100 of beer sold, step by step</span>
+  <ol>
+    <li><dfn>Revenue</dfn> (also called "sales" or "turnover"): customers paid <span class="m">€100</span> for beer. This is the top line — before ANY costs.</li>
+    <li>Making the beer costs money — barley, hops, bottles, the brewery workers. This is <dfn>cost of goods sold</dfn>: <span class="m">−€40</span>. What remains, <span class="m">€60</span>, is <dfn>gross profit</dfn>.</li>
+    <li>Running the company also costs money — office salaries, marketing, trucks, accountants: <span class="m">−€40</span>. What remains, <span class="m">€20</span>, is <dfn>operating profit</dfn>: what the <em>business itself</em> earns.</li>
+    <li>The bank wants interest on the company's loans: <span class="m">−€3</span>.</li>
+    <li>The government wants tax: <span class="m">−€4.50</span>.</li>
+    <li>What survives is <dfn>net profit</dfn>: <span class="m">€12.50</span>. This is "the profit" from Lesson 1 — the number behind EPS and P/E.</li>
+  </ol>
+</div>
+
+<figure class="viz" aria-label="Stacked bar showing how 100 euros of revenue is split between costs and profit">
+  <p class="fig-title">Where €100 of revenue goes</p>
+  <p class="fig-sub">Every red piece is money taken by someone. The green piece is what shareholders keep.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-out)"></span>costs (money out)</span>
+    <span class="chip"><span class="sw" style="background:var(--c-in)"></span>net profit (yours)</span>
+  </div>
+  <div class="stack-row">
+    <div class="lab">€100 of sales</div>
+    <div class="stack-track" style="flex:1">
+      <div class="seg" style="width:40%; background:var(--c-out)"><span class="seg-inlabel">making the beer 40</span></div>
+      <div class="seg" style="width:40%; background:var(--c-out)"><span class="seg-inlabel">running the company 40</span></div>
+      <div class="seg" style="width:3%; background:var(--c-out)"></div>
+      <div class="seg" style="width:4.5%; background:var(--c-out)"></div>
+      <div class="seg last" style="width:12.5%; background:var(--c-in)"><span class="seg-inlabel">12.5</span></div>
+    </div>
+  </div>
+  <div class="seg-under">
+    <div></div>
+    <div class="names"><span style="width:40%"></span><span style="width:40%"></span><span style="width:3%">interest 3</span><span style="width:4.5%">&nbsp;· tax 4.5</span></div>
+  </div>
+  <figcaption class="fig-note">These percentages have names: gross margin <span class="mono">60%</span> (100−40), operating margin <span class="mono">20%</span>, net margin <span class="mono">12.5%</span>. A <dfn>margin</dfn> is simply "how many cents of each €1 of sales survive to this level". Margins let you compare a €10M brewery with a €100B giant — size cancels out.</figcaption>
+</figure>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #1 — comparing margins across different businesses</span>
+  <p>A supermarket with a 2% net margin can be excellent — supermarkets sell enormous volumes with tiny margins. A software company with a 15% margin might be <em>weak</em> — its rivals make 30%. Margins only mean something <strong>compared to similar companies, and compared to the same company's own past</strong>. A number alone is never good or bad.</p>
+</div>
+
+<h2>3. The balance sheet — the photo of what it owns and owes</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Everything a company owns was paid for with either borrowed money or the owners' money — so owns = owed + owners', always, to the cent.</div>
+
+<p>Start with something you know. Your friend "owns" a €300,000 apartment — but €200,000 of mortgage is still unpaid. What is truly hers? <span class="mono">€300,000 − €200,000 = €100,000</span>. Three words describe this:</p>
+<ul>
+  <li><dfn>Assets</dfn> — everything owned: the apartment (€300,000).</li>
+  <li><dfn>Liabilities</dfn> — everything owed: the mortgage (€200,000).</li>
+  <li><dfn>Equity</dfn> — what's truly yours after debts: €100,000.</li>
+</ul>
+<p>A balance sheet is exactly this, for a company, on one specific day. Here is Sint-Anna Brewing's — drawn as two towers that are <em>always the same height</em>:</p>
+
+<figure class="viz" aria-label="Balance sheet shown as two equal towers: assets on the left, liabilities plus equity on the right">
+  <p class="fig-title">Sint-Anna Brewing — balance sheet as two towers</p>
+  <p class="fig-sub">Left: what it owns. Right: who paid for it. The towers are always exactly equal — that's why it's called a BALANCE sheet.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-asset)"></span>assets (owned)</span>
+    <span class="chip"><span class="sw" style="background:var(--c-out)"></span>liabilities (owed)</span>
+    <span class="chip"><span class="sw" style="background:var(--c-in)"></span>equity (the owners' part)</span>
+  </div>
+  <div class="towers">
+    <div class="tower">
+      <div class="t-title">What it owns</div>
+      <div class="t-stack">
+        <div class="tseg" style="flex:1; background:var(--c-asset); opacity:.65"><span class="ts-name">Cash</span><span class="ts-val">€1.0M</span></div>
+        <div class="tseg" style="flex:1.5; background:var(--c-asset); opacity:.78"><span class="ts-name">Beer in stock</span><span class="ts-val">€1.5M</span></div>
+        <div class="tseg" style="flex:3.5; background:var(--c-asset); opacity:.9"><span class="ts-name">Brewing equipment</span><span class="ts-val">€3.5M</span></div>
+        <div class="tseg" style="flex:6; background:var(--c-asset)"><span class="ts-name">Buildings</span><span class="ts-val">€6.0M</span></div>
+      </div>
+      <div class="t-total">total assets €12.0M</div>
+    </div>
+    <div class="equals">=</div>
+    <div class="tower">
+      <div class="t-title">Who paid for it</div>
+      <div class="t-stack">
+        <div class="tseg" style="flex:1; background:var(--c-out); opacity:.75"><span class="ts-name">Unpaid supplier bills</span><span class="ts-val">€1.0M</span></div>
+        <div class="tseg" style="flex:5; background:var(--c-out)"><span class="ts-name">Bank loan</span><span class="ts-val">€5.0M</span></div>
+        <div class="tseg" style="flex:6; background:var(--c-in)"><span class="ts-name">Equity — the shareholders' part</span><span class="ts-val">€6.0M</span></div>
+      </div>
+      <div class="t-total">€6.0M owed + €6.0M owners' = €12.0M</div>
+    </div>
+  </div>
+  <figcaption class="fig-note">When you buy a share of Sint-Anna, you buy a piece of the <strong>green block</strong> — not of the whole left tower. The bank's €5M gets paid first, always. That is why debt matters so much to shareholders.</figcaption>
+</figure>
+
+<p>Two quick health checks you can compute from any balance sheet:</p>
+<div class="steps">
+  <span class="s-label">Balance sheet health checks — Sint-Anna's numbers</span>
+  <ol>
+    <li><dfn>Debt-to-equity</dfn>: borrowed money ÷ owners' money = <span class="m">€5.0M ÷ €6.0M ≈ 0.8</span>. Below ~1 is usually comfortable; above ~2, the bank owns more of the company's future than the shareholders do. (Sector matters, as always.)</li>
+    <li><dfn>ROE</dfn> (return on equity): net profit ÷ equity = <span class="m">€1.25M ÷ €6.0M ≈ 21%</span>. Meaning: the owners' money grows ~21% per year inside the business. Consistently above ~15% is a good business. But careful — more debt makes ROE look better while making the company riskier. Always read ROE and debt <em>together</em>.</li>
+  </ol>
+</div>
+
+<h2>4. The cash flow statement — the lie detector</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Profit is an opinion, cash is a fact — and the cash flow statement is where the facts live.</div>
+
+<p>This surprises everyone at first: <strong>a company can report a profit while its bank account goes down.</strong> How? Watch:</p>
+
+<div class="steps">
+  <span class="s-label">How profit and cash separate — two true stories from the brewery</span>
+  <ol>
+    <li>Sint-Anna sells <span class="m">€500,000</span> of beer to a hotel chain, with payment due in 90 days. Accounting rules say: the sale happened, so it counts as revenue and profit <em>today</em>. But the bank account received <span class="m">€0</span>. Profit went up; cash didn't.</li>
+    <li>Sint-Anna buys a new brewing machine for <span class="m">€800,000</span>, paid in cash today. Accounting rules say: the machine will work ~10 years, so the cost is spread over 10 years on paper (<span class="m">€80,000</span>/year — this spreading is called <dfn>depreciation</dfn>). Profit barely moved this year; the bank account lost €800,000 at once.</li>
+  </ol>
+</div>
+
+<p>Neither of these is cheating — the rules are sensible. But they create a gap between "profit" (a calculated opinion) and "cash" (a bank fact). Honest companies show both. Dishonest companies show beautiful profits while cash quietly bleeds — and the cash flow statement is where you catch them. It has three parts:</p>
+
+<figure class="viz" aria-label="Two panels comparing healthy and warning cash flow patterns">
+  <p class="fig-title">The three cash flows — a healthy company vs. a company to fear</p>
+  <p class="fig-sub">Bars to the right: cash coming in. Bars to the left: cash going out. Same labels, opposite stories.</p>
+  <div class="legend">
+    <span class="chip"><span class="sw" style="background:var(--c-in)"></span>cash in</span>
+    <span class="chip"><span class="sw" style="background:var(--c-out)"></span>cash out</span>
+  </div>
+  <div class="cf-panels">
+    <div class="cf-panel">
+      <div class="p-title">✓ Sint-Anna Brewing (healthy)</div>
+      <div class="cf-row"><div class="lab">Operations<br>(the business itself)</div>
+        <div class="cf-track"><div class="cf-bar pos" style="width:36%"></div><span class="cf-val" style="left:88%">+€1.8M</span></div></div>
+      <div class="cf-row"><div class="lab">Investing<br>(machines, buildings)</div>
+        <div class="cf-track"><div class="cf-bar neg" style="width:20%"></div><span class="cf-val" style="right:72%">−€1.0M</span></div></div>
+      <div class="cf-row"><div class="lab">Financing<br>(loans, dividends)</div>
+        <div class="cf-track"><div class="cf-bar neg" style="width:10%"></div><span class="cf-val" style="right:62%">−€0.5M</span></div></div>
+      <div class="cf-verdict">The business <strong>generates</strong> cash, invests part of it in growth, and returns the rest (paying down loans, paying dividends). The healthiest pattern that exists: <span class="mono">+ / − / −</span>.</div>
+    </div>
+    <div class="cf-panel">
+      <div class="p-title">⚠ "GrowthCo" (be afraid)</div>
+      <div class="cf-row"><div class="lab">Operations<br>(the business itself)</div>
+        <div class="cf-track"><div class="cf-bar neg" style="width:16%"></div><span class="cf-val" style="right:68%">−€0.8M</span></div></div>
+      <div class="cf-row"><div class="lab">Investing<br>(machines, buildings)</div>
+        <div class="cf-track"><div class="cf-bar neg" style="width:30%"></div><span class="cf-val" style="right:82%">−€1.5M</span></div></div>
+      <div class="cf-row"><div class="lab">Financing<br>(loans, dividends)</div>
+        <div class="cf-track"><div class="cf-bar pos" style="width:50%"></div><span class="cf-val" style="left:102%">+€2.5M</span></div></div>
+      <div class="cf-verdict">The business <strong>burns</strong> cash and survives only by borrowing more every year: <span class="mono">− / − / +</span>. Its "profit" may look fine. The moment banks say no, it dies. (Young companies can look like this legitimately for a while — but then you must understand exactly why, and for how long.)</div>
+    </div>
+  </div>
+  <figcaption class="fig-note">The single most useful check in this whole lesson: compare <strong>operating cash flow</strong> to <strong>net profit</strong>, over several years. In an honest, healthy company they travel together (cash flow usually a bit higher). Profit growing while operating cash flow shrinks = the loudest warning in accounting.</figcaption>
+</figure>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #2 — believing the profit number without the cash check</span>
+  <p>Wirecard, a German payment company worth €24 billion, reported beautiful growing profits for years. In 2020 it admitted that <strong>€1.9 billion of its cash did not exist</strong>. The profits were paper. People who read only income statements lost everything; people who noticed that reported profits never matched the cash flows had asked the right question years earlier.</p>
+  <p>Your rule, forever: <strong>never judge a company by its profit without looking at its operating cash flow.</strong> Profit is an opinion. Cash is a fact.</p>
+</div>
+
+<h2>5. Play detective — which company went bankrupt?</h2>
+<p>Two companies, five years of real patterns (simplified numbers). Both reported growing profits every single year. Read both cards slowly, decide, then reveal.</p>
+
+<figure class="viz" aria-label="Interactive comparison of two companies, one of which went bankrupt">
+  <div class="duel">
+    <div class="duel-card">
+      <span class="dc-name">Company A — "Flanders Foods"</span>
+      <table>
+        <tr><td>Profit growth</td><td class="num">+8% per year</td></tr>
+        <tr><td>Operating cash flow</td><td class="num">≈ 1.1 × profit, every year</td></tr>
+        <tr><td>Debt-to-equity</td><td class="num">0.6 → 0.5 (falling)</td></tr>
+        <tr><td>Dividend</td><td class="num">paid in cash, 12 years straight</td></tr>
+        <tr><td>Headlines</td><td>"boring", "slow", "nothing new"</td></tr>
+      </table>
+    </div>
+    <div class="duel-card">
+      <span class="dc-name">Company B — "TechnoBel"</span>
+      <table>
+        <tr><td>Profit growth</td><td class="num">+25% per year</td></tr>
+        <tr><td>Operating cash flow</td><td class="num">negative, 3 years in a row</td></tr>
+        <tr><td>Debt-to-equity</td><td class="num">0.7 → 2.9 (tripled)</td></tr>
+        <tr><td>Dividend</td><td class="num">none — "we reinvest everything"</td></tr>
+        <tr><td>Headlines</td><td>"record revenue!", "the Belgian success story"</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="duel-reveal">
+    <button class="viz-btn" id="btn-duel" type="button">Reveal which one collapsed</button>
+    <div class="duel-answer" id="duel-answer">
+      <strong>Company B collapsed within two years.</strong> Its "profits" existed only on paper: customers who never paid, sales recorded early, costs pushed into the future. The cash flow statement told the truth the whole time — the business consumed cash every year and lived on borrowed money (the <span class="mono">− / − / +</span> pattern). When banks stopped lending, there was no cash to pay salaries. Meanwhile "boring" Company A quietly compounded, its profit backed by real cash every single year.<br><br>
+      You just did, in three minutes, what most people who lost money on Wirecard never did. This exact check — <em>does profit convert to cash?</em> — will later become one line of code in your system, run automatically over every company in your universe.
+    </div>
+  </div>
+</figure>
+
+<h2>6. The beginner's toolkit — five numbers and where to find them</h2>
+<div class="idea"><span class="i-label">The idea in one sentence</span>Five numbers, always judged against the sector and the company's own history, answer "is this a good business?" faster than any news article.</div>
+
+<div class="tablebox">
+  <table>
+    <thead><tr><th>Number</th><th>Formula</th><th>Question it answers</th><th>Rough guide*</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Revenue growth</strong></td><td class="num">this yr ÷ last yr − 1</td><td>Is the business getting bigger?</td><td class="num">steady &gt; spectacular</td></tr>
+      <tr><td><strong>Net margin</strong></td><td class="num">net profit ÷ revenue</td><td>How much of each €1 of sales survives?</td><td class="num">vs. sector only</td></tr>
+      <tr><td><strong>ROE</strong></td><td class="num">net profit ÷ equity</td><td>How fast does owners' money grow inside the business?</td><td class="num">&gt;15% good, check debt</td></tr>
+      <tr><td><strong>Debt-to-equity</strong></td><td class="num">debt ÷ equity</td><td>Who really owns this company's future?</td><td class="num">&lt;1 comfortable</td></tr>
+      <tr><td><strong>Cash conversion</strong></td><td class="num">operating CF ÷ net profit</td><td>Is the profit real?</td><td class="num">≈1 or more, sustained</td></tr>
+    </tbody>
+  </table>
+</div>
+<p style="font-size:13px; color:var(--muted)">*Rough guides for a first filter — every sector has its own normal ranges. Lesson 4 (valuation) builds on these five.</p>
+
+<p>Where the documents live:</p>
+<ul>
+  <li><strong>US companies:</strong> every listed company must file a yearly <dfn>10-K</dfn> (the full annual report) and quarterly <dfn>10-Q</dfn>s on <span class="mono">sec.gov/edgar</span> — free, complete, searchable. The three statements are in the section called "Financial Statements".</li>
+  <li><strong>Belgian companies:</strong> the annual report is on the company's own "Investor Relations" page. Additionally — and almost nobody uses this — <em>every</em> Belgian company, listed or not, must file annual accounts at the <dfn>NBB Balance Sheet Centre</dfn> (Balanscentrale / Centrale des bilans), publicly accessible. This is the under-fished data source from our master plan, and your future agents will read it automatically.</li>
+</ul>
+
+<div class="trap">
+  <span class="ex-label">Beginner trap #3 — the "record profit" that happened only once</span>
+  <p>A company sells its headquarters building and books a €50M gain. This year's net profit doubles! The headline says "record profit". But the company can't sell its headquarters again next year — this is a <dfn>one-time gain</dfn>, not the business improving.</p>
+  <p>Check: annual reports separate "operating" results from one-time items. When profit jumps suddenly, always ask: <em>did the business improve, or did something unrepeatable happen?</em> Operating profit, not net profit, is the line that tells you how the actual business is doing.</p>
+</div>
+
+<h2>7. Check yourself</h2>
+<p>Answer first, then click. All six are patterns you will meet in real annual reports.</p>
+<div class="quiz">
+  <details><summary>A company reports rising profit for 3 years, but its operating cash flow is negative all 3 years. What does this suggest?</summary><p class="answer">The profits may exist only on paper: customers who haven't paid, aggressive accounting, costs pushed forward. Real, healthy profit turns into cash within a reasonable time. Persistent profit-without-cash is the single loudest warning in accounting — it was visible for years at Wirecard and at our fictional TechnoBel.</p></details>
+  <details><summary>A company owns €300M of assets and owes €200M. What is its equity, and what exactly do you buy when you buy its shares?</summary><p class="answer">Equity = €300M − €200M = €100M. Buying a share buys a piece of that €100M — not of the €300M. Lenders get paid first, always. That's why two companies with identical assets can be completely different investments if one carries triple the debt.</p></details>
+  <details><summary>The brewery sells €500,000 of beer to a hotel chain, payment due in 90 days. What happens to profit today? What happens to cash today?</summary><p class="answer">Profit goes up today (the sale is recorded when it's made). Cash: nothing — €0 arrived. This is the fundamental gap between the income statement (opinions and rules) and the cash flow statement (bank facts). Neither is wrong; you must read both.</p></details>
+  <details><summary>A supermarket has a 2% net margin. A software company has 15%. Which is the weaker business?</summary><p class="answer">You cannot tell — margins are only meaningful within a sector. 2% can be excellent for supermarkets (huge volume, thin margins by nature); 15% could be poor for software if competitors earn 30%. Compare to similar companies and to the same company's own history, never across sectors.</p></details>
+  <details><summary>Company X has ROE of 25%. Company Y has ROE of 15%. X carries debt-to-equity of 3.0; Y carries 0.3. Which would you rather own long term?</summary><p class="answer">Usually Y. Debt inflates ROE: borrowing shrinks the equity base, so the same profit divided by less equity gives a prettier percentage — while making the company fragile. X's 25% is partly a debt trick; one bad year and the bank owns the conversation. Always read ROE together with debt.</p></details>
+  <details><summary>A company's net profit doubled this year. Before celebrating, what two questions do you ask?</summary><p class="answer">First: was it the business, or a one-time item (sold a building, legal settlement, accounting change)? Check operating profit. Second: did cash follow — does operating cash flow confirm the jump? If both answers are good, then celebrate.</p></details>
+</div>
+
+<h2>8. Key words from this lesson</h2>
+<div class="keyterms">
+  <div><b>Revenue</b> — everything customers paid this period. The top line, before all costs.</div>
+  <div><b>Gross / operating / net profit</b> — what survives after production costs / after running costs / after everything.</div>
+  <div><b>Margin</b> — a profit level as % of revenue. Lets you compare companies of any size.</div>
+  <div><b>Asset</b> — anything the company owns: cash, stock, machines, buildings.</div>
+  <div><b>Liability</b> — anything the company owes: loans, unpaid bills.</div>
+  <div><b>Equity</b> — assets minus liabilities: the part that truly belongs to shareholders.</div>
+  <div><b>Debt-to-equity</b> — borrowed money ÷ owners' money. Above ~2 = the bank is the real boss.</div>
+  <div><b>ROE</b> — net profit ÷ equity: how fast owners' money grows inside the business.</div>
+  <div><b>Depreciation</b> — spreading a big purchase over its working years on paper.</div>
+  <div><b>Operating cash flow</b> — real cash the business itself generated. The lie detector.</div>
+  <div><b>One-time gain</b> — profit from something unrepeatable. Not the business improving.</div>
+  <div><b>10-K / annual report</b> — the full yearly document; on EDGAR (US) or the company's IR page (BE).</div>
+</div>
+
+<h2>9. If you remember only three things</h2>
+<div class="steps">
+  <ol>
+    <li><strong>Three documents, three questions.</strong> Income statement: did it earn? Balance sheet: what does it own and owe? Cash flow: did real money move? Fifteen minutes with these beats any headline.</li>
+    <li><strong>Profit is an opinion, cash is a fact.</strong> Never trust a profit number that operating cash flow doesn't confirm, year after year.</li>
+    <li><strong>No number means anything alone.</strong> Every margin, every ratio: compare to the sector, and to the company's own last five years. Trends beat snapshots.</li>
+  </ol>
+</div>
+
+<h2>10. Homework — read a real annual report (the easy way)</h2>
+<div class="homework">
+  <h3>Field exercise (~1.5 hours)</h3>
+  <p>Take the Belgian company from your Lesson 1 homework (Lotus Bakeries, Melexis, Kinepolis — any of them). Go to its website → "Investors" → download the latest annual report. Don't read it cover to cover — hunt for exactly these numbers:</p>
+  <ul>
+    <li>From the <strong>income statement</strong>: revenue and net profit, this year and last year. Compute: revenue growth and net margin.</li>
+    <li>From the <strong>balance sheet</strong>: total equity and total financial debt. Compute: debt-to-equity and ROE.</li>
+    <li>From the <strong>cash flow statement</strong>: operating cash flow. Compute: cash conversion = operating CF ÷ net profit.</li>
+    <li>Then write <strong>three sentences</strong>, one per statement: Does it earn money? Is it safely financed? Does the profit convert to real cash?</li>
+  </ul>
+  <p><strong>Bonus (10 min):</strong> open <span class="mono">sec.gov/edgar</span>, search "Microsoft", open the latest 10-K, and just <em>find</em> the income statement inside it. You don't need to read it — you need to lose your fear of the document. It's the same three statements, just longer.</p>
+  <p>Bring your five computed numbers and your three sentences. That's a real company analysis — your first.</p>
+</div>
+
+<footer>
+  <span>Lesson 3 of 8 · Part 1: Understanding Trading</span>
+  <span>Next: <span class="cmd">start lesson 4</span> — Valuation: what is a company actually worth?</span>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var btn = document.getElementById("btn-duel");
+  btn.addEventListener("click", function () {
+    document.getElementById("duel-answer").className = "duel-answer show";
+    btn.disabled = true;
+    btn.textContent = "Revealed";
+  });
+})();
+</script>
+
+</html>
