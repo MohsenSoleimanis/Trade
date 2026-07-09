@@ -40,6 +40,15 @@ def constitution() -> dict:
     return {"signed": c.signed, **c.model_dump(mode="json")}
 
 
+@app.get("/api/vault/status")
+def vault_status() -> dict:
+    """Phase 1: vault health for the UI — a vault you can't see is a vault
+    you won't notice breaking."""
+    from dewaag.vault.store import vault_status as _status
+
+    return _status()
+
+
 @app.get("/", response_class=HTMLResponse)
 def home() -> str:
     c = load_constitution()
