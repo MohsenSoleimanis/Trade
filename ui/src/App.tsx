@@ -4,6 +4,7 @@ import { Company } from "./pages/Company";
 import { Dashboard } from "./pages/Dashboard";
 import { Research } from "./pages/Research";
 import { RiskConsole } from "./pages/RiskConsole";
+import { Screener } from "./pages/Screener";
 import { TradingDesk } from "./pages/TradingDesk";
 
 function useRoute(): string {
@@ -19,7 +20,7 @@ function useRoute(): string {
 const MODULES: [string, string, string][] = [
   ["Dashboard", "/", ""],
   ["Research", "/research", ""],
-  ["Screener", "", "ph 5"],
+  ["Screener", "/screener", ""],
   ["Risk Console", "/risk", ""],
   ["Trading Desk", "/desk", ""],
   ["Backtest Lab", "", "ph 4"],
@@ -32,6 +33,7 @@ export function App() {
   let page: JSX.Element;
   if (route.startsWith("/company/")) page = <Company symbol={route.split("/")[2]} />;
   else if (route === "/research") page = <Research />;
+  else if (route === "/screener") page = <Screener />;
   else if (route === "/risk") page = <RiskConsole />;
   else if (route.startsWith("/desk")) page = <TradingDesk route={route} />;
   else page = <Dashboard />;

@@ -129,6 +129,10 @@ def company(symbol: str, range: str = "5y") -> dict:
     chart = [{"date": str(d.date()), "value": round(float(v), 4)} for d, v in series.items()]
 
     yr = px[px.index >= px.index.max() - pd.DateOffset(years=1)]
+
+    from dewaag.engine.signals import engine_read
+    engine = engine_read(symbol)
+
     fund = load_fundamentals(symbol)
     tk = toolkit(fund)
     latest = tk["latest"] or {}
@@ -141,7 +145,7 @@ def company(symbol: str, range: str = "5y") -> dict:
         "day_change": float(last["adj_close"] / prev["adj_close"] - 1),
         "high_52w": round(float(yr.max()), 2), "low_52w": round(float(yr.min()), 2),
         "currency": profile.get("currency"), "range": range, "chart": chart,
-        "toolkit": tk, "valuation": val,
+        "engine": engine, "toolkit": tk, "valuation": val,
         "quality": check_frame(symbol, prices),
         "meta": {
             "source": "yahoo (free)", "ingested_at": str(last["ingested_at"]),
@@ -149,6 +153,31 @@ def company(symbol: str, range: str = "5y") -> dict:
                     "see docs/SETUP-APIS.md for the upgrade path.",
         },
     }
+
+
+# ------------------------------------------------------ the engine
+
+@app.get("/api/signals")
+def signals() -> list[dict]:
+    """The whole universe, scored by the engine (quality/value/momentum/composite)."""
+    import numpy as np
+
+    from dewaag.engine.signals import compute_signals
+
+    df = compute_signals().replace({np.nan: None})
+    cols = ["symbol", "name", "country", "tier", "currency", "price",
+            "ret_1m", "ret_12m", "mom_12_1", "vol_1y", "max_dd_1y", "beta_1y",
+            "pe", "earnings_yield", "roe_avg", "dte", "cash_conv_avg", "rev_growth",
+            "above_200d", "pos_52w", "q_score", "v_score", "m_score", "composite", "coverage"]
+    return df[cols].to_dict(orient="records")
+
+
+@app.get("/api/brief")
+def brief() -> list[dict]:
+    """The engine briefing — what the machine found on its own."""
+    from dewaag.engine.insights import briefing
+
+    return briefing()
 
 
 # ------------------------------------------------- portfolio & trading

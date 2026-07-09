@@ -4,17 +4,20 @@ import { Spark } from "../components/Spark";
 import { Why } from "../components/Why";
 
 interface Quality { gate: string; findings: { level: string }[] }
+interface Finding { severity: string; title: string; detail: string; symbols: string[]; lesson: string }
 
 export function Dashboard() {
   const [vault, setVault] = useState<VaultStatus | null>(null);
   const [quality, setQuality] = useState<Quality | null>(null);
   const [rows, setRows] = useState<Company[] | null>(null);
   const [pf, setPf] = useState<Portfolio | null>(null);
+  const [brief, setBrief] = useState<Finding[] | null>(null);
 
   useEffect(() => {
     get<VaultStatus>("/api/vault/status").then(setVault).catch(() => {});
     get<Company[]>("/api/companies").then(setRows).catch(() => {});
     get<Portfolio>("/api/portfolio").then(setPf).catch(() => {});
+    get<Finding[]>("/api/brief").then(setBrief).catch(() => {});
     get<Quality>("/api/vault/quality").then(setQuality).catch(() => {});
   }, []);
 
@@ -81,6 +84,28 @@ export function Dashboard() {
                 </div>
               </div>
               <Spark data={r.spark} w={62} h={26} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card" style={{ marginBottom: 12 }}>
+        <span className="k">engine briefing — what the machine found on its own</span>
+        {!brief && <div className="loading" style={{ padding: "10px 0" }}>the engine is reading the universe…</div>}
+        {brief && brief.map((f, i) => (
+          <div key={i} style={{ display: "flex", gap: 10, alignItems: "baseline", padding: "7px 0", borderBottom: "1px dashed var(--line)" }}>
+            <span className={`badge ${f.severity === "ALERT" ? "warn" : f.severity === "CANDIDATE" ? "ok" : "tier"}`}
+              style={{ minWidth: 78, textAlign: "center" }}>{f.severity}</span>
+            <div style={{ flex: 1 }}>
+              <b style={{ fontSize: 13 }}>{f.title}</b>
+              <div className="s">{f.detail} <span className="mono" style={{ color: "var(--accent)" }}>→ {f.lesson}</span></div>
+              {f.symbols.length > 0 && (
+                <div style={{ marginTop: 2 }}>
+                  {f.symbols.map((s) => (
+                    <a key={s} className="mono" style={{ marginRight: 10, fontSize: 12 }} href={`#/company/${s}`}>{s} →</a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
