@@ -1,0 +1,17 @@
+# De Waag broker configuration.
+#
+#   provider: paper_local  -> offline simulator (fills at last close + half-spread)
+#   provider: ibkr         -> your real IBKR PAPER account via IB Gateway
+#
+# Switching to ibkr requires IB Gateway running on this machine, logged in
+# with your PAPER credentials, API enabled on port 7497 (see docs/SETUP-APIS.md).
+# When the gateway is offline, ibkr orders are refused — never silently
+# simulated. You must always know which venue filled you.
+
+provider: paper_local
+
+ibkr:
+  host: 127.0.0.1
+  port: 7497        # 7497 = paper. (7496 is live — De Waag will refuse it anyway
+                    # until the Phase-7 governance criteria are met.)
+  client_id: 7

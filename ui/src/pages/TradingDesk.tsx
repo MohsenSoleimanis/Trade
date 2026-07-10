@@ -15,6 +15,30 @@ interface WhatIf {
   after: { vol: number; var95_eur: number | null; top_risk: string | null };
 }
 
+interface BrokerSt {
+  provider: string; connected: boolean; account: string | null;
+  net_liquidation: number | null; cash: number | null; ib_positions: number | null;
+  mismatches?: { symbol: string; ibkr: number; local: number }[];
+}
+
+function BrokerStatus() {
+  const [st, setSt] = useState<BrokerSt | null>(null);
+  useEffect(() => { get<BrokerSt>("/api/broker/status").then(setSt).catch(() => {}); }, []);
+  if (!st) return <span className="s">venue: …</span>;
+  if (st.provider === "paper_local") {
+    return <span className="s">venue: <b>local simulator</b> — switch to your IBKR paper account in <span className="mono">config/broker.yaml</span> once IB Gateway runs</span>;
+  }
+  if (!st.connected) {
+    return <span className="badge warn">IBKR SELECTED — GATEWAY OFFLINE (start IB Gateway, paper login, port 7497)</span>;
+  }
+  return (
+    <span className="s">venue: <b>IBKR paper</b> · {st.account} · NLV {st.net_liquidation?.toLocaleString()} · {st.ib_positions} positions at broker
+      {st.mismatches && st.mismatches.length > 0 &&
+        <span className="badge warn" style={{ marginLeft: 8 }}>RECONCILE: {st.mismatches.map((m) => m.symbol).join(", ")} differ</span>}
+    </span>
+  );
+}
+
 export function TradingDesk({ route }: { route: string }) {
   // #/desk/LOTB pre-selects a symbol (the Company page's Trade button)
   const preselect = route.split("/")[2] ?? "";
@@ -80,7 +104,7 @@ export function TradingDesk({ route }: { route: string }) {
     <>
       <div className="pagehead"><h1>Trading Desk</h1>
         {pf && <span className={`badge ${pf.constitution_signed ? "ok" : "warn"}`}>{pf.constitution_signed ? "DESK OPEN" : "DESK LOCKED — CONSTITUTION UNSIGNED"}</span>}
-        <span className="s">paper book · local fills · every order journaled</span>
+        <BrokerStatus />
       </div>
       <p className="pagesub">No thesis, no trade. No budget, no size. The software is calm-you, enforcing rules on excited-you.</p>
 

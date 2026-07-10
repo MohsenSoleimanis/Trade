@@ -13,6 +13,8 @@ dependencies = [
     "pyarrow>=16.0",
     "duckdb>=1.0",
     "yfinance>=0.2.40",
+    # broker (Phase 3b)
+    "ib_async>=1.0",
 ]
 
 [project.optional-dependencies]

@@ -178,7 +178,36 @@ def execute(symbol: str, side: str, shares: int, thesis: str = "",
     if blocks:
         return {"ok": False, "blocks": blocks}
 
-    # fill
+    # fill — through the configured venue
+    from dewaag.broker import gateway_available, load_broker_config, place_limit_order
+
+    broker_cfg = load_broker_config()
+    broker_name = "paper_local"
+    if broker_cfg["provider"] == "ibkr":
+        ib = broker_cfg["ibkr"]
+        if not gateway_available(ib["host"], ib["port"]):
+            return {"ok": False, "blocks": [
+                "IBKR selected but the gateway is offline — start IB Gateway (paper login) and retry. "
+                "Silent fallback to the simulator is disabled on purpose: you must always know which venue filled you."]}
+        # limit at our previewed fill price (last close nudged by half-spread):
+        # honest default that usually crosses; unfilled remainders are cancelled.
+        result = place_limit_order(symbol, side, shares, pv["fill"])
+        if result["filled"] == 0:
+            return {"ok": False, "blocks": [
+                f"IBKR paper: order not filled ({result['status']}). {result.get('note') or ''} "
+                "Market closed? Orders rest only during the wait window, then cancel."]}
+        if result["filled"] < shares:
+            shares = result["filled"]  # book exactly what really filled
+            pv = preview(symbol, side, shares)
+        pv["fill"] = result["avg_price"] or pv["fill"]
+        if result.get("commission") is not None:
+            pv["costs"]["commission"] = round(float(result["commission"]), 2)
+            pv["costs"]["total"] = round(pv["costs"]["commission"] + pv["costs"]["half_spread"] + pv["costs"]["tob"], 2)
+        notional = to_eur(pv["fill"] * shares, pv["currency"])
+        pv["notional_eur"] = round(notional, 2)
+        pv["total_eur"] = round(notional + pv["costs"]["total"], 2) if side == "BUY" else round(notional - pv["costs"]["total"], 2)
+        broker_name = "ibkr_paper"
+
     fill_eur_per_share = to_eur(pv["fill"], pv["currency"])
     if side == "BUY":
         state["cash"] -= pv["total_eur"]
@@ -208,7 +237,7 @@ def execute(symbol: str, side: str, shares: int, thesis: str = "",
         "fill": pv["fill"], "currency": pv["currency"],
         "costs_eur": pv["costs"]["total"], "total_eur": pv["total_eur"],
         "thesis": thesis, "wrong_price": wrong_price,
-        "broker": "paper_local",
+        "broker": broker_name,
     }
     state["trades"].append(trade)
     save_state(state)

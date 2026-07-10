@@ -387,6 +387,31 @@ def portfolio() -> dict:
     return snapshot()
 
 
+@app.get("/api/broker/status")
+def broker_status() -> dict:
+    """Which venue fills your orders, and is it reachable. When IBKR is
+    connected, also reconcile: our book of record vs the broker's truth."""
+    from dewaag.broker import ibkr_status
+    from dewaag.portfolio import snapshot
+
+    st = ibkr_status()
+    if st.get("connected"):
+        try:
+            from dewaag.broker import IB_SYMBOL, ibkr_positions
+
+            reverse = {v: k for k, v in IB_SYMBOL.items()}
+            ib_pos = {reverse.get(p["ib_symbol"], p["ib_symbol"]): p["shares"] for p in ibkr_positions()}
+            ours = {p["symbol"]: p["shares"] for p in snapshot()["positions"]}
+            mismatches = []
+            for sym in set(ib_pos) | set(ours):
+                if abs(ib_pos.get(sym, 0) - ours.get(sym, 0)) > 0.001:
+                    mismatches.append({"symbol": sym, "ibkr": ib_pos.get(sym, 0), "local": ours.get(sym, 0)})
+            st["mismatches"] = mismatches
+        except Exception as e:  # noqa: BLE001
+            st["mismatches_error"] = str(e)[:120]
+    return st
+
+
 @app.get("/api/order/preview")
 def order_preview(symbol: str, side: str, shares: int) -> dict:
     from dewaag.portfolio import preview
