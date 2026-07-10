@@ -62,6 +62,7 @@ SEED = [
     ("TESB",  "TESB.BR", "Tessenderlo",         "EBR", "EUR", "BE", "small", "materials"),
     # --- The benchmark (Lesson 1: the score to beat) ---
     ("IWDA",  "IWDA.AS", "iShares MSCI World (acc)", "AMS", "EUR", "IE", "etf", "etf"),
+    ("WEBN",  "WEBN.DE", "Amundi Prime All-Country World (acc)", "XETRA", "EUR", "IE", "etf", "etf"),
     # --- FX: the double bet must be priced, not ignored (Lesson 2 §6) ---
     ("EURUSD", "EURUSD=X", "EUR/USD", "FX", "USD", "FX", "fx", "fx"),
 ]

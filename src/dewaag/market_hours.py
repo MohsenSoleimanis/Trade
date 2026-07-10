@@ -15,6 +15,7 @@ from zoneinfo import ZoneInfo
 SESSIONS: dict[str, tuple[str, time, time]] = {
     "EBR": ("Europe/Brussels", time(9, 0), time(17, 30)),
     "AMS": ("Europe/Amsterdam", time(9, 0), time(17, 30)),
+    "XETRA": ("Europe/Berlin", time(9, 0), time(17, 30)),
     "NASDAQ": ("America/New_York", time(9, 30), time(16, 0)),
     "NYSE": ("America/New_York", time(9, 30), time(16, 0)),
 }

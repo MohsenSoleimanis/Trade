@@ -20,7 +20,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 BROKER_CONFIG = REPO_ROOT / "config" / "broker.yaml"
 
 # exchange column in the universe -> IBKR primary exchange
-PRIMARY_EXCHANGE = {"NASDAQ": "NASDAQ", "NYSE": "NYSE", "EBR": "ENEXT.BE", "AMS": "AEB"}
+PRIMARY_EXCHANGE = {"NASDAQ": "NASDAQ", "NYSE": "NYSE", "EBR": "ENEXT.BE", "AMS": "AEB", "XETRA": "IBIS"}
 # routing exchange (SMART works for all of these)
 ROUTING = "SMART"
 # symbols whose IBKR spelling differs from ours

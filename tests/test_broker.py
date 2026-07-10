@@ -26,6 +26,7 @@ def test_offline_gateway_refuses_orders_never_simulates(tmp_path, monkeypatch):
     """provider=ibkr + gateway down -> explicit refusal. Silent fallback to
     the simulator would mean not knowing which venue filled you."""
     monkeypatch.setattr(pf, "PORTFOLIO_PATH", tmp_path / "p.json")
+    monkeypatch.setattr(pf, "_starting_cash", lambda: 10_000.0)
     monkeypatch.setattr(pf, "_last_close", lambda s: 100.0)
     monkeypatch.setattr(pf, "_eurusd", lambda: 1.0)
 

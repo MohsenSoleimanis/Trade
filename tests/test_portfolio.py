@@ -62,6 +62,7 @@ def test_paper_execute_roundtrip(tmp_path, monkeypatch):
     """BUY then SELL through the local paper broker: cash falls by costs,
     the position appears and disappears, the journal remembers the thesis."""
     monkeypatch.setattr(pf, "PORTFOLIO_PATH", tmp_path / "portfolio.json")
+    monkeypatch.setattr(pf, "_starting_cash", lambda: 10_000.0)
     monkeypatch.setattr(pf, "_last_close", lambda s: 100.0)
     monkeypatch.setattr(pf, "_eurusd", lambda: 1.0)
 
@@ -90,6 +91,7 @@ def test_paper_execute_roundtrip(tmp_path, monkeypatch):
 
 def test_no_cash_no_leverage(tmp_path, monkeypatch):
     monkeypatch.setattr(pf, "PORTFOLIO_PATH", tmp_path / "portfolio.json")
+    monkeypatch.setattr(pf, "_starting_cash", lambda: 10_000.0)
     monkeypatch.setattr(pf, "_last_close", lambda s: 5_000.0)
     monkeypatch.setattr(pf, "_eurusd", lambda: 1.0)
     import pandas as pd

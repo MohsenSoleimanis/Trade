@@ -45,7 +45,9 @@ def gate_order(c: Constitution, *, portfolio_value: float, position_value_after:
         blocks.append("thesis required — one honest sentence: why this, why now, and what would prove you wrong (constitution §6).")
 
     if wrong_price is None or wrong_price <= 0:
-        blocks.append("'I am wrong if it falls to ___' price required — sizing is computed backwards from it (Lesson 6 §3).")
+        if tier != "etf":   # a lifetime world-ETF accumulation has no stop:
+            # you buy the dips, you don't exit them (Lesson 7, the core layer)
+            blocks.append("'I am wrong if it falls to ___' price required — sizing is computed backwards from it (Lesson 6 §3).")
     elif wrong_price >= entry:
         blocks.append("the 'wrong' price must be below entry.")
     else:
@@ -60,7 +62,7 @@ def gate_order(c: Constitution, *, portfolio_value: float, position_value_after:
     # §2 caps SINGLE-COMPANY risk. A broad ETF is a basket of ~1,500
     # companies — it IS the diversification the cap exists to protect.
     # Core ETFs get a wider ceiling (60%) instead of the stock cap.
-    cap_pct = 60.0 if tier == "etf" else c.max_position_pct
+    cap_pct = 95.0 if tier == "etf" else c.max_position_pct
     cap = portfolio_value * cap_pct / 100.0
     if position_value_after > cap * 1.005:
         blocks.append(

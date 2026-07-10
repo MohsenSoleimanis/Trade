@@ -14,7 +14,7 @@
 # ============================================================
 
 owner: "Mohsen"
-signed_on: "2026-07-10"
+signed_on: null            # FILL-ME: sign via the wizard — knowingly this time
 
 # --- §1  Risk per idea (Lesson 6 §3: the backwards sizing method) ---
 # The most you accept losing on any single idea, as % of portfolio.
@@ -31,11 +31,11 @@ max_position_pct: 10.0
 # The euros you can watch temporarily vanish without panic-selling.
 # Percentages are for spreadsheets; your behavior runs on euros.
 # 0 means "not yet decided" and keeps the constitution UNSIGNED.
-max_drawdown_eur: 100
+max_drawdown_eur: 0        # FILL-ME: for a €100 book, "euros I can watch vanish" — e.g. 30
 
 # --- §4  Emergency fund (Lesson 6 §6: never invest money with a deadline) ---
 # Months of living costs held OUTSIDE the portfolio, never invested.
-emergency_fund_months: 50
+emergency_fund_months: 6
 
 # --- §5  Leverage (Lesson 6 §5: the one door to ruin) ---
 # This must be 0. The code refuses to start with any other value.

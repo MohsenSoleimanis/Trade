@@ -22,7 +22,15 @@ from dewaag.engine.sizing import gate_order
 from dewaag.vault import store
 
 PORTFOLIO_PATH = store.DATA_DIR / "portfolio.json"
-STARTING_CASH_EUR = 10_000.0
+PORTFOLIO_CONFIG = store.REPO_ROOT / "config" / "portfolio.yaml"
+
+
+def _starting_cash() -> float:
+    import yaml
+    if PORTFOLIO_CONFIG.exists():
+        cfg = yaml.safe_load(PORTFOLIO_CONFIG.read_text(encoding="utf-8")) or {}
+        return float(cfg.get("starting_cash_eur", 10_000.0))
+    return 10_000.0
 
 
 # ---------- state ----------
@@ -30,8 +38,8 @@ STARTING_CASH_EUR = 10_000.0
 def _empty_state() -> dict:
     return {
         "currency": "EUR",
-        "starting_cash": STARTING_CASH_EUR,
-        "cash": STARTING_CASH_EUR,
+        "starting_cash": _starting_cash(),
+        "cash": _starting_cash(),
         "created": str(date.today()),
         "positions": {},        # symbol -> {shares, avg_cost_eur, thesis, wrong_price, opened_at}
         "trades": [],
