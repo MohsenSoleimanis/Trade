@@ -135,6 +135,7 @@ def preview(symbol: str, side: str, shares: int) -> dict:
         raise ValueError(f"unknown symbol {symbol}")
     tier = str(universe.loc[symbol, "tier"])
     currency = str(universe.loc[symbol, "currency"])
+    exchange = str(universe.loc[symbol, "exchange"])
     last = _last_close(symbol)
 
     # paper fill model: last close nudged against you by the tier's half-spread
@@ -142,8 +143,10 @@ def preview(symbol: str, side: str, shares: int) -> dict:
     fill = last * (1 + half) if side == "BUY" else last * (1 - half)
     notional_eur = to_eur(fill * shares, currency)
     costs = estimate(tier, notional_eur)
+    from dewaag.market_hours import status as market_status
     return {
         "symbol": symbol, "side": side, "tier": tier, "currency": currency,
+        "market": market_status(exchange),
         "last": round(last, 4), "fill": round(fill, 4), "shares": shares,
         "notional_eur": round(notional_eur, 2), "costs": costs,
         "total_eur": round(notional_eur + costs["total"], 2) if side == "BUY"

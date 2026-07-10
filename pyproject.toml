@@ -15,6 +15,7 @@ dependencies = [
     "yfinance>=0.2.40",
     # broker (Phase 3b)
     "ib_async>=1.0",
+    "tzdata>=2024.1",  # zoneinfo tz database on Windows
 ]
 
 [project.optional-dependencies]

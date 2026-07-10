@@ -5,6 +5,7 @@ interface Action {
   action: "BUY" | "SELL"; symbol: string; name: string; sector?: string;
   currency?: string; shares: number; entry: number; wrong_price: number | null;
   cost_eur?: number; position_eur?: number;
+  market?: { open: boolean; label: string };
   scores?: { q_score: number | null; v_score: number | null; m_score: number | null; composite: number | null };
   reason_code: string; thesis: string; narration: string[];
 }
@@ -105,10 +106,15 @@ function ActionCard({ a, sign, busy, done, onApprove }: { a: Action; sign: strin
       <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center" }}>
         {done ? (
           <span className={`badge ${done === "done" ? "ok" : "warn"}`}>{done === "done" ? "EXECUTED ✓" : done}</span>
+        ) : a.market && !a.market.open ? (
+          <>
+            <button className="btn" disabled title="market closed">Market {a.market.label}</button>
+            <span className="s">a limit order now would just cancel — wait for the open, or pick a name whose market is live</span>
+          </>
         ) : (
           <>
             <button className="btn" onClick={onApprove} disabled={busy}>{busy ? "placing…" : `Approve — place this ${a.action.toLowerCase()}`}</button>
-            <span className="s">or ignore it; nothing happens without your click</span>
+            <span className="s">{a.market ? `market ${a.market.label} · ` : ""}nothing happens without your click</span>
           </>
         )}
       </div>

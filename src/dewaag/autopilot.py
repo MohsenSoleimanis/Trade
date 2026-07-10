@@ -25,6 +25,11 @@ from dewaag.vault import store
 CONFIG_PATH = store.REPO_ROOT / "config" / "autopilot.yaml"
 
 
+def _exchange_of(symbol: str) -> str:
+    u = store.load_universe().set_index("symbol")
+    return str(u.loc[symbol, "exchange"]) if symbol in u.index else "NYSE"
+
+
 def load_config() -> dict:
     cfg = {}
     if CONFIG_PATH.exists():
@@ -75,6 +80,7 @@ def _explain_momentum(m: float | None) -> str:
 
 def generate_plan() -> dict:
     from dewaag.engine.signals import compute_signals
+    from dewaag.market_hours import status as market_status
     from dewaag.portfolio import preview, snapshot
 
     cfg = load_config()
@@ -116,9 +122,15 @@ def generate_plan() -> dict:
                       & (~stocks["symbol"].isin(held))
                       & (stocks["pe"].notna())
                       & ~((stocks["v_score"] > 70) & (stocks["q_score"] < 35))]  # skip trap shape
-        # prefer quality-at-a-reasonable-price, then overall composite
-        cand = cand.assign(qarp=((cand["q_score"] > 55) & (cand["v_score"] > 50)).astype(int))
-        cand = cand.sort_values(["qarp", "composite"], ascending=[False, False])
+        # prefer quality-at-a-reasonable-price; among those, prefer names
+        # whose market is OPEN now (so the plan is actually actionable today),
+        # then overall composite.
+        cand = cand.assign(
+            qarp=((cand["q_score"] > 55) & (cand["v_score"] > 50)).astype(int),
+            tradeable=cand["symbol"].map(
+                lambda s: 1 if market_status(_exchange_of(s)).get("open") else 0),
+        )
+        cand = cand.sort_values(["qarp", "tradeable", "composite"], ascending=[False, False, False])
 
         budget = equity * c.max_risk_per_idea_pct / 100.0
         for _, r in cand.head(room).iterrows():
@@ -137,12 +149,18 @@ def generate_plan() -> dict:
                 continue
             cur = r["currency"]
             pv = preview(r["symbol"], "BUY", shares)
+            mkt = market_status(_exchange_of(r["symbol"]))
             reason = "quality at a reasonable price" if r.get("qarp") else "best overall on the evidence"
             sign = "$" if cur == "USD" else "€"
+            mkt_line = (f"Its market is {mkt['label']} — you can place this now."
+                        if mkt["open"] else
+                        f"Heads up: its market is {mkt['label']}, so this only fills once it opens. "
+                        f"A limit order placed now would just cancel — better to wait, or pick a name whose market is open.")
             buys.append({
                 "action": "BUY", "symbol": r["symbol"], "name": r["name"],
                 "sector": r.get("sector", ""), "currency": cur,
                 "shares": shares, "entry": entry, "wrong_price": wrong,
+                "market": mkt,
                 "risk_eur": round(shares * (entry - wrong) * (1 / (pv["notional_eur"] / (entry * shares)) if pv["notional_eur"] else 1), 0),
                 "cost_eur": pv["costs"]["total"], "position_eur": pv["notional_eur"],
                 "scores": {k: (None if r[k] is None or (isinstance(r[k], float) and r[k] != r[k]) else int(r[k]))
@@ -158,6 +176,7 @@ def generate_plan() -> dict:
                     f"I'd buy at about {sign}{entry:,.2f} and set the exit at {sign}{wrong:,.2f} ({int(exit_pct*100)}% below) — wide enough to survive normal noise, so I only sell if the reason is truly broken.",
                     f"Each share can lose {sign}{entry-wrong:,.2f}, so the 1% budget buys {shares} shares — about {sign}{entry*shares:,.0f} invested.",
                     f"Trading costs ≈ €{pv['costs']['total']:.0f} (spread + Belgian TOB tax + commission) — I use a limit order so we never overpay.",
+                    mkt_line,
                     f"This keeps you diversified toward {cfg['target_holdings']} small positions — spreading bets is your only free protection.",
                 ],
             })
