@@ -139,10 +139,95 @@ export function Stage({ symbol }: { symbol: string }) {
         </div>
       </div>
 
+      <Outlook symbol={symbol} price={d.last_price} sign={sign} />
+
       <AgentBrief symbol={symbol} />
 
       <div className="honesty">source: {d.meta.source} · {d.meta.note}</div>
     </>
+  );
+}
+
+// ---- the forward half of the page: what the street expects + what is happening now
+
+interface OutlookData {
+  forward: {
+    available: boolean; note?: string;
+    forward_pe?: number | null; trailing_pe?: number | null;
+    street_eps_growth?: number | null;
+    target_low?: number | null; target_mean?: number | null; target_high?: number | null;
+    recommendation?: string | null; analysts?: number | null;
+  };
+  news: { title: string; when: string | null; source: string; link?: string | null }[];
+  read: string[];
+}
+
+function Outlook({ symbol, price, sign }: { symbol: string; price: number; sign: string }) {
+  const [o, setO] = useState<OutlookData | null>(null);
+  const [dead, setDead] = useState(false);
+  useEffect(() => {
+    setO(null); setDead(false);
+    get<OutlookData>(`/api/company/${symbol}/outlook`).then(setO).catch(() => setDead(true));
+  }, [symbol]);
+
+  if (dead) return null;
+  const f = o?.forward;
+  const hasTargets = !!(f?.available && f.target_low && f.target_high);
+
+  return (
+    <div className="instruments-row" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 10, marginTop: 10 }}>
+      <div className="card">
+        <span className="k">forward view · street expectations</span>
+        {!o && <div className="loading" style={{ padding: "10px 0" }}>asking the street…</div>}
+        {o && !f?.available && <div className="s" style={{ padding: "10px 0" }}>{f?.note ?? "no analyst coverage found for this name."}</div>}
+        {o && f?.available && (
+          <>
+            {hasTargets && (
+              <>
+                <div style={{ margin: "10px 0 2px" }} className="s">
+                  price vs analyst targets ({f.analysts ?? "?"} analysts{f.recommendation ? ` · consensus: ${f.recommendation.replace("_", " ")}` : ""})
+                </div>
+                <RangeBar lo={Math.min(f.target_low!, price) * 0.97} hi={Math.max(f.target_high!, price) * 1.03}
+                  value={price} band={[f.target_low!, f.target_high!]} fmt={(x) => sign + x.toFixed(0)} />
+                <div className="costline" style={{ marginTop: 10 }}><span>target low / mean / high</span>
+                  <span className="mono">{sign}{f.target_low!.toFixed(0)} / {sign}{f.target_mean?.toFixed(0)} / {sign}{f.target_high!.toFixed(0)}</span></div>
+              </>
+            )}
+            {f.street_eps_growth != null && (
+              <div className="costline"><span>street EPS growth (next yr)</span>
+                <span className="mono" style={{ fontWeight: 650, color: f.street_eps_growth >= 0 ? "var(--green)" : "var(--red)" }}>
+                  {(f.street_eps_growth * 100).toFixed(0)}%</span></div>
+            )}
+            {f.forward_pe != null && f.trailing_pe != null && (
+              <div className="costline"><span>P/E — trailing → forward</span>
+                <span className="mono">{f.trailing_pe.toFixed(1)} → {f.forward_pe.toFixed(1)}</span></div>
+            )}
+            {o.read[0] && <Why lesson="Lesson 1">{o.read.join(" ")}</Why>}
+          </>
+        )}
+      </div>
+
+      <div className="card" style={{ padding: 0 }}>
+        <div style={{ padding: "10px 14px 4px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <span className="k">news · what is happening now</span>
+          <span className="s">context, not signal — it&apos;s already in the price</span>
+        </div>
+        {!o && <div className="loading" style={{ padding: "4px 14px 12px" }}>reading the wires…</div>}
+        {o && o.news.length === 0 && <div className="s" style={{ padding: "4px 14px 12px" }}>quiet — no recent coverage found.</div>}
+        {o && o.news.length > 0 && (
+          <div style={{ maxHeight: 218, overflowY: "auto", padding: "0 4px 6px 0" }}>
+            {o.news.map((n, i) => (
+              <a key={i} href={n.link ?? undefined} target="_blank" rel="noreferrer"
+                style={{ display: "flex", gap: 10, padding: "5px 14px", textDecoration: "none", color: "inherit", alignItems: "baseline", borderBottom: "1px solid color-mix(in srgb, var(--line) 40%, transparent)" }}>
+                <span className="mono s" style={{ minWidth: 62, color: "var(--muted)" }}>{n.when ?? "—"}</span>
+                <span style={{ fontSize: 11.5, lineHeight: 1.45, flex: 1 }}>{n.title}</span>
+                <span className="s" style={{ color: "var(--muted)", whiteSpace: "nowrap", maxWidth: 110, overflow: "hidden", textOverflow: "ellipsis" }}>{n.source}</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -118,6 +118,11 @@ def context_pack(symbol: str) -> dict:
     except FileNotFoundError:
         quality = [{"level": "CRITICAL", "check": "missing", "detail": "no price history"}]
 
+    # the forward half of the desk: news + street expectations. Cached on
+    # disk; a dead network yields empty/unavailable, never a crashed brief.
+    from dewaag.vault.forward import get_forward
+    from dewaag.vault.news import get_news
+
     return {
         "symbol": symbol,
         "as_of": _now(),
@@ -127,6 +132,8 @@ def context_pack(symbol: str) -> dict:
         "engine": engine_read(symbol),
         "signals": sig_row,
         "calendar": [e for e in upcoming(30) if e["symbol"] == symbol],
+        "news": get_news(symbol),               # what is happening NOW
+        "forward": get_forward(symbol),         # what the street expects NEXT
         "quality": quality,
         "brief": load_brief(symbol),
         "agent_memory": recall(20, symbol=symbol),

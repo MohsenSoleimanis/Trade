@@ -74,9 +74,28 @@ def nightly() -> dict:
                         "items": items}, indent=2), encoding="utf-8")
         return f"{len(items)} findings"
 
+    def outlook():
+        # warm news + street-expectation caches so the morning Stage is instant.
+        # Only names you hold or track — the whole universe would hammer feeds.
+        from dewaag.pipeline import load as load_cards
+        from dewaag.portfolio import load_state
+        from dewaag.vault.forward import get_forward
+        from dewaag.vault.news import get_news
+        symbols = set(load_state()["positions"]) | {c["symbol"] for c in load_cards()
+                                                    if c.get("stage") not in ("CLOSED",)}
+        n = 0
+        for sym in sorted(symbols):
+            try:
+                get_news(sym, force=True)
+                get_forward(sym, force=True)
+                n += 1
+            except Exception:  # noqa: BLE001 — one dead feed must not fail the night
+                pass
+        return f"{n} names warmed (news + forward)"
+
     for name, fn in [("ingest", ingest), ("quality gate", quality),
                      ("fundamentals", fundamentals), ("calendar", calendar),
-                     ("signals", signals), ("brief", brief)]:
+                     ("signals", signals), ("brief", brief), ("outlook", outlook)]:
         steps.append(_step(name, fn))
         print(f"  {'OK ' if steps[-1]['ok'] else 'FAIL'} {name}: {steps[-1]['detail'][:100]}")
 

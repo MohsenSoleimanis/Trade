@@ -165,6 +165,45 @@ def company(symbol: str, range: str = "5y") -> dict:
     }
 
 
+@app.get("/api/company/{symbol}/outlook")
+def outlook(symbol: str) -> dict:
+    """The forward half of the page: live news + street expectations.
+    Served separately so the Stage renders instantly and this fills in
+    when the (slower, network-bound) feeds answer. Both cached on disk."""
+    from dewaag.vault import store
+    from dewaag.vault.forward import get_forward
+    from dewaag.vault.news import get_news
+
+    universe = store.load_universe().set_index("symbol")
+    if symbol not in universe.index:
+        raise HTTPException(404, f"unknown symbol {symbol}")
+    tier = str(universe.loc[symbol, "tier"])
+
+    fwd = get_forward(symbol) if tier != "etf" else {"available": False,
+        "note": "an index fund has no analyst estimates — its forward view is the world economy itself"}
+    news = get_news(symbol)
+
+    # plain-language read of the street numbers, same voice as the engine
+    bullets: list[str] = []
+    if fwd.get("available") and fwd.get("target_mean"):
+        n = fwd.get("analysts")
+        bullets.append(
+            f"{n or 'Some'} analysts cover this name — "
+            + ("crowded water: hard to know something they don't." if (n or 0) >= 20
+               else "thin coverage: exactly where small edges can hide." if (n or 99) <= 5
+               else "moderate coverage."))
+        if fwd.get("street_eps_growth") is not None:
+            g = fwd["street_eps_growth"]
+            bullets.append(
+                f"The street expects earnings per share to move {g:+.0%} over the next year. "
+                "That expectation is already in today's price — the stock moves on whether reality beats it.")
+        bullets.append(
+            "Price targets are opinions, and historically optimistic on average. "
+            "The spread between the low and high target tells you how much analysts disagree — "
+            "wide disagreement means high uncertainty, whatever the mean says.")
+    return {"symbol": symbol, "forward": fwd, "news": news, "read": bullets}
+
+
 # ------------------------------------------------------ the engine
 
 @app.get("/api/signals")
