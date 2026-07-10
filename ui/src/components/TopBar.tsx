@@ -16,7 +16,7 @@ function marketOpen(tz: string, openMin: number, closeMin: number): boolean {
   return mins >= openMin && mins < closeMin;
 }
 
-const SURFACES: [string, string][] = [["Today", "/"], ["Pipeline", "/pipeline"], ["Library", "/library"]];
+const SURFACES: [string, string][] = [["Today", "/"], ["Autopilot", "/autopilot"], ["Pipeline", "/pipeline"], ["Library", "/library"]];
 
 export function TopBar({ route }: { route: string }) {
   const [q, setQ] = useState("");

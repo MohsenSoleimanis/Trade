@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "./components/TopBar";
+import { Autopilot } from "./pages/Autopilot";
 import { Library } from "./pages/Library";
 import { Pipeline } from "./pages/Pipeline";
 import { Today } from "./pages/Today";
@@ -31,7 +32,8 @@ export function App() {
   }
 
   let page: JSX.Element;
-  if (route.startsWith("/pipeline")) page = <Pipeline />;
+  if (route.startsWith("/autopilot")) page = <Autopilot />;
+  else if (route.startsWith("/pipeline")) page = <Pipeline />;
   else if (route.startsWith("/library")) page = <Library route={route} />;
   else page = <Today />;
 

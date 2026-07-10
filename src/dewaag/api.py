@@ -180,6 +180,40 @@ def brief() -> list[dict]:
     return briefing()
 
 
+# ------------------------------------------------------ autopilot
+
+class AutoAction(BaseModel):
+    symbol: str
+    action: str
+    shares: int
+    wrong_price: float | None = None
+    thesis: str = ""
+
+
+@app.get("/api/autopilot/plan")
+def autopilot_plan() -> dict:
+    """The narrated plan — what the system would do, and WHY, in plain words."""
+    from dewaag.autopilot import generate_plan
+
+    return generate_plan()
+
+
+@app.post("/api/autopilot/execute")
+def autopilot_execute(a: AutoAction) -> dict:
+    """Run one approved action through the gated executor."""
+    from dewaag.autopilot import execute_action
+
+    return execute_action(a.model_dump())
+
+
+@app.post("/api/autopilot/run")
+def autopilot_run() -> dict:
+    """Full-auto (paper only): execute the whole plan. Off unless config allows."""
+    from dewaag.autopilot import run_auto
+
+    return run_auto()
+
+
 # ------------------------------------------------------ today surface
 
 @app.get("/api/today")

@@ -71,6 +71,10 @@ def test_paper_execute_roundtrip(tmp_path, monkeypatch):
           "currency": "EUR", "country": "BE", "tier": "mega"}]).set_index("symbol", drop=False)
     monkeypatch.setattr(pf.store, "load_universe", lambda: fake_universe)
     monkeypatch.setattr(pf, "load_constitution", lambda: signed())
+    # pin the venue to the local simulator so the unit test never reaches TWS
+    import dewaag.broker as broker_mod
+    monkeypatch.setattr(broker_mod, "load_broker_config",
+                        lambda: {"provider": "paper_local", "ibkr": {"host": "127.0.0.1", "port": 7497, "client_id": 7}})
 
     r = pf.execute("TST", "BUY", 5, thesis="testing the machine end to end, long enough", wrong_price=80.0)
     assert r["ok"], r.get("blocks")

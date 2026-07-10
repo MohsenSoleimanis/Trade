@@ -1,0 +1,13 @@
+# Autopilot — the system runs the disciplined loop and narrates it.
+#
+# HONEST FRAME: this is a teaching demonstrator on PAPER money. It runs the
+# boring, evidence-based process (quality-at-a-reasonable-price, sized by your
+# constitution, exits armed) and explains every number as a sentence. It does
+# NOT predict prices or promise profit. full_auto is paper-only; real money
+# will always require your per-trade approval.
+
+target_holdings: 5        # how many names to hold when fully invested (diversification)
+max_new_per_cycle: 1      # at most this many NEW buys per run — slow and deliberate
+exit_pct: 0.20            # default "I am wrong" level: this far below entry
+full_auto: false          # false = propose + narrate, you click approve
+                          # true  = place paper orders automatically (paper only)

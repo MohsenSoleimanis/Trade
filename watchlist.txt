@@ -1,0 +1,12 @@
+# One ticker per line. Lines starting with # are ignored.
+# Edit this list freely, then run:  python scan.py
+AAPL
+MSFT
+NVDA
+GOOGL
+AMZN
+META
+TSLA
+JPM
+V
+JNJ
