@@ -212,4 +212,10 @@ def execute(symbol: str, side: str, shares: int, thesis: str = "",
     }
     state["trades"].append(trade)
     save_state(state)
+
+    # trades move pipeline cards: BUY -> LIVE, full SELL -> CLOSED (+ post-mortem task)
+    from dewaag.pipeline import on_trade
+    remaining = state["positions"].get(symbol, {}).get("shares", 0)
+    on_trade(symbol, side, remaining)
+
     return {"ok": True, "trade": trade, "portfolio": snapshot()}

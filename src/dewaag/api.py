@@ -180,6 +180,147 @@ def brief() -> list[dict]:
     return briefing()
 
 
+# ------------------------------------------------------ today surface
+
+@app.get("/api/today")
+def today() -> dict:
+    """The cockpit payload: jobs, alerts, calendar, brief, tasks, portfolio."""
+    import json as _json
+
+    from dewaag.engine.alerts import compute_alerts
+    from dewaag.jobs import status as jobs_status
+    from dewaag.pipeline import tasks as pipeline_tasks
+    from dewaag.portfolio import snapshot
+    from dewaag.vault.calendar import upcoming
+    from dewaag.vault.store import DATA_DIR
+
+    pf = snapshot()
+    tasks = pipeline_tasks()
+    c = load_constitution()
+    if not c.signed:
+        tasks.insert(0, {"kind": "setup", "card": None, "symbol": None,
+                         "text": "Sign your Risk Constitution — the desk stays locked until the euro drawdown limit is yours, not a template's"})
+
+    brief_path = DATA_DIR / "brief.json"
+    brief = _json.loads(brief_path.read_text(encoding="utf-8")) if brief_path.exists() else {"at": None, "items": []}
+
+    return {
+        "jobs": jobs_status(),
+        "alerts": compute_alerts(),
+        "calendar": upcoming(14),
+        "brief": brief,
+        "tasks": tasks,
+        "portfolio": {"equity": pf["equity"], "pnl": pf["pnl_since_start"],
+                      "drawdown_eur": pf["drawdown_eur"], "drawdown_limit_eur": pf["drawdown_limit_eur"],
+                      "positions": len(pf["positions"]), "signed": pf["constitution_signed"]},
+    }
+
+
+# ------------------------------------------------------ pipeline
+
+class CardAdd(BaseModel):
+    symbol: str
+    source: str = "manual"
+    note: str = ""
+
+
+class CardAdvance(BaseModel):
+    thesis: str = ""
+    wrong_price: float | None = None
+
+
+class CardPass(BaseModel):
+    reason: str
+
+
+class CardGrade(BaseModel):
+    grade: str
+    note: str = ""
+
+
+@app.get("/api/pipeline")
+def pipeline_list() -> list[dict]:
+    from dewaag.pipeline import load as load_cards
+
+    return load_cards()
+
+
+@app.post("/api/pipeline/add")
+def pipeline_add(body: CardAdd) -> dict:
+    from dewaag.pipeline import add_card
+
+    try:
+        return add_card(body.symbol.upper(), body.source, body.note)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/api/pipeline/{card_id}/advance")
+def pipeline_advance(card_id: str, body: CardAdvance) -> dict:
+    from dewaag.pipeline import advance
+
+    try:
+        return advance(card_id, thesis=body.thesis, wrong_price=body.wrong_price)
+    except (ValueError, KeyError) as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/api/pipeline/{card_id}/pass")
+def pipeline_pass(card_id: str, body: CardPass) -> dict:
+    from dewaag.pipeline import pass_card
+
+    try:
+        return pass_card(card_id, body.reason)
+    except (ValueError, KeyError) as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.post("/api/pipeline/{card_id}/grade")
+def pipeline_grade(card_id: str, body: CardGrade) -> dict:
+    from dewaag.pipeline import grade
+
+    try:
+        return grade(card_id, body.grade, body.note)
+    except (ValueError, KeyError) as e:
+        raise HTTPException(400, str(e)) from e
+
+
+# ------------------------------------------------------ constitution signing
+
+class SignBody(BaseModel):
+    max_drawdown_eur: float
+    emergency_fund_months: int = 6
+    strategy_statement: str = ""
+
+
+@app.post("/api/constitution/sign")
+def sign_constitution(body: SignBody) -> dict:
+    """The onboarding fix: the constitution is signed in the product,
+    with a proper flow — never again by editing YAML. Scalar fields are
+    replaced in-place so the file's teaching comments survive."""
+    import re
+    from datetime import date as _date
+
+    from dewaag.constitution import DEFAULT_PATH
+
+    if body.max_drawdown_eur <= 0:
+        raise HTTPException(400, "the euro drawdown limit must be a real number you chose — that's the signature")
+    if body.emergency_fund_months < 3:
+        raise HTTPException(400, "emergency fund below 3 months fails §4 — never invest money with a deadline")
+
+    text = DEFAULT_PATH.read_text(encoding="utf-8")
+    text = re.sub(r"(?m)^signed_on:.*$", f'signed_on: "{_date.today().isoformat()}"', text)
+    text = re.sub(r"(?m)^max_drawdown_eur:.*$", f"max_drawdown_eur: {body.max_drawdown_eur:.0f}", text)
+    text = re.sub(r"(?m)^emergency_fund_months:.*$", f"emergency_fund_months: {body.emergency_fund_months}", text)
+    if body.strategy_statement.strip():
+        stmt = "\n".join("  " + line for line in body.strategy_statement.strip().splitlines())
+        text = re.sub(r"(?ms)^strategy_statement: \|.*\Z", f"strategy_statement: |\n{stmt}\n", text)
+    DEFAULT_PATH.write_text(text, encoding="utf-8")
+
+    c = load_constitution()
+    return {"signed": c.signed, "signed_on": str(c.signed_on), "max_drawdown_eur": c.max_drawdown_eur}
+
+
 # ------------------------------------------------------ risk engine
 
 @app.get("/api/risk")

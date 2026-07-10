@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "./components/TopBar";
-import { BacktestLab } from "./pages/BacktestLab";
-import { Company } from "./pages/Company";
-import { Dashboard } from "./pages/Dashboard";
-import { Research } from "./pages/Research";
-import { RiskConsole } from "./pages/RiskConsole";
-import { Screener } from "./pages/Screener";
-import { TradingDesk } from "./pages/TradingDesk";
+import { Library } from "./pages/Library";
+import { Pipeline } from "./pages/Pipeline";
+import { Today } from "./pages/Today";
+
+// v2 shell: three surfaces (Today / Pipeline / Library), no sidebar.
+// Old deep links (#/company/X, #/desk, #/screener…) redirect into Library.
 
 function useRoute(): string {
   const [hash, setHash] = useState(window.location.hash);
@@ -18,54 +17,28 @@ function useRoute(): string {
   return hash.replace(/^#/, "") || "/";
 }
 
-const MODULES: [string, string, string][] = [
-  ["Dashboard", "/", ""],
-  ["Research", "/research", ""],
-  ["Screener", "/screener", ""],
-  ["Risk Console", "/risk", ""],
-  ["Trading Desk", "/desk", ""],
-  ["Backtest Lab", "/lab", ""],
-  ["Agent Floor", "", "ph 6"],
+const LEGACY: [RegExp, (m: RegExpMatchArray) => string][] = [
+  [/^\/company\/(.+)$/, (m) => `/library/company/${m[1]}`],
+  [/^\/desk(\/.+)?$/, (m) => `/library/desk${m[1] ?? ""}`.replace(/\/$/, "")],
+  [/^\/(research|screener|risk|lab)$/, (m) => `/library/${m[1] === "research" ? "dossiers" : m[1]}`],
 ];
 
 export function App() {
-  const route = useRoute();
+  let route = useRoute();
+  for (const [re, to] of LEGACY) {
+    const m = route.match(re);
+    if (m) { route = to(m); window.location.hash = `#${route}`; break; }
+  }
 
   let page: JSX.Element;
-  if (route.startsWith("/company/")) page = <Company symbol={route.split("/")[2]} />;
-  else if (route === "/research") page = <Research />;
-  else if (route === "/screener") page = <Screener />;
-  else if (route === "/risk") page = <RiskConsole />;
-  else if (route === "/lab") page = <BacktestLab />;
-  else if (route.startsWith("/desk")) page = <TradingDesk route={route} />;
-  else page = <Dashboard />;
+  if (route.startsWith("/pipeline")) page = <Pipeline />;
+  else if (route.startsWith("/library")) page = <Library route={route} />;
+  else page = <Today />;
 
   return (
-    <div className="shell">
-      <nav className="sidenav">
-        <a className="brand" href="#/">⚖ De Waag<span className="v">v0.1</span></a>
-        {MODULES.map(([label, to, phase]) =>
-          to ? (
-            <a key={label} className={`nav ${routeMatches(route, to) ? "on" : ""}`} href={`#${to}`}>
-              {label}
-            </a>
-          ) : (
-            <a key={label} className="nav off" aria-disabled="true">
-              {label}<span className="phase">{phase}</span>
-            </a>
-          )
-        )}
-      </nav>
-      <div className="content">
-        <TopBar />
-        <main className="main">{page}</main>
-      </div>
+    <div className="shell2">
+      <TopBar route={route} />
+      <main className="main">{page}</main>
     </div>
   );
-}
-
-function routeMatches(route: string, to: string) {
-  if (to === "/") return route === "/";
-  if (to === "/research") return route === "/research" || route.startsWith("/company/");
-  return route.startsWith(to);
 }

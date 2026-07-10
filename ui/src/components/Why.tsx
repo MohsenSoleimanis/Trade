@@ -1,8 +1,13 @@
-// The teaching layer, as a component. Every metric the app shows can
-// carry one of these: what the number is, why it matters, which lesson
-// it comes from. The product contract: never a number without a why.
+import { useEffect, useState } from "react";
+import { mentorOn, onMentorChange } from "../mentor";
+
+// The teaching layer — rendered ONLY in mentor mode (off by default).
+// The tool must stand alone; the teacher appears when invited.
 
 export function Why(props: { lesson: string; children: React.ReactNode }) {
+  const [on, setOn] = useState(mentorOn());
+  useEffect(() => onMentorChange(() => setOn(mentorOn())), []);
+  if (!on) return null;
   return (
     <details className="why">
       <summary>why this matters</summary>

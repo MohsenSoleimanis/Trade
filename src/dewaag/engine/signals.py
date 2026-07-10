@@ -137,7 +137,8 @@ def compute_signals() -> pd.DataFrame:
             continue
         price_native = float(store.load_prices(u["symbol"]).sort_values("date").iloc[-1]["close"])
         row = {"symbol": u["symbol"], "name": u["name"], "country": u["country"],
-               "tier": u["tier"], "currency": u["currency"], "price": price_native}
+               "tier": u["tier"], "currency": u["currency"],
+               "sector": u.get("sector", "other"), "price": price_native}
         row.update(_price_block(s, bench))
         row.update(_fundamental_block(u["symbol"], price_native))
         rows.append(row)
@@ -146,13 +147,21 @@ def compute_signals() -> pd.DataFrame:
     stocks = df[df["tier"] != "etf"]
 
     # --- dimension scores: percentiles among stocks (ETF excluded) ---
-    quality_parts = pd.concat([
+    # SECTOR-AWARE RULERS (audit fix): banks, insurers and holdings live on
+    # leverage, and their cash-flow statements aren't industrial cash flows.
+    # Judging KBC by debt/equity was a metric mismatch, not a finding.
+    quality_full = pd.concat([
         _pct_rank(stocks["roe_avg"]),
         _pct_rank(-stocks["dte"]),                      # less debt = better
         _pct_rank(stocks["cash_conv_avg"].clip(upper=2)),  # >2 is noise, not virtue
         _pct_rank(stocks["margin_trend"]),
-    ], axis=1)
-    df["q_score"] = quality_parts.mean(axis=1, skipna=True).round(0)
+    ], axis=1).mean(axis=1, skipna=True)
+    quality_fin = pd.concat([
+        _pct_rank(stocks["roe_avg"]),
+        _pct_rank(stocks["margin_trend"]),
+    ], axis=1).mean(axis=1, skipna=True)
+    is_fin = df["sector"].isin(["financials", "holding"])
+    df["q_score"] = quality_full.where(~is_fin, quality_fin).round(0)
 
     df["v_score"] = _pct_rank(stocks["earnings_yield"]).round(0)
     df["m_score"] = _pct_rank(stocks["mom_12_1"]).round(0)
@@ -176,6 +185,9 @@ def engine_read(symbol: str) -> dict:
 
     bullets: list[str] = []
     b = bullets.append
+
+    if r.get("sector") in ("financials", "holding"):
+        b("financial-sector ruler applied: debt and cash-conversion excluded from the quality score — leverage is structural for banks and holdings, not a defect")
 
     # quality evidence
     if pd.notna(r["roe_avg"]):
