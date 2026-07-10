@@ -13,7 +13,11 @@ interface TodayData {
 export function Today() {
   const [d, setD] = useState<TodayData | null>(null);
   const reload = () => get<TodayData>("/api/today").then(setD).catch(() => {});
-  useEffect(() => { reload(); }, []);
+  useEffect(() => {
+    reload();
+    const id = setInterval(reload, 30000); // marks to delayed quotes — the page stays alive
+    return () => clearInterval(id);
+  }, []);
 
   if (!d) return <div className="loading">assembling your day…</div>;
   const p = d.portfolio;

@@ -190,6 +190,91 @@ def place_limit_order(symbol: str, side: str, shares: int,
         ib.disconnect()
 
 
+# --------------------------------------------------------- quote cache
+
+_quote_cache: dict = {}   # symbol -> (unix_ts, quote dict)
+_gateway_cache: dict = {"ts": 0.0, "up": False}
+QUOTE_TTL = 15.0           # seconds — "alive" for a human, gentle on TWS
+
+
+def _gateway_up() -> bool:
+    import time
+    now = time.time()
+    if now - _gateway_cache["ts"] > 10:
+        cfg = load_broker_config()["ibkr"]
+        _gateway_cache.update(ts=now, up=gateway_available(cfg["host"], cfg["port"], timeout=0.6))
+    return _gateway_cache["up"]
+
+
+def get_quotes(symbols: list[str]) -> dict[str, dict]:
+    """Delayed quotes for many symbols in ONE connection, cached ~15s.
+    Returns {symbol: {price, bid, ask, source}} — source is 'delayed' when
+    TWS answered, 'close' when we fell back to the vault's last close.
+    Never raises: a quote layer that can crash the app helps nobody."""
+    import time
+
+    from dewaag.vault import store
+
+    now = time.time()
+    out: dict[str, dict] = {}
+    need: list[str] = []
+    for s in symbols:
+        ts, q = _quote_cache.get(s, (0.0, None))
+        if q is not None and now - ts < QUOTE_TTL:
+            out[s] = q
+        else:
+            need.append(s)
+
+    if need and _gateway_up():
+        try:
+            from ib_async import Stock
+
+            ib = _connect()
+            try:
+                ib.reqMarketDataType(3)
+                tickers = {}
+                for s in need:
+                    try:
+                        spec = contract_spec(s)
+                    except ValueError:
+                        continue
+                    c = Stock(spec["symbol"], spec["exchange"], spec["currency"],
+                              primaryExchange=spec["primaryExchange"])
+                    ib.qualifyContracts(c)
+                    tickers[s] = ib.reqMktData(c, "", False, False)
+                for _ in range(14):        # poll up to ~7s for the batch
+                    ib.sleep(0.5)
+                    if all(_valid(t.last) or _valid(t.close) or _valid(t.bid)
+                           for t in tickers.values()):
+                        break
+                for s, t in tickers.items():
+                    price = t.last if _valid(t.last) else (t.close if _valid(t.close) else None)
+                    if price is not None:
+                        q = {"price": float(price),
+                             "bid": float(t.bid) if _valid(t.bid) else None,
+                             "ask": float(t.ask) if _valid(t.ask) else None,
+                             "source": "delayed"}
+                        _quote_cache[s] = (now, q)
+                        out[s] = q
+            finally:
+                ib.disconnect()
+        except Exception:  # noqa: BLE001 — fall through to vault closes
+            pass
+
+    # vault-close fallback for anything still missing
+    for s in symbols:
+        if s not in out:
+            try:
+                df = store.load_prices(s).sort_values("date")
+                q = {"price": float(df.iloc[-1]["close"]), "bid": None, "ask": None,
+                     "source": "close"}
+            except FileNotFoundError:
+                continue
+            _quote_cache[s] = (now, q)
+            out[s] = q
+    return out
+
+
 def ibkr_positions() -> list[dict]:
     ib = _connect()
     try:

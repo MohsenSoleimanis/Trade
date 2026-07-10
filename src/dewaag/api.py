@@ -431,6 +431,16 @@ def portfolio() -> dict:
     return snapshot()
 
 
+@app.get("/api/quotes")
+def quotes(symbols: str) -> dict:
+    """Delayed live quotes (via TWS when running; vault close otherwise).
+    The UI polls this to stay alive: ?symbols=COLR,MELE,IWDA"""
+    from dewaag.broker import get_quotes
+
+    syms = [s.strip().upper() for s in symbols.split(",") if s.strip()][:30]
+    return get_quotes(syms)
+
+
 @app.get("/api/broker/status")
 def broker_status() -> dict:
     """Which venue fills your orders, and is it reachable. When IBKR is

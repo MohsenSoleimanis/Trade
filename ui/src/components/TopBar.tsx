@@ -65,7 +65,14 @@ export function TopBar({ route }: { route: string }) {
 
   return (
     <div className="topbar">
-      <a className="brand2" href="#/">⚖ De Waag</a>
+      <a className="brand2" href="#/">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 3v18M3 21h18M6 3h12" />
+          <path d="M6 3 3 10a3 3 0 0 0 6 0L6 3zM18 3l-3 7a3 3 0 0 0 6 0l-3-7z" />
+        </svg>
+        De Waag
+      </a>
       <nav className="tabs">
         {SURFACES.map(([label, to]) => (
           <a key={to} className={`tab ${active(to) ? "on" : ""}`} href={`#${to}`}>{label}</a>

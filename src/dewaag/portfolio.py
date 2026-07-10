@@ -57,6 +57,16 @@ def _last_close(symbol: str) -> float:
     return float(prices.sort_values("date").iloc[-1]["close"])
 
 
+def _mark_price(symbol: str) -> float:
+    """Best available price: delayed live quote via TWS when it's running,
+    the vault's last close otherwise. The whole app marks to this — so when
+    the market moves, so do your P&L, previews and alerts."""
+    from dewaag.broker import get_quotes
+
+    q = get_quotes([symbol]).get(symbol)
+    return float(q["price"]) if q else _last_close(symbol)
+
+
 def _eurusd() -> float:
     """USD per 1 EUR. The double bet (Lesson 2 §6) must be priced, not ignored."""
     try:
@@ -82,7 +92,7 @@ def snapshot() -> dict:
     open_risk_eur = 0.0
     for sym, p in state["positions"].items():
         currency = str(universe.loc[sym, "currency"]) if sym in universe.index else "EUR"
-        last = _last_close(sym)
+        last = _mark_price(sym)
         value_eur = to_eur(last * p["shares"], currency)
         cost_eur = p["avg_cost_eur"] * p["shares"]
         wrong = p.get("wrong_price")
@@ -136,7 +146,7 @@ def preview(symbol: str, side: str, shares: int) -> dict:
     tier = str(universe.loc[symbol, "tier"])
     currency = str(universe.loc[symbol, "currency"])
     exchange = str(universe.loc[symbol, "exchange"])
-    last = _last_close(symbol)
+    last = _mark_price(symbol)
 
     # paper fill model: last close nudged against you by the tier's half-spread
     half = {"mega": 0.0002, "large": 0.0005, "mid": 0.002, "small": 0.006, "etf": 0.0003}.get(tier, 0.004)

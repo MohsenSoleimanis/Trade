@@ -1,8 +1,14 @@
 import { useEffect, useState } from "react";
 import { CompanyDetail, fmtMoney, fmtNum, fmtPct, get } from "../api";
 import { CandleChart } from "../components/CandleChart";
+import { Delta, Gauge, heat, RangeBar } from "../components/instruments";
 import { PriceChart } from "../components/PriceChart";
+import { TradePanel } from "../components/TradePanel";
 import { Why } from "../components/Why";
+
+// The dossier as a TERMINAL WORKSPACE: one dense screen of instruments —
+// hero strip, chart + trade rail, gauges, heat table, valuation band.
+// Sentences live in mentor mode; the surface speaks in visuals.
 
 export function Company({ symbol }: { symbol: string }) {
   const [d, setD] = useState<CompanyDetail | null>(null);
@@ -11,7 +17,8 @@ export function Company({ symbol }: { symbol: string }) {
 
   useEffect(() => {
     setErr(null);
-    get<CompanyDetail>(`/api/company/${symbol}?range=${range}`).then(setD).catch((e) => setErr(String(e)));
+    get<CompanyDetail>(`/api/company/${symbol}?range=${range === "candles" ? "1y" : range}`)
+      .then(setD).catch((e) => setErr(String(e)));
   }, [symbol, range]);
 
   if (err) return <div className="loading">could not load {symbol}: {err}</div>;
@@ -20,212 +27,182 @@ export function Company({ symbol }: { symbol: string }) {
   const sign = d.currency === "USD" ? "$" : "€";
   const crit = d.quality.filter((q) => q.level === "CRITICAL");
   const warns = d.quality.filter((q) => q.level === "WARN");
-  const day = d.day_change ?? 0;
+  const v = d.valuation;
+
+  // valuation band: fair value at implied growth ±1pt (the honest range)
+  let band: [number, number] | undefined;
+  if (v.eps && v.eps > 0 && v.implied_growth != null) {
+    const fv = (g: number) => (g < v.rate - 0.005 ? (v.eps! * (1 + g)) / (v.rate - g) : NaN);
+    const lo = fv(Math.max(0, v.implied_growth - 0.01));
+    const hi = fv(Math.min(v.rate - 0.01, v.implied_growth + 0.01));
+    if (isFinite(lo) && isFinite(hi)) band = [Math.min(lo, hi), Math.max(lo, hi)];
+  }
+
+  const years = d.toolkit.years.slice(-4);
 
   return (
     <>
-      <a href="#/research" className="s">← research</a>
-      <div className="pagehead" style={{ marginTop: 6 }}>
-        <h1>{d.profile.name}</h1>
-        <span className="mono s">{d.symbol} · {d.profile.exchange}</span>
-        <span className="badge tier">{d.profile.tier}</span>
-        <span style={{ marginLeft: "auto", textAlign: "right" }}>
-          <span className="v">{sign}{d.last_price.toFixed(2)}</span>{" "}
-          <span className={`mono ${day >= 0 ? "up" : "down"}`} style={{ fontWeight: 700 }}>
-            {day >= 0 ? "+" : ""}{(day * 100).toFixed(2)}%
-          </span>
-        </span>
-        <a className="btn" href={`#/desk/${d.symbol}`} style={{ textDecoration: "none" }}>Trade →</a>
-      </div>
-      <p className="pagesub">
-        last trade {d.last_date} · market cap {fmtMoney(d.valuation.market_cap, d.currency)} ·
-        52w range <span className="mono">{sign}{d.low_52w} – {sign}{d.high_52w}</span>
-      </p>
-
-      {crit.length > 0 && (
-        <div className="qbanner crit"><b>QUARANTINED:</b> {crit.map((q) => `${q.check}: ${q.detail}`).join(" · ")} — numbers below may be unreliable.</div>
-      )}
-      {crit.length === 0 && warns.length > 0 && (
-        <div className="qbanner warn"><b>Data notes:</b> {warns.map((q) => `${q.check}: ${q.detail}`).join(" · ")} — verified real history, kept on purpose.</div>
-      )}
-
-      <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-          <span className="k">{range === "candles" ? "daily candles + volume — raw prices" : "the weighing machine — adjusted price"}</span>
-          <span className="range-toggle">
-            {["candles", "1y", "3y", "5y", "max"].map((r) => (
-              <button key={r} className={range === r ? "on" : ""} onClick={() => setRange(r === "candles" ? "candles" : r)}>{r.toUpperCase()}</button>
-            ))}
-          </span>
+      {/* ---------- hero strip ---------- */}
+      <div className="card" style={{ padding: "12px 18px", marginBottom: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ minWidth: 210 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+              <h1 style={{ fontSize: 19 }}>{d.profile.name}</h1>
+              <span className="mono s">{d.symbol}</span>
+              <span className="badge tier">{d.profile.tier}</span>
+            </div>
+            <span className="s">{d.profile.exchange} · {String((d.profile as any).sector ?? "")} · {d.last_date}</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+            <span className="v" style={{ fontSize: 26 }}>{sign}{d.last_price.toFixed(2)}</span>
+            <Delta v={d.day_change} />
+          </div>
+          <div style={{ flex: 1 }} />
+          <HeroTile label="mkt cap" value={fmtMoney(v.market_cap, d.currency)} />
+          <HeroTile label="P/E" value={fmtNum(v.pe, 1)} />
+          <HeroTile label="EPS" value={v.eps != null ? sign + v.eps.toFixed(2) : "—"} />
+          <HeroTile label="implied growth" value={fmtPct(v.implied_growth)} />
+          <div style={{ minWidth: 170 }}>
+            <span className="k">52w range</span>
+            <RangeBar lo={d.low_52w} hi={d.high_52w} value={d.last_price}
+              fmt={(x) => sign + x.toFixed(0)} />
+          </div>
         </div>
-        {range === "candles"
-          ? <CandleChart data={d.candles} />
-          : <PriceChart data={d.chart} currency={d.currency} />}
-        <Why lesson="Lessons 1 & 5">
-          This line is mostly noise day-to-day and mostly business results over years. It is drawn from
-          adjusted prices (our own dividend adjustment — the vault computes it, sources proved unreliable),
-          so long-period returns include dividends.
-        </Why>
+        {(crit.length > 0 || warns.length > 0) && (
+          <div className={`qbanner ${crit.length ? "crit" : "warn"}`} style={{ margin: "10px 0 0" }}>
+            {crit.length ? <b>QUARANTINED: </b> : <b>Data notes: </b>}
+            {[...crit, ...warns].map((q) => `${q.check}: ${q.detail}`).join(" · ")}
+          </div>
+        )}
       </div>
 
-      <div className="card" style={{ marginTop: 12 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <span className="k" style={{ margin: 0 }}>the engine's read</span>
-          {(["q_score", "v_score", "m_score", "composite"] as const).map((k) => {
-            const v = d.engine.scores[k];
-            const label = { q_score: "quality", v_score: "value", m_score: "momentum", composite: "Σ" }[k];
-            return (
-              <span key={k} className="mono" style={{ fontSize: 12 }}>
-                {label} <b style={{ color: v == null ? "var(--muted)" : v >= 67 ? "var(--green)" : v >= 34 ? "var(--blue)" : "var(--red)" }}>
-                  {v == null ? "—" : v}</b><span className="s">/100</span>
-              </span>
-            );
-          })}
+      {/* ---------- chart + right rail ---------- */}
+      <div className="chart-trade-row" style={{ marginBottom: 12 }}>
+        <div className="card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <span className="k">{range === "candles" ? "daily · candles + volume" : "adjusted total-return line"}</span>
+            <span className="range-toggle">
+              {["candles", "1y", "3y", "5y", "max"].map((r) => (
+                <button key={r} className={range === r ? "on" : ""} onClick={() => setRange(r)}>{r.toUpperCase()}</button>
+              ))}
+            </span>
+          </div>
+          {range === "candles"
+            ? <CandleChart data={d.candles} />
+            : <PriceChart data={d.chart} currency={d.currency} />}
+          <Why lesson="Lessons 1 & 5">
+            Candles show raw daily trading (what you'd have paid); the line view shows dividend-adjusted
+            wealth over years — the weighing machine. Day-to-day is mostly noise; years are mostly business.
+          </Why>
         </div>
-        <ul style={{ margin: "10px 0 0", paddingLeft: 18 }}>
-          {d.engine.bullets.map((b, i) => <li key={i} style={{ fontSize: 13, margin: "5px 0" }}>{b}</li>)}
-        </ul>
-        <Why lesson="Lesson 7 / master plan">
-          Generated by the engine from your vault — percentile ranks against the whole universe plus
-          rule-based cross-checks (value-trap shape, cash-gap, quality-at-a-price). It orders the evidence;
-          it does not know the future. Disagree with any bullet? Good — now you have something concrete to research.
-        </Why>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <TradePanel symbol={d.symbol} currency={d.currency} lastClose={d.last_price} />
+          <div className="card">
+            <span className="k">engine scores · vs universe</span>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8 }}>
+              <Gauge value={d.engine.scores.q_score} label="quality" size={70} />
+              <Gauge value={d.engine.scores.v_score} label="value" size={70} />
+              <Gauge value={d.engine.scores.m_score} label="momentum" size={70} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div className="grid2" style={{ marginTop: 14 }}>
-        <ToolkitCard d={d} />
-        <ValuationCard d={d} />
+      {/* ---------- instruments row ---------- */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr 1fr", gap: 12 }} className="instruments-row">
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ padding: "12px 16px 0" }}><span className="k">fundamentals · heat = direction vs prior year</span></div>
+          <table className="data" style={{ marginTop: 6 }}>
+            <thead><tr><th className="static">metric</th>
+              {years.map((y) => <th key={y.period} className="num static">{y.period.slice(0, 4)}</th>)}</tr></thead>
+            <tbody>
+              <HeatRow label="Revenue" years={years} get={(y) => y.revenue} fmt={(x) => fmtMoney(x, d.currency)} deltaOf={(y, p) => (y.revenue != null && p?.revenue) ? y.revenue / p.revenue - 1 : null} />
+              <HeatRow label="Net margin" years={years} get={(y) => y.net_margin} fmt={(x) => fmtPct(x)} deltaOf={(y, p) => (y.net_margin != null && p?.net_margin != null) ? y.net_margin - p.net_margin : null} />
+              <HeatRow label="ROE" years={years} get={(y) => y.roe} fmt={(x) => fmtPct(x, 0)} deltaOf={(y, p) => (y.roe != null && p?.roe != null) ? y.roe - p.roe : null} />
+              <HeatRow label="Debt/equity" years={years} get={(y) => y.debt_to_equity} fmt={(x) => fmtNum(x, 2)} deltaOf={(y, p) => (y.debt_to_equity != null && p?.debt_to_equity != null) ? y.debt_to_equity - p.debt_to_equity : null} good="down" />
+              <HeatRow label="Cash conv." years={years} get={(y) => y.cash_conversion} fmt={(x) => fmtNum(x, 2)} deltaOf={(y, p) => (y.cash_conversion != null && p?.cash_conversion != null) ? y.cash_conversion - p.cash_conversion : null} />
+            </tbody>
+          </table>
+        </div>
+
+        <div className="card">
+          <span className="k">valuation instrument</span>
+          {v.pe && band ? (
+            <>
+              <div style={{ margin: "14px 0 4px" }} className="s">price vs honest fair-value band (implied growth ±1pt)</div>
+              <RangeBar
+                lo={Math.min(band[0] * 0.9, d.last_price * 0.9)}
+                hi={Math.max(band[1] * 1.1, d.last_price * 1.1)}
+                value={d.last_price} band={band}
+                fmt={(x) => sign + x.toFixed(0)} />
+              <div className="costline" style={{ marginTop: 12 }}><span>price</span><span className="mono">{sign}{d.last_price.toFixed(2)}</span></div>
+              <div className="costline"><span>band</span><span className="mono">{sign}{band[0].toFixed(0)} – {sign}{band[1].toFixed(0)}</span></div>
+              <div className="costline"><span>verdict</span>
+                <span className="mono" style={{ fontWeight: 650 }}>
+                  {d.last_price < band[0] ? "below band — interesting" : d.last_price > band[1] ? "above band — priced up" : "inside band — no edge"}
+                </span></div>
+              <Why lesson="Lesson 4">
+                The band is the value formula at the market's own implied growth ±1 point. Price inside the
+                band = your guess and the market's guess agree — the correct action is usually nothing.
+              </Why>
+            </>
+          ) : <div className="s" style={{ padding: "14px 0" }}>no positive earnings — valuation instruments offline for this name (the right rulers are P/B or events; Lesson 4's multiples table)</div>}
+        </div>
+
+        <div className="card">
+          <span className="k">engine signals</span>
+          <div style={{ marginTop: 6 }}>
+            {d.engine.bullets.slice(0, 6).map((b, i) => {
+              const tone = b.startsWith("✓") ? "var(--green)" : b.startsWith("⚠") ? "var(--warn)" : "var(--muted)";
+              return (
+                <div key={i} style={{ display: "flex", gap: 8, padding: "5px 0", borderBottom: "1px solid color-mix(in srgb, var(--line) 45%, transparent)" }}>
+                  <span style={{ color: tone, fontSize: 9, lineHeight: "18px" }}>●</span>
+                  <span style={{ fontSize: 12, lineHeight: 1.5 }}>{b.replace(/^[✓⚠] /, "")}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="honesty">
-        source: {d.meta.source} · prices ingested {d.meta.ingested_at} · {d.meta.note}
+        source: {d.meta.source} · ingested {d.meta.ingested_at} · {d.meta.note}
+        {" · "}<a href="#/research" className="mini-link">← all companies</a>
       </div>
     </>
   );
 }
 
-/* ---------------- Lesson 3: the five-number toolkit ---------------- */
-
-const METRICS: [keyof import("../api").YearRatios, string, string, string][] = [
-  // key, label, lesson, why-text
-  ["rev_growth", "Revenue growth", "Lesson 3 §6", "Is the business getting bigger? Steady beats spectacular — and one year means little."],
-  ["net_margin", "Net margin", "Lesson 3 §2", "How many cents of each €1 of sales survive all costs. Compare only within the sector and to the company's own history."],
-  ["roe", "Return on equity", "Lesson 3 §3", "How fast the owners' money grows inside the business. Above ~15% sustained is a good business — but always read it together with debt: leverage inflates ROE."],
-  ["debt_to_equity", "Debt / equity", "Lesson 3 §3", "Who really owns this company's future? Below ~1 is comfortable; above ~2 the bank is the boss. Lenders get paid before you, always."],
-  ["cash_conversion", "Cash conversion", "Lesson 3 §4", "Operating cash flow ÷ net profit — the lie detector. Around 1 or above, sustained: the profit is real. Profit growing while this shrinks is the loudest warning in accounting (Wirecard)."],
-];
-
-function ToolkitCard({ d }: { d: CompanyDetail }) {
-  const years = d.toolkit.years;
-  if (!years.length) {
-    return <div className="card"><span className="k">the five numbers</span><div className="loading">no fundamentals ingested for this name yet</div></div>;
-  }
-  const shown = years.slice(-4);
+function HeroTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="card">
-      <span className="k">the five numbers — annual statements</span>
-      <table className="data" style={{ marginTop: 8 }}>
-        <thead>
-          <tr>
-            <th>metric</th>
-            {shown.map((y) => <th key={y.period} className="num">{y.period.slice(0, 4)}</th>)}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="s">Revenue</td>
-            {shown.map((y) => <td key={y.period} className="num">{fmtMoney(y.revenue, d.currency)}</td>)}
-          </tr>
-          {METRICS.map(([key, label]) => (
-            <tr key={key}>
-              <td className="s">{label}</td>
-              {shown.map((y) => {
-                const v = y[key] as number | null;
-                const txt = key === "debt_to_equity" || key === "cash_conversion" ? fmtNum(v) : fmtPct(v);
-                return <td key={y.period} className="num">{txt}</td>;
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {METRICS.map(([key, label, lesson, why]) => (
-        <Why key={key} lesson={lesson}><b>{label}:</b> {why}</Why>
-      ))}
+    <div style={{ minWidth: 84 }}>
+      <span className="k">{label}</span>
+      <span className="v" style={{ fontSize: 15 }}>{value}</span>
     </div>
   );
 }
 
-/* ---------------- Lesson 4: decoder + value machine ---------------- */
-
-function ValuationCard({ d }: { d: CompanyDetail }) {
-  const v = d.valuation;
-  const [g, setG] = useState(() =>
-    v.implied_growth != null ? Math.round(Math.min(Math.max(v.implied_growth, 0), 0.07) * 200) / 2 : 3);
-  const [r, setR] = useState(8);
-  const sign = d.currency === "USD" ? "$" : "€";
-
-  const gap = r / 100 - g / 100;
-  const broken = gap < 0.005 || v.eps == null || v.eps <= 0;
-  const fair = broken ? null : (v.eps! * (1 + g / 100)) / gap;
-  const upside = fair != null ? fair / d.last_price - 1 : null;
-
+function HeatRow({ label, years, get, fmt, deltaOf, good = "up" }: {
+  label: string;
+  years: import("../api").YearRatios[];
+  get: (y: import("../api").YearRatios) => number | null;
+  fmt: (x: number) => string;
+  deltaOf: (y: import("../api").YearRatios, prev: import("../api").YearRatios | undefined) => number | null;
+  good?: "up" | "down";
+}) {
   return (
-    <div className="card">
-      <span className="k">valuation — the promise inside the price</span>
-
-      <div className="cards" style={{ margin: "10px 0 4px" }}>
-        <div><span className="k">eps</span><span className="v" style={{ fontSize: 17 }}>{v.eps != null ? sign + v.eps.toFixed(2) : "—"}</span></div>
-        <div><span className="k">p/e</span><span className="v" style={{ fontSize: 17 }}>{fmtNum(v.pe, 1)}</span></div>
-        <div><span className="k">implied growth</span><span className="v" style={{ fontSize: 17 }}>{fmtPct(v.implied_growth)}</span></div>
-      </div>
-
-      {v.implied_growth != null ? (
-        <p className="s" style={{ margin: "4px 0 12px" }}>
-          Decoded: at today's price, the market believes profits grow ≈ <b>{fmtPct(v.implied_growth)}</b> per
-          year, forever (at {fmtPct(v.rate, 0)} demanded return). Your question is never "is the P/E high?" —
-          it is "is <i>that promise</i> believable for this business?"
-        </p>
-      ) : (
-        <p className="s" style={{ margin: "4px 0 12px" }}>
-          No positive earnings — P/E and the decoder are meaningless here (Lesson 4's multiples table: wrong ruler for this company).
-        </p>
-      )}
-
-      <span className="k">the value machine</span>
-      <div className="slider-row">
-        <span>growth of profits</span>
-        <input type="range" min={0} max={7} step={0.5} value={g} onChange={(e) => setG(Number(e.target.value))} aria-label="growth" />
-        <span className="mono">{g.toFixed(1)}%</span>
-      </div>
-      <div className="slider-row">
-        <span>return you demand</span>
-        <input type="range" min={5} max={12} step={0.5} value={r} onChange={(e) => setR(Number(e.target.value))} aria-label="rate" />
-        <span className="mono">{r.toFixed(1)}%</span>
-      </div>
-
-      {broken ? (
-        <div className="warnbox">
-          {v.eps == null || v.eps <= 0
-            ? "No positive earnings to feed the formula."
-            : "Growth ≈ demanded return — the formula explodes toward infinity. No company grows faster than its discount rate forever. If a valuation needs these settings, someone is dreaming."}
-        </div>
-      ) : (
-        <div className="cards" style={{ marginTop: 8 }}>
-          <div><span className="k">fair value / share</span><span className="v" style={{ fontSize: 17 }}>{sign}{fair!.toFixed(2)}</span></div>
-          <div><span className="k">vs price</span>
-            <span className={`v ${upside! >= 0 ? "up" : "down"}`} style={{ fontSize: 17 }}>
-              {upside! >= 0 ? "+" : ""}{(upside! * 100).toFixed(0)}%
-            </span>
-            <div className="s">{Math.abs(upside!) < 0.3 ? "inside honest-range noise → the correct action is usually nothing" : "large gap — check your assumptions before believing it"}</div>
-          </div>
-        </div>
-      )}
-
-      <Why lesson="Lesson 4">
-        value = profit × (1+g) ÷ (rate − growth). Move each slider one step and watch the value swing —
-        that violence is why valuations are <b>ranges with reasons, never points</b>, and why you demand a
-        margin of safety before acting. The fair value uses last-year EPS; garbage in, gospel out.
-      </Why>
-    </div>
+    <tr>
+      <td className="s">{label}</td>
+      {years.map((y, i) => {
+        const val = get(y);
+        const delta = deltaOf(y, years[i - 1]);
+        return (
+          <td key={y.period} className="num" style={heat(delta, good)}>
+            {val == null ? "—" : fmt(val)}
+          </td>
+        );
+      })}
+    </tr>
   );
 }
