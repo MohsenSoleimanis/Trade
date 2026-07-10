@@ -54,13 +54,22 @@ def main() -> None:
     order = MarketOrder(action, qty)
     trade = ib.placeOrder(contract, order)
 
-    # Wait until IBKR ACKNOWLEDGES the order (leaves PendingSubmit) or it fills.
-    # Disconnecting while still PendingSubmit loses the order, so we hold here.
-    for _ in range(40):  # up to ~20s
+    # Wait for a FILL. Orders often sit briefly in PendingSubmit before IBKR
+    # acknowledges and fills them, so we hold the connection open rather than
+    # disconnecting early (which would strand the order). Once acknowledged
+    # (Submitted/PreSubmitted) we give it a short grace period to fill; if it
+    # doesn't, it's resting (markets closed) and we report that.
+    ack_at = None
+    for i in range(60):  # up to ~30s
         ib.sleep(0.5)
         s = trade.orderStatus.status
-        if trade.isDone() or s in ("Submitted", "PreSubmitted"):
+        if s == "Filled" or s in ("Cancelled", "ApiCancelled", "Inactive"):
             break
+        if s in ("Submitted", "PreSubmitted"):
+            if ack_at is None:
+                ack_at = i
+            elif i - ack_at >= 12:  # ~6s after acknowledgment, still unfilled -> resting
+                break
 
     st = trade.orderStatus
     print(f"  Status : {st.status}")

@@ -197,8 +197,7 @@ def execute(symbol: str, side: str, shares: int, thesis: str = "",
         result = place_limit_order(symbol, side, shares, pv["fill"])
         if result["filled"] == 0:
             return {"ok": False, "blocks": [
-                f"IBKR paper: order not filled ({result['status']}). {result.get('note') or ''} "
-                "Market closed? Orders rest only during the wait window, then cancel."]}
+                f"IBKR paper — not filled. {result.get('note') or result.get('status', '')}"]}
         if result["filled"] < shares:
             shares = result["filled"]  # book exactly what really filled
             pv = preview(symbol, side, shares)

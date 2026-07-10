@@ -103,13 +103,41 @@ def ibkr_status() -> dict:
     return out
 
 
-def place_limit_order(symbol: str, side: str, shares: int,
-                      limit_price: float, wait_seconds: int = 12) -> dict:
-    """Place a DAY limit order on the paper account, wait briefly for a fill.
+def _valid(x) -> bool:
+    return x is not None and x == x and x > 0  # x==x rejects NaN
 
-    Limit orders only (Lesson 2 is law at the venue too). If it doesn't fill
-    within the wait, the order is CANCELLED and reported — a resting order
-    you forgot is a gift to better-informed traders (trap #2).
+
+def _live_quote(ib, contract) -> dict:
+    """Bid/ask/last for pricing a MARKETABLE limit. We use DELAYED data
+    (type 3) directly: it's free for Euronext (the paper account has no live
+    subscription), enough to cross the spread — and it needs a few seconds to
+    arrive, so we poll rather than guess a fixed sleep (that was the bug that
+    left orders priced off a stale close)."""
+    ib.reqMarketDataType(3)  # delayed (~15 min); free, no subscription needed
+    t = ib.reqMktData(contract, "", False, False)
+    for _ in range(16):       # poll up to ~8s for the delayed quote to populate
+        ib.sleep(0.5)
+        if _valid(t.ask) or _valid(t.bid) or _valid(t.last):
+            break
+    quote = {"bid": t.bid if _valid(t.bid) else None,
+             "ask": t.ask if _valid(t.ask) else None,
+             "last": t.last if _valid(t.last) else (t.close if _valid(t.close) else None)}
+    try:
+        ib.cancelMktData(contract)
+    except Exception:  # noqa: BLE001
+        pass
+    return quote
+
+
+def place_limit_order(symbol: str, side: str, shares: int,
+                      fallback_price: float, wait_seconds: int = 18) -> dict:
+    """Place a MARKETABLE DAY limit on the paper account and wait for a fill.
+
+    We fetch the live quote and set the limit at (or just through) the current
+    ask for a buy / bid for a sell — so it fills like a market order but with a
+    price cap (Lesson 2: never a naked market order, but a stale limit that
+    never crosses is just as useless). Unfilled remainder is cancelled — a
+    forgotten resting order is a gift to informed traders (trap #2).
     """
     from ib_async import LimitOrder, Stock
 
@@ -119,10 +147,18 @@ def place_limit_order(symbol: str, side: str, shares: int,
         contract = Stock(spec["symbol"], spec["exchange"], spec["currency"],
                          primaryExchange=spec["primaryExchange"])
         ib.qualifyContracts(contract)
-        order = LimitOrder("BUY" if side == "BUY" else "SELL", shares,
-                           round(limit_price, 2), tif="DAY")
+        q = _live_quote(ib, contract)
+
+        if side == "BUY":
+            ref = q["ask"] or q["last"] or fallback_price
+            limit = round(ref * 1.003, 2)   # cross the ask + small buffer
+        else:
+            ref = q["bid"] or q["last"] or fallback_price
+            limit = round(ref * 0.997, 2)
+        priced_from = "live/delayed quote" if (q["ask"] or q["bid"] or q["last"]) else "stale close (NO market data)"
+
+        order = LimitOrder("BUY" if side == "BUY" else "SELL", shares, limit, tif="DAY")
         trade = ib.placeOrder(contract, order)
-        ib.sleep(1)
         waited = 0.0
         while not trade.isDone() and waited < wait_seconds:
             ib.sleep(1)
@@ -137,11 +173,19 @@ def place_limit_order(symbol: str, side: str, shares: int,
         if filled < shares and not trade.isDone():
             ib.cancelOrder(order)
             ib.sleep(1)
+
+        note = None
+        if filled < shares:
+            if not (q["ask"] or q["bid"] or q["last"]):
+                note = (f"no market data for {symbol} on your paper account — IBKR couldn't price a fill. "
+                        f"Enable delayed data in TWS (Global Config → API, or the market-data settings) "
+                        f"or add this exchange's data subscription. US names usually have free data; "
+                        f"Euronext often needs it enabled.")
+            else:
+                note = (f"{filled}/{shares} filled at limit €{limit} (priced from {priced_from}, "
+                        f"bid {q['bid']} / ask {q['ask']}). Remainder cancelled — the quote may have moved; retry.")
         return {"status": status, "filled": filled, "avg_price": avg,
-                "commission": commission,
-                "note": None if filled == shares else
-                f"only {filled}/{shares} filled within {wait_seconds}s — remainder cancelled "
-                f"(adjust the limit toward the ask/bid and retry, or wait for the auction)"}
+                "commission": commission, "limit": limit, "quote": q, "note": note}
     finally:
         ib.disconnect()
 
