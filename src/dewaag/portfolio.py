@@ -182,7 +182,7 @@ def execute(symbol: str, side: str, shares: int, thesis: str = "",
     blocks = gate_order(
         c, portfolio_value=snap["equity"], position_value_after=position_after_eur,
         shares=shares, entry=pv["fill"], wrong_price=wrong_price,
-        thesis=thesis, side=side,
+        thesis=thesis, side=side, tier=pv["tier"],
     )
     if side == "BUY" and pv["total_eur"] > state["cash"]:
         blocks.append(f"not enough cash: need €{pv['total_eur']:,.2f}, have €{state['cash']:,.2f}. No leverage — the door stays closed (§5).")

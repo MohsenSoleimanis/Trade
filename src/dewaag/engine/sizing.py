@@ -30,7 +30,7 @@ def backwards_size(portfolio_value: float, risk_pct: float,
 
 def gate_order(c: Constitution, *, portfolio_value: float, position_value_after: float,
                shares: int, entry: float, wrong_price: float | None,
-               thesis: str, side: str) -> list[str]:
+               thesis: str, side: str, tier: str = "mid") -> list[str]:
     """Every reason this order may not pass. Empty list = cleared."""
     blocks: list[str] = []
 
@@ -57,10 +57,14 @@ def gate_order(c: Constitution, *, portfolio_value: float, position_value_after:
                 f"(€{budget:,.0f}). Reduce shares or rethink the exit — conviction never enters the formula (§1)."
             )
 
-    cap = portfolio_value * c.max_position_pct / 100.0
+    # §2 caps SINGLE-COMPANY risk. A broad ETF is a basket of ~1,500
+    # companies — it IS the diversification the cap exists to protect.
+    # Core ETFs get a wider ceiling (60%) instead of the stock cap.
+    cap_pct = 60.0 if tier == "etf" else c.max_position_pct
+    cap = portfolio_value * cap_pct / 100.0
     if position_value_after > cap * 1.005:
         blocks.append(
-            f"position would be €{position_value_after:,.0f} — above your {c.max_position_pct}% cap "
+            f"position would be €{position_value_after:,.0f} — above the {cap_pct:.0f}% cap "
             f"(€{cap:,.0f}). Feeling sure is data about you, not the stock (§2)."
         )
 

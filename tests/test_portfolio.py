@@ -103,3 +103,17 @@ def test_no_cash_no_leverage(tmp_path, monkeypatch):
     r = pf.execute("TST", "BUY", 3, thesis="x" * 30, wrong_price=4000.0)
     assert r["ok"] is False
     assert any("cash" in b or "cap" in b for b in r["blocks"])
+
+
+def test_etf_core_exempt_from_stock_cap_but_stocks_are_not():
+    """§2 caps single-company risk; a 1,500-company basket is the
+    diversification itself. ETFs get a 60% core ceiling instead."""
+    c = signed()
+    stock_blocks = gate_order(c, portfolio_value=10_000, position_value_after=3_000,
+                              shares=10, entry=300, wrong_price=270, thesis="x" * 30,
+                              side="BUY", tier="mega")
+    assert any("cap" in b for b in stock_blocks)
+    etf_blocks = gate_order(c, portfolio_value=10_000, position_value_after=3_000,
+                            shares=25, entry=120, wrong_price=108, thesis="core holding " * 3,
+                            side="BUY", tier="etf")
+    assert not any("cap" in b for b in etf_blocks)
