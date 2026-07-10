@@ -8,7 +8,7 @@
 # When the gateway is offline, ibkr orders are refused — never silently
 # simulated. You must always know which venue filled you.
 
-provider: ibkr
+provider: paper_local
 
 ibkr:
   host: 127.0.0.1
