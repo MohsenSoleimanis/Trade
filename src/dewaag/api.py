@@ -130,6 +130,15 @@ def company(symbol: str, range: str = "5y") -> dict:
 
     yr = px[px.index >= px.index.max() - pd.DateOffset(years=1)]
 
+    # raw OHLC + volume for the candlestick view (last ~9 months, daily) —
+    # raw close, not adjusted: candles show what you'd actually have paid
+    ohlc = prices.tail(190)
+    candles = [{"time": str(r["date"]), "open": round(float(r["open"]), 4),
+                "high": round(float(r["high"]), 4), "low": round(float(r["low"]), 4),
+                "close": round(float(r["close"]), 4),
+                "volume": int(r["volume"]) if pd.notna(r["volume"]) else 0}
+               for _, r in ohlc.iterrows()]
+
     from dewaag.engine.signals import engine_read
     engine = engine_read(symbol)
 
@@ -145,6 +154,7 @@ def company(symbol: str, range: str = "5y") -> dict:
         "day_change": float(last["adj_close"] / prev["adj_close"] - 1),
         "high_52w": round(float(yr.max()), 2), "low_52w": round(float(yr.min()), 2),
         "currency": profile.get("currency"), "range": range, "chart": chart,
+        "candles": candles,
         "engine": engine, "toolkit": tk, "valuation": val,
         "quality": check_frame(symbol, prices),
         "meta": {

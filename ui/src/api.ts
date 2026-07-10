@@ -39,6 +39,7 @@ export interface CompanyDetail {
   profile: { name: string; exchange: string; currency: string; country: string; tier: string };
   last_price: number; last_date: string; currency: string;
   day_change: number | null; high_52w: number; low_52w: number; range: string;
+  candles: { time: string; open: number; high: number; low: number; close: number; volume: number }[];
   engine: { scores: { q_score: number | null; v_score: number | null; m_score: number | null; composite: number | null }; coverage?: number; bullets: string[] };
   chart: { date: string; value: number }[];
   toolkit: { years: YearRatios[]; latest: YearRatios | null };

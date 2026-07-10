@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { CompanyDetail, fmtMoney, fmtNum, fmtPct, get } from "../api";
+import { CandleChart } from "../components/CandleChart";
 import { PriceChart } from "../components/PriceChart";
 import { Why } from "../components/Why";
 
 export function Company({ symbol }: { symbol: string }) {
   const [d, setD] = useState<CompanyDetail | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [range, setRange] = useState("5y");
+  const [range, setRange] = useState("candles");
 
   useEffect(() => {
     setErr(null);
@@ -49,15 +50,17 @@ export function Company({ symbol }: { symbol: string }) {
       )}
 
       <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <span className="k">the weighing machine — price</span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <span className="k">{range === "candles" ? "daily candles + volume — raw prices" : "the weighing machine — adjusted price"}</span>
           <span className="range-toggle">
-            {["1y", "3y", "5y", "max"].map((r) => (
-              <button key={r} className={range === r ? "on" : ""} onClick={() => setRange(r)}>{r.toUpperCase()}</button>
+            {["candles", "1y", "3y", "5y", "max"].map((r) => (
+              <button key={r} className={range === r ? "on" : ""} onClick={() => setRange(r === "candles" ? "candles" : r)}>{r.toUpperCase()}</button>
             ))}
           </span>
         </div>
-        <PriceChart data={d.chart} currency={d.currency} />
+        {range === "candles"
+          ? <CandleChart data={d.candles} />
+          : <PriceChart data={d.chart} currency={d.currency} />}
         <Why lesson="Lessons 1 & 5">
           This line is mostly noise day-to-day and mostly business results over years. It is drawn from
           adjusted prices (our own dividend adjustment — the vault computes it, sources proved unreliable),
