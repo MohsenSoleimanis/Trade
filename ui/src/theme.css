@@ -289,8 +289,8 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 
 /* ============ UX v3: the one-workspace shell ============ */
 .ws {
-  display: grid; grid-template-columns: 190px minmax(0, 1fr) 292px;
-  gap: 0; width: 100%; max-width: 1720px; margin: 0 auto;
+  display: grid; grid-template-columns: 200px minmax(0, 1fr) 300px;
+  gap: 0; width: 100%;
   min-height: calc(100vh - 54px);
 }
 .ws-rail, .ws-rail-r {
@@ -353,3 +353,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   .ws-rail-r { display: none; } /* small screens: stage first; act via legacy desk */
 }
 @media (max-width: 860px) { .ws { grid-template-columns: 1fr; } .ws-rail { display: none; } }
+
+
+/* ---------- quiet scrollbars (Windows chrome tamed) ---------- */
+* { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+*::-webkit-scrollbar { width: 7px; height: 7px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+*::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+*::-webkit-scrollbar-corner { background: transparent; }
+.ws-rail, .ws-rail-r { scrollbar-width: none; }           /* rails: no visible bar */
+.ws-rail::-webkit-scrollbar, .ws-rail-r::-webkit-scrollbar { display: none; }
