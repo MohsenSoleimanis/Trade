@@ -48,8 +48,8 @@ def contract_spec(symbol: str) -> dict:
     if symbol not in u.index:
         raise ValueError(f"unknown symbol {symbol}")
     row = u.loc[symbol]
-    if row["tier"] == "fx":
-        raise ValueError("FX reference series are not tradable")
+    if row["tier"] in ("fx", "macro"):
+        raise ValueError("reference series (FX, macro channels) are not tradable")
     return {
         "symbol": IB_SYMBOL.get(symbol, symbol),
         "exchange": ROUTING,

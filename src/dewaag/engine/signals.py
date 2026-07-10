@@ -130,7 +130,7 @@ def compute_signals() -> pd.DataFrame:
     bench = _series("IWDA")
     rows = []
     for _, u in universe.iterrows():
-        if u["tier"] in ("fx",):
+        if u["tier"] in ("fx", "macro"):
             continue
         s = _series(u["symbol"])
         if s is None or len(s) < 260:

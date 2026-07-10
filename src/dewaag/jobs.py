@@ -83,6 +83,11 @@ def nightly() -> dict:
         from dewaag.vault.news import get_news
         symbols = set(load_state()["positions"]) | {c["symbol"] for c in load_cards()
                                                     if c.get("stage") not in ("CLOSED",)}
+        from dewaag.vault.news import get_macro_news
+        try:
+            get_macro_news(force=True)  # the world wire, one fetch for the whole app
+        except Exception:  # noqa: BLE001
+            pass
         n = 0
         for sym in sorted(symbols):
             try:

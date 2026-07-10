@@ -149,8 +149,53 @@ export function Workspace({ initial }: { initial?: string }) {
             <a href="#/library/system" className="mini-link"> system</a> · <a href="#/library/lab" className="mini-link">lab</a>
           </div>
         </div>
+
+        <World />
       </aside>
     </div>
+  );
+}
+
+interface MacroData {
+  regime: { symbol: string; read: string }[];
+  book: { positions: number; note: string; channels: { channel: string; label: string; beta: number; so_what: string }[] };
+  wire: { title: string; when: string | null; source: string; link?: string | null }[];
+}
+
+function World() {
+  const [m, setM] = useState<MacroData | null>(null);
+  useEffect(() => { get<MacroData>("/api/macro").then(setM).catch(() => {}); }, []);
+  if (!m) return null;
+
+  return (
+    <>
+      <div className="ws-sec" style={{ marginTop: 8 }}>WORLD — the market&apos;s own summary</div>
+      <div className="ws-feed">
+        {m.regime.map((r) => (
+          <div key={r.symbol} className="s" style={{ padding: "3px 2px", lineHeight: 1.45, borderBottom: "1px solid color-mix(in srgb, var(--line) 35%, transparent)" }}>
+            {r.read}
+          </div>
+        ))}
+        {m.book.channels.slice(0, 2).map((c) => (
+          <div key={c.channel} className="s" style={{ padding: "3px 2px", lineHeight: 1.45, color: "var(--text)" }}>
+            <b>your book:</b> {c.so_what}
+          </div>
+        ))}
+        {m.book.positions === 0 && (
+          <div className="s" style={{ padding: "3px 2px", lineHeight: 1.45 }}>{m.book.note}</div>
+        )}
+        {m.wire.slice(0, 3).map((n, i) => (
+          <a key={i} href={n.link ?? undefined} target="_blank" rel="noreferrer"
+            style={{ display: "flex", gap: 6, padding: "3px 2px", textDecoration: "none", color: "inherit", alignItems: "baseline" }}>
+            <span className="mono s" style={{ color: "var(--muted)", minWidth: 40 }}>{n.when?.slice(5) ?? "—"}</span>
+            <span className="s" style={{ lineHeight: 1.4 }}>{n.title}</span>
+          </a>
+        ))}
+        <div className="s" style={{ padding: "4px 2px", color: "var(--muted)" }}>
+          channels digest world news in minutes — context, never a signal.
+        </div>
+      </div>
+    </>
   );
 }
 

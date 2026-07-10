@@ -164,7 +164,7 @@ def build_panel(start_year: int = 2006) -> tuple[pd.DataFrame, dict, pd.Series |
 
     bench = monthly["IWDA"] if "IWDA" in monthly.columns else None
     stocks = [s for s in monthly.columns
-              if tiers.get(s) not in ("etf", "fx")]
+              if tiers.get(s) not in ("etf", "fx", "macro")]
     return monthly[stocks], tiers, bench
 
 

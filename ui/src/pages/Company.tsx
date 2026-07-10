@@ -160,6 +160,7 @@ interface OutlookData {
   };
   news: { title: string; when: string | null; source: string; link?: string | null }[];
   read: string[];
+  macro: { channel: string; label: string; beta: number; r: number | null; strength: string; so_what: string }[];
 }
 
 function Outlook({ symbol, price, sign }: { symbol: string; price: number; sign: string }) {
@@ -175,7 +176,7 @@ function Outlook({ symbol, price, sign }: { symbol: string; price: number; sign:
   const hasTargets = !!(f?.available && f.target_low && f.target_high);
 
   return (
-    <div className="instruments-row" style={{ display: "grid", gridTemplateColumns: "1fr 1.4fr", gap: 10, marginTop: 10 }}>
+    <div className="instruments-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1.2fr", gap: 10, marginTop: 10 }}>
       <div className="card">
         <span className="k">forward view · street expectations</span>
         {!o && <div className="loading" style={{ padding: "10px 0" }}>asking the street…</div>}
@@ -203,6 +204,34 @@ function Outlook({ symbol, price, sign }: { symbol: string; price: number; sign:
                 <span className="mono">{f.trailing_pe.toFixed(1)} → {f.forward_pe.toFixed(1)}</span></div>
             )}
             {o.read[0] && <Why lesson="Lesson 1">{o.read.join(" ")}</Why>}
+          </>
+        )}
+      </div>
+
+      <div className="card">
+        <span className="k">macro lens · how the world reaches this name</span>
+        {!o && <div className="loading" style={{ padding: "10px 0" }}>measuring channels…</div>}
+        {o && o.macro.length === 0 && <div className="s" style={{ padding: "10px 0" }}>not enough overlapping history to measure.</div>}
+        {o && o.macro.length > 0 && (
+          <>
+            <div style={{ marginTop: 6 }}>
+              {o.macro.map((m, i) => {
+                const dim = m.strength === "negligible";
+                const col = m.strength === "strong" ? "var(--red)" : m.strength === "clear" ? "var(--warn)" : "var(--muted)";
+                return (
+                  <div key={i} style={{ padding: "4px 0", borderBottom: "1px solid color-mix(in srgb, var(--line) 45%, transparent)", opacity: dim ? 0.55 : 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: 11.5 }}>{m.label}</span>
+                      <span className="mono s" style={{ color: col, whiteSpace: "nowrap" }}>
+                        {m.channel === "IWDA" ? `β ${m.beta.toFixed(2)}` : m.strength}
+                      </span>
+                    </div>
+                    {!dim && <div className="s" style={{ lineHeight: 1.4 }}>{m.so_what}</div>}
+                  </div>
+                );
+              })}
+            </div>
+            <Why lesson="risk">Measured co-movement (~3y weekly, market effect removed) — not causation, not prophecy. You can&apos;t forecast a war; you CAN know which channel would carry it to this name before it happens.</Why>
           </>
         )}
       </div>

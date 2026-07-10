@@ -87,7 +87,7 @@ def generate_plan() -> dict:
     c = load_constitution()
     snap = snapshot()
     df = compute_signals()
-    stocks = df[~df["tier"].isin(["etf", "fx"])].copy()
+    stocks = df[~df["tier"].isin(["etf", "fx", "macro"])].copy()
 
     held = {p["symbol"] for p in snap["positions"]}
     equity = snap["equity"]

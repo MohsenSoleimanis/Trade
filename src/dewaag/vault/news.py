@@ -75,6 +75,46 @@ def _google_news(query: str) -> list[dict]:
     return out
 
 
+MACRO_QUERIES = [
+    "markets geopolitics war impact",
+    "ECB federal reserve interest rates",
+    "oil energy prices economy",
+    "climate policy economic impact",
+]
+
+
+def get_macro_news(force: bool = False) -> list[dict]:
+    """The WORLD wire — war, central banks, energy, climate. Same honesty
+    rule as company news, doubled: by the time you read a macro headline,
+    every price on your screen has already voted on it. This wire exists
+    so you are never SURPRISED, not so you trade it."""
+    NEWS_DIR.mkdir(parents=True, exist_ok=True)
+    cache = NEWS_DIR / "_MACRO.json"
+    if cache.exists() and not force:
+        payload = json.loads(cache.read_text(encoding="utf-8"))
+        if time.time() - payload["fetched_ts"] < CACHE_MINUTES * 60:
+            return payload["items"]
+
+    items: list[dict] = []
+    for q in MACRO_QUERIES:
+        items.extend(_google_news(q)[:4])
+    seen, merged = set(), []
+    for it in items:
+        key = it["title"].lower()[:70]
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append(it)
+    merged.sort(key=lambda x: x["when"] or "", reverse=True)
+    merged = merged[:12]
+
+    cache.write_text(json.dumps({
+        "fetched_ts": time.time(),
+        "fetched_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "items": merged}, indent=1), encoding="utf-8")
+    return merged
+
+
 def get_news(symbol: str, force: bool = False) -> list[dict]:
     """Merged, deduped, cached ~30 min. Returns newest first."""
     NEWS_DIR.mkdir(parents=True, exist_ok=True)

@@ -23,9 +23,12 @@ SPIKE_CRIT = 0.80      # >80% is almost always a data error (or a story
 MIN_ROWS = 250         # less than ~1 trading year of history -> WARN
 
 
-def check_frame(symbol: str, df: pd.DataFrame, today=None) -> list[dict]:
+def check_frame(symbol: str, df: pd.DataFrame, today=None, tier: str | None = None) -> list[dict]:
     """Pure function over a price frame -> findings. Pure so tests can feed
-    synthetic frames — the immune system itself must be testable."""
+    synthetic frames — the immune system itself must be testable.
+
+    tier="macro": the spike check is OFF. VIX doubling in a day is not a
+    data error — it is exactly the information the series exists to carry."""
     findings: list[dict] = []
     add = lambda level, check, detail: findings.append(  # noqa: E731
         {"symbol": symbol, "level": level, "check": check, "detail": detail}
@@ -57,13 +60,14 @@ def check_frame(symbol: str, df: pd.DataFrame, today=None) -> list[dict]:
     if (df["adj_close"] <= 0).any() or (df["close"] <= 0).any():
         add("CRITICAL", "nonpositive", "zero/negative prices present")
 
-    rets = df.sort_values("date")["adj_close"].pct_change().abs().dropna()
-    if len(rets):
-        worst = float(rets.max())
-        if worst > SPIKE_CRIT:
-            add("CRITICAL", "spike", f"|daily move| {worst:.0%}")
-        elif worst > SPIKE_WARN:
-            add("WARN", "spike", f"|daily move| {worst:.0%}")
+    if tier != "macro":
+        rets = df.sort_values("date")["adj_close"].pct_change().abs().dropna()
+        if len(rets):
+            worst = float(rets.max())
+            if worst > SPIKE_CRIT:
+                add("CRITICAL", "spike", f"|daily move| {worst:.0%}")
+            elif worst > SPIKE_WARN:
+                add("WARN", "spike", f"|daily move| {worst:.0%}")
 
     return findings
 
@@ -75,7 +79,8 @@ def run_checks() -> pd.DataFrame:
 
     universe = store.load_universe()
     all_findings: list[dict] = []
-    for symbol in universe["symbol"]:
+    for _, row in universe.iterrows():
+        symbol = row["symbol"]
         path = store.price_path(symbol)
         if not path.exists():
             all_findings.append(
@@ -83,7 +88,7 @@ def run_checks() -> pd.DataFrame:
                  "detail": "in universe but no price file"}
             )
             continue
-        all_findings.extend(check_frame(symbol, pd.read_parquet(path)))
+        all_findings.extend(check_frame(symbol, pd.read_parquet(path), tier=str(row["tier"])))
     cols = ["symbol", "level", "check", "detail"]
     return pd.DataFrame(all_findings, columns=cols)
 

@@ -120,6 +120,7 @@ def context_pack(symbol: str) -> dict:
 
     # the forward half of the desk: news + street expectations. Cached on
     # disk; a dead network yields empty/unavailable, never a crashed brief.
+    from dewaag.engine.macro import regime, sensitivities
     from dewaag.vault.forward import get_forward
     from dewaag.vault.news import get_news
 
@@ -134,6 +135,8 @@ def context_pack(symbol: str) -> dict:
         "calendar": [e for e in upcoming(30) if e["symbol"] == symbol],
         "news": get_news(symbol),               # what is happening NOW
         "forward": get_forward(symbol),         # what the street expects NEXT
+        "macro": {"regime": regime(),           # how the WORLD reaches this name
+                  "sensitivities": sensitivities(symbol)},
         "quality": quality,
         "brief": load_brief(symbol),
         "agent_memory": recall(20, symbol=symbol),

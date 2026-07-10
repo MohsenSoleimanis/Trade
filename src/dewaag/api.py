@@ -76,7 +76,7 @@ def companies() -> list[dict]:
     out = []
     for _, row in universe.iterrows():
         sym = row["symbol"]
-        if row["tier"] == "fx":
+        if row["tier"] in ("fx", "macro"):
             continue
         t = tail[tail["symbol"] == sym]
         price = day = ret1y = mcap = None
@@ -183,6 +183,9 @@ def outlook(symbol: str) -> dict:
         "note": "an index fund has no analyst estimates — its forward view is the world economy itself"}
     news = get_news(symbol)
 
+    from dewaag.engine.macro import sensitivities
+    macro = sensitivities(symbol)
+
     # plain-language read of the street numbers, same voice as the engine
     bullets: list[str] = []
     if fwd.get("available") and fwd.get("target_mean"):
@@ -201,7 +204,23 @@ def outlook(symbol: str) -> dict:
             "Price targets are opinions, and historically optimistic on average. "
             "The spread between the low and high target tells you how much analysts disagree — "
             "wide disagreement means high uncertainty, whatever the mean says.")
-    return {"symbol": symbol, "forward": fwd, "news": news, "read": bullets}
+    return {"symbol": symbol, "forward": fwd, "news": news, "read": bullets,
+            "macro": macro}
+
+
+@app.get("/api/macro")
+def macro() -> dict:
+    """The world lens: regime (what the channel prices say now), the book's
+    measured exposures, and the world wire. War/climate/rates never appear
+    as predictions here — only as channels, sensitivities and rehearsals."""
+    from dewaag.engine.macro import portfolio_exposures, regime
+    from dewaag.vault.news import get_macro_news
+
+    return {"regime": regime(), "book": portfolio_exposures(),
+            "wire": get_macro_news(),
+            "how_to_read": "Channel prices digest world news in minutes — this is the market's own summary. "
+                           "Sensitivities are measured co-movement (~3y weekly, market removed), not causation. "
+                           "For 'what would a shock do', the stress tab replays 2008 / COVID / 2022 on your exact book."}
 
 
 # ------------------------------------------------------ the engine

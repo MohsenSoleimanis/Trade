@@ -40,7 +40,7 @@ def refresh_calendar() -> int:
     universe = store.load_universe()
     all_rows: list[dict] = []
     for _, r in universe.iterrows():
-        if r["tier"] in ("fx",):
+        if r["tier"] in ("fx", "macro"):
             continue
         all_rows.extend(fetch_symbol_calendar(r["symbol"], r["yahoo"]))
     df = pd.DataFrame(all_rows, columns=["symbol", "event", "date", "ingested_at"])

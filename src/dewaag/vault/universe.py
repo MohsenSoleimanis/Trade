@@ -65,6 +65,13 @@ SEED = [
     ("WEBN",  "WEBN.DE", "Amundi Prime All-Country World (acc)", "XETRA", "EUR", "IE", "etf", "etf"),
     # --- FX: the double bet must be priced, not ignored (Lesson 2 §6) ---
     ("EURUSD", "EURUSD=X", "EUR/USD", "FX", "USD", "FX", "fx", "fx"),
+    # --- Macro channels: war/climate/rates reach a company THROUGH these
+    #     traded prices. We don't forecast shocks — we measure exposure to
+    #     the channels that transmit them. Never tradable here. ---
+    ("VIX",   "^VIX", "VIX — market fear index",          "MACRO", "USD", "US",    "macro", "macro"),
+    ("BRENT", "BZ=F", "Brent crude — energy/war channel", "MACRO", "USD", "WORLD", "macro", "macro"),
+    ("GOLD",  "GC=F", "Gold — crisis-hedge channel",      "MACRO", "USD", "WORLD", "macro", "macro"),
+    ("US10Y", "^TNX", "US 10y yield — rates channel",     "MACRO", "USD", "US",    "macro", "macro"),
 ]
 
 COLUMNS = ["symbol", "yahoo", "name", "exchange", "currency", "country", "tier", "sector"]
