@@ -4,9 +4,10 @@ import { Autopilot } from "./pages/Autopilot";
 import { Library } from "./pages/Library";
 import { Pipeline } from "./pages/Pipeline";
 import { Today } from "./pages/Today";
+import { Workspace } from "./pages/Workspace";
 
-// v2 shell: three surfaces (Today / Pipeline / Library), no sidebar.
-// Old deep links (#/company/X, #/desk, #/screener…) redirect into Library.
+// UX v3: the WORKSPACE is the app. Everything else is secondary,
+// reachable through the ▤ menu (skill rule: primary vs secondary nav).
 
 function useRoute(): string {
   const [hash, setHash] = useState(window.location.hash);
@@ -19,8 +20,8 @@ function useRoute(): string {
 }
 
 const LEGACY: [RegExp, (m: RegExpMatchArray) => string][] = [
-  [/^\/company\/(.+)$/, (m) => `/library/company/${m[1]}`],
-  [/^\/desk(\/.+)?$/, (m) => `/library/desk${m[1] ?? ""}`.replace(/\/$/, "")],
+  [/^\/company\/(.+)$/, (m) => `/w/${m[1]}`],
+  [/^\/desk(\/(.+))?$/, (m) => (m[2] ? `/w/${m[2]}` : "/library/desk")],
   [/^\/(research|screener|risk|lab)$/, (m) => `/library/${m[1] === "research" ? "dossiers" : m[1]}`],
 ];
 
@@ -32,15 +33,18 @@ export function App() {
   }
 
   let page: JSX.Element;
-  if (route.startsWith("/autopilot")) page = <Autopilot />;
+  if (route.startsWith("/w/")) page = <Workspace initial={route.split("/")[2]} />;
+  else if (route.startsWith("/autopilot")) page = <Autopilot />;
   else if (route.startsWith("/pipeline")) page = <Pipeline />;
-  else if (route.startsWith("/library")) page = <Library route={route} />;
-  else page = <Today />;
+  else if (route.startsWith("/today")) page = <Today />;
+  else if (route.startsWith("/library")) page = <div className="page-pad"><Library route={route} /></div>;
+  else page = <Workspace />;
 
+  const isWorkspace = route === "/" || route.startsWith("/w/");
   return (
     <div className="shell2">
       <TopBar route={route} />
-      <main className="main">{page}</main>
+      {isWorkspace ? page : <main className="main">{page}</main>}
     </div>
   );
 }

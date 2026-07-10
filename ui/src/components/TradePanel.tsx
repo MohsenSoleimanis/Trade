@@ -8,12 +8,15 @@ import { get } from "../api";
 interface Quote { price: number; bid: number | null; ask: number | null; source: string }
 interface SizeResult { ok: boolean; shares?: number; risk_budget?: number }
 
-export function TradePanel({ symbol, currency, lastClose }: { symbol: string; currency: string; lastClose: number }) {
+export function TradePanel({ symbol, currency, lastClose, initialWrong, initialThesis, onFilled }: {
+  symbol: string; currency: string; lastClose: number;
+  initialWrong?: number; initialThesis?: string; onFilled?: () => void;
+}) {
   const [q, setQ] = useState<Quote | null>(null);
   const [side, setSide] = useState<"BUY" | "SELL">("BUY");
   const [shares, setShares] = useState("");
-  const [wrong, setWrong] = useState("");
-  const [thesis, setThesis] = useState("");
+  const [wrong, setWrong] = useState(initialWrong ? String(initialWrong) : "");
+  const [thesis, setThesis] = useState(initialThesis ?? "");
   const [suggest, setSuggest] = useState<number | null>(null);
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -52,6 +55,7 @@ export function TradePanel({ symbol, currency, lastClose }: { symbol: string; cu
       setResult(j.ok
         ? { ok: true, text: `filled — ${shares} ${symbol} @ ~${sign}${price.toFixed(2)}, journaled with your thesis` }
         : { ok: false, text: (j.blocks ?? ["blocked"]).join(" · ") });
+      if (j.ok) onFilled?.();
     } finally { setBusy(false); }
   }
 

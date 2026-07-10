@@ -16,7 +16,15 @@ function marketOpen(tz: string, openMin: number, closeMin: number): boolean {
   return mins >= openMin && mins < closeMin;
 }
 
-const SURFACES: [string, string][] = [["Today", "/"], ["Autopilot", "/autopilot"], ["Pipeline", "/pipeline"], ["Library", "/library"]];
+const MENU: [string, string][] = [
+  ["Autopilot (narrated plans)", "/autopilot"],
+  ["Pipeline board", "/pipeline"],
+  ["Today (classic)", "/today"],
+  ["Screener table", "/library/screener"],
+  ["Risk console", "/library/risk"],
+  ["Backtest Lab", "/library/lab"],
+  ["System & jobs", "/library/system"],
+];
 
 export function TopBar({ route }: { route: string }) {
   const [q, setQ] = useState("");
@@ -73,11 +81,15 @@ export function TopBar({ route }: { route: string }) {
         </svg>
         De Waag
       </a>
-      <nav className="tabs">
-        {SURFACES.map(([label, to]) => (
-          <a key={to} className={`tab ${active(to) ? "on" : ""}`} href={`#${to}`}>{label}</a>
-        ))}
-      </nav>
+      <a className={`tab-main ${route === "/" || route.startsWith("/w/") ? "on" : ""}`} href="#/">Workspace</a>
+      <details className="menu">
+        <summary aria-label="more pages">▤</summary>
+        <div className="menu-pop">
+          {MENU.map(([label, to]) => (
+            <a key={to} href={`#${to}`} onClick={(e) => (e.currentTarget.closest("details") as HTMLDetailsElement).open = false}>{label}</a>
+          ))}
+        </div>
+      </details>
       <div className="search">
         <input ref={inputRef} placeholder="Ctrl+K — symbol, company…" value={q}
           onChange={(e) => { setQ(e.target.value); setSel(0); }}

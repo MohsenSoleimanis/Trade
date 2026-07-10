@@ -286,3 +286,70 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .val-bar { height: 22px; background: var(--blue); border-radius: 0 4px 4px 0; transition: width 250ms var(--ease); min-width: 3px; }
 .tool-out { display: flex; flex-wrap: wrap; gap: 10px; }
 @media (max-width: 1100px) { .instruments-row { grid-template-columns: 1fr !important; } }
+
+/* ============ UX v3: the one-workspace shell ============ */
+.ws {
+  display: grid; grid-template-columns: 190px minmax(0, 1fr) 292px;
+  gap: 0; width: 100%; max-width: 1720px; margin: 0 auto;
+  min-height: calc(100vh - 54px);
+}
+.ws-rail, .ws-rail-r {
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+  padding: 10px 8px 40px; overflow-y: auto; max-height: calc(100vh - 54px);
+  position: sticky; top: 54px;
+}
+.ws-rail { border-right: 1px solid var(--line); }
+.ws-rail-r { border-left: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; padding: 10px 10px 40px; }
+.ws-stage { padding: 14px 16px 60px; min-width: 0; animation: pagein 200ms var(--ease); }
+
+.ws-sec {
+  font: 700 9.5px "JetBrains Mono", Consolas, monospace; letter-spacing: 0.12em;
+  color: var(--muted); margin: 12px 6px 5px; display: flex; justify-content: space-between; align-items: center;
+}
+.ws-sec:first-child { margin-top: 2px; }
+.ws-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 6px;
+  padding: 5px 8px; border-radius: 7px; cursor: pointer; font-size: 12px;
+  transition: background var(--dur) var(--ease);
+}
+.ws-row:hover { background: var(--surface-2); }
+.ws-row.sel { background: var(--accent-soft); outline: 1px solid var(--accent); }
+.ws-row .sym { font: 700 11px "JetBrains Mono", Consolas, monospace; }
+.ws-tag { font: 700 8.5px "JetBrains Mono", Consolas, monospace; padding: 2px 7px; border-radius: 8px; background: var(--code-bg); color: var(--muted); text-transform: uppercase; }
+.ws-tag.hot { background: var(--accent-soft); color: var(--green); }
+.ws-filter { display: inline-flex; gap: 2px; }
+.ws-filter button { border: 0; background: transparent; color: var(--muted); font: 700 9px "JetBrains Mono", Consolas, monospace; padding: 2px 6px; border-radius: 5px; }
+.ws-filter button.on { background: var(--accent); color: #fff; }
+
+.ws-feed { display: flex; flex-direction: column; gap: 6px; }
+.ws-fitem {
+  display: flex; gap: 8px; align-items: baseline; background: var(--surface);
+  border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.45;
+}
+.ws-fitem.click { cursor: pointer; transition: border-color var(--dur) var(--ease); }
+.ws-fitem.click:hover { border-color: var(--accent); }
+.ws-ftag { font: 700 8.5px "JetBrains Mono", Consolas, monospace; padding: 2px 7px; border-radius: 8px; background: var(--code-bg); color: var(--muted); text-transform: uppercase; white-space: nowrap; }
+.ws-ftag.act { background: var(--danger-soft); color: var(--red); }
+.ws-ftag.watch { background: var(--warn-soft); color: var(--warn); }
+.ws-ftag.ok { background: var(--accent-soft); color: var(--green); }
+
+.tab-main { padding: 6px 16px; border-radius: 8px; color: var(--muted); font-weight: 600; font-size: 13px; }
+.tab-main.on { background: var(--accent); color: #fff; }
+.menu { position: relative; }
+.menu summary { list-style: none; cursor: pointer; color: var(--muted); font-size: 15px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--code-bg); }
+.menu summary::-webkit-details-marker { display: none; }
+.menu[open] summary { color: var(--ink); border-color: var(--accent); }
+.menu-pop {
+  position: absolute; top: 38px; left: 0; width: 220px; z-index: 70;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(2,6,23,.55); overflow: hidden; padding: 4px;
+}
+.menu-pop a { display: block; padding: 8px 12px; border-radius: 7px; color: var(--ink); font-size: 13px; }
+.menu-pop a:hover { background: var(--surface-2); color: var(--ink); }
+.page-pad { padding: 0; }
+
+@media (max-width: 1180px) {
+  .ws { grid-template-columns: 170px minmax(0,1fr); }
+  .ws-rail-r { display: none; } /* small screens: stage first; act via legacy desk */
+}
+@media (max-width: 860px) { .ws { grid-template-columns: 1fr; } .ws-rail { display: none; } }

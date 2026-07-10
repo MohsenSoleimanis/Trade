@@ -431,6 +431,26 @@ def portfolio() -> dict:
     return snapshot()
 
 
+@app.get("/api/position/{symbol}/proceeds")
+def position_proceeds(symbol: str) -> dict:
+    """'If I sell now, what lands in my pocket?' — the Belgian answer:
+    spread + TOB + commission + 2026 capital-gains tax, as a range."""
+    from dewaag.engine.taxes import sale_proceeds
+    from dewaag.portfolio import _eurusd, _mark_price, load_state
+    from dewaag.vault import store
+
+    state = load_state()
+    pos = state["positions"].get(symbol)
+    if not pos:
+        raise HTTPException(404, f"no position in {symbol}")
+    u = store.load_universe().set_index("symbol")
+    currency = str(u.loc[symbol, "currency"]) if symbol in u.index else "EUR"
+    tier = str(u.loc[symbol, "tier"]) if symbol in u.index else "mid"
+    fx = 1.0 / _eurusd() if currency == "USD" else 1.0
+    return sale_proceeds(shares=pos["shares"], mark_price_native=_mark_price(symbol),
+                         fx_to_eur=fx, tier=tier, avg_cost_eur=pos["avg_cost_eur"])
+
+
 @app.get("/api/quotes")
 def quotes(symbols: str) -> dict:
     """Delayed live quotes (via TWS when running; vault close otherwise).
