@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>De Waag 2.0 — Audit & Redesign</title>
+<style>
+  :root {
+    --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --warn: #9C4A3C; --warn-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --blue: #2a78d6; --shadow: 0 1px 3px rgba(27,36,32,.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+      --line: #2B342F; --accent: #5CBB95; --accent-soft: #1E3229;
+      --warn: #CE8478; --warn-soft: #33211D; --code-bg: #232C27;
+      --blue: #3987e5; --shadow: 0 1px 3px rgba(0,0,0,.3); }
+  }
+  :root[data-theme="dark"] { --bg: #121815; --surface: #1A211D; --ink: #E7EDEA; --muted: #96A49D;
+    --line: #2B342F; --accent: #5CBB95; --accent-soft: #1E3229;
+    --warn: #CE8478; --warn-soft: #33211D; --code-bg: #232C27;
+    --blue: #3987e5; --shadow: 0 1px 3px rgba(0,0,0,.3); }
+  :root[data-theme="light"] { --bg: #F6F8F6; --surface: #FFFFFF; --ink: #1B2420; --muted: #5A6963;
+    --line: #DCE3DE; --accent: #1E6B52; --accent-soft: #E3EFE9;
+    --warn: #9C4A3C; --warn-soft: #F6E9E6; --code-bg: #EEF2EF;
+    --blue: #2a78d6; --shadow: 0 1px 3px rgba(27,36,32,.07); }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink);
+    font: 15px/1.68 "Segoe UI", system-ui, sans-serif; margin: 0; padding: 0 20px 90px; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1, h2, h3 { font-family: Cambria, Georgia, serif; line-height: 1.25; text-wrap: balance; }
+  .mono { font-family: Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+  header { padding: 54px 0 30px; border-bottom: 2px solid var(--ink); }
+  .eyebrow { font: 700 12px Consolas, monospace; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(30px, 5vw, 42px); margin: 0; }
+  .subtitle { font-size: 16.5px; color: var(--muted); margin: 14px 0 0; max-width: 62ch; }
+
+  h2 { font-size: 25px; margin: 52px 0 6px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 18px; margin: 26px 0 4px; }
+  p { margin: 12px 0; font-size: 15px; }
+  li { font-size: 15px; margin: 6px 0; }
+
+  .verdict { background: var(--warn-soft); border-left: 3px solid var(--warn); border-radius: 0 6px 6px 0; padding: 14px 20px; margin: 18px 0; }
+  .verdict b { font-family: Consolas, monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--warn); display: block; margin-bottom: 4px; }
+  .keep { background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; padding: 14px 20px; margin: 18px 0; }
+  .keep b { font-family: Consolas, monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); display: block; margin-bottom: 4px; }
+
+  .tablebox { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th { text-align: left; font: 600 10.5px Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 2px solid var(--line); }
+  td { padding: 9px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.mono { white-space: nowrap; }
+
+  /* mock */
+  .mock { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); margin: 20px 0; background: var(--surface); font-size: 11px; }
+  .mock-top { background: var(--code-bg); border-bottom: 1px solid var(--line); padding: 7px 14px; display: flex; gap: 14px; align-items: center; }
+  .mock-top .t { font: 700 12px Cambria, Georgia, serif; }
+  .mock-top .tab { color: var(--muted); padding: 2px 10px; border-radius: 10px; }
+  .mock-top .tab.on { background: var(--accent); color: var(--bg); font-weight: 700; }
+  .mock-top .cmdk { margin-left: auto; font: 10px Consolas, monospace; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; }
+  .mock-body { padding: 12px 14px; }
+  .mrow { display: grid; gap: 8px; }
+  .mcardrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px; }
+  .mc { background: var(--code-bg); border-radius: 6px; padding: 8px 11px; }
+  .mc .k { font: 600 8.5px Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; }
+  .mc .v { font: 700 13px Consolas, monospace; }
+  .mline { display: flex; gap: 8px; align-items: baseline; padding: 5px 8px; border-bottom: 1px dashed var(--line); }
+  .mline:last-child { border-bottom: none; }
+  .pill { font: 700 8.5px Consolas, monospace; padding: 1px 7px; border-radius: 8px; background: var(--code-bg); color: var(--muted); white-space: nowrap; }
+  .pill.alert { background: var(--warn-soft); color: var(--warn); }
+  .pill.ok { background: var(--accent-soft); color: var(--accent); }
+  .kanban { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .kcol { background: var(--code-bg); border-radius: 6px; padding: 8px; min-height: 120px; }
+  .kcol .kh { font: 700 9px Consolas, monospace; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .kcard { background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 6px 8px; margin-bottom: 6px; }
+  .kcard .s { font: 700 10px Consolas, monospace; }
+  .kcard .d { color: var(--muted); font-size: 9.5px; line-height: 1.4; }
+
+  .phase { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: var(--shadow); margin: 12px 0; padding: 14px 20px; }
+  .phase h3 { margin: 0; font-size: 16px; }
+  .phase .tag { font: 700 11px Consolas, monospace; color: var(--accent); }
+  .phase p { font-size: 13.5px; margin: 6px 0 0; }
+  .cmd { font-family: Consolas, monospace; background: var(--code-bg); border-radius: 4px; padding: 1px 7px; font-size: .92em; white-space: nowrap; }
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); font-size: 14px; color: var(--muted); }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Audit & Redesign · v2 Blueprint · July 2026</div>
+  <h1>De Waag 2.0 — from modules to a working process</h1>
+  <p class="subtitle">A full audit of the current application, and a from-scratch redesign. The verdict in one sentence: the engine room is professional, the product is not — because it is organized around <em>features</em> instead of around <em>your working day</em>. Version 2 is a rebuild of everything you touch.</p>
+</header>
+
+<h2>Part 1 — The audit</h2>
+
+<div class="verdict"><b>Finding 1 · No process spine</b>
+The app is seven parallel pages. Professional investing is a pipeline: idea → triage → deep research → decision → live monitoring → post-mortem. Nothing in the current product moves work through stages, remembers where you left off, or tells you what's next. This is the root cause of "it doesn't help me" — it genuinely doesn't, it only responds.</div>
+
+<div class="verdict"><b>Finding 2 · Passive by design</b>
+Nothing runs without a click: no scheduled ingestion, no alerts firing while you're at work, no awareness of upcoming earnings or ex-dividend dates. A professional system's defining feature is that it works when you aren't there and greets you with "here's what changed and what needs you."</div>
+
+<div class="verdict"><b>Finding 3 · Amateur onboarding & empty states</b>
+The constitution is signed by editing a YAML file. The desk greets a new user with a lock. The portfolio pages are blank shells until trades exist. Real products carry you: a first-run wizard signs the constitution in the UI, builds a watchlist, schedules the jobs, and seeds the pipeline.</div>
+
+<div class="verdict"><b>Finding 4 · Shallow data = shallow answers</b>
+45 tickers, ~4 years of statements, no sector classification, no peer comparison, no news, no calendar. A professional dossier must answer "versus whom?" and "what happens next week?" — the current company page cannot answer either.</div>
+
+<div class="verdict"><b>Finding 5 · The teacher swallowed the tool</b>
+Lesson references sit inside every card. Useful for learning; fatal for the feeling of professionalism. Pedagogy must become an optional layer (a "mentor mode" toggle, off by default) — present when wanted, invisible otherwise.</div>
+
+<div class="keep"><b>What survives the audit — stated honestly</b>
+The invisible half is sound and matches institutional practice: point-in-time vault with quality gates, signal/risk/backtest engines with tested math, constitution-gated execution (the regulatory standard for pre-trade controls), journaled decisions. These become headless <b>services</b> under the new product. Throwing them away would be theater, not professionalism — the rebuild targets the experience, not the engine room.</div>
+
+<h2>Part 2 — The redesign: three surfaces, one pipeline</h2>
+<p>Version 2 abandons the module sidebar. The product has <b>three surfaces</b>, mapped to how a professional actually spends the day, plus a command palette (<span class="cmd">Ctrl+K</span>) to jump anywhere.</p>
+
+<h3>Surface 1 · TODAY — the cockpit</h3>
+<p>Opens first, every time. One screen that answers: what happened, what needs me, what's coming. Composed automatically by the overnight job chain.</p>
+<div class="mock" role="img" aria-label="Mockup of the Today cockpit">
+  <div class="mock-top"><span class="t">⚖ De Waag</span><span class="tab on">Today</span><span class="tab">Pipeline</span><span class="tab">Library</span><span class="cmdk">Ctrl+K search &amp; commands</span></div>
+  <div class="mock-body">
+    <div class="mcardrow">
+      <div class="mc"><span class="k">equity</span><span class="v">€10,412 · +4.1%</span></div>
+      <div class="mc"><span class="k">vs benchmark</span><span class="v">−1.2% behind IWDA</span></div>
+      <div class="mc"><span class="k">drawdown</span><span class="v">€312 / €1,500</span></div>
+      <div class="mc"><span class="k">jobs last night</span><span class="v">ingest ✓ gate ✓ brief ✓</span></div>
+    </div>
+    <div class="mline"><span class="pill alert">NEEDS YOU</span><span><b>KIN −4.8%</b>, now 3% above your exit €38 — decide stance while calm; position note attached</span></div>
+    <div class="mline"><span class="pill alert">CALENDAR</span><span><b>MELE reports Q2 in 4 days</b> — you hold 7 shares; pre-earnings checklist generated in Pipeline</span></div>
+    <div class="mline"><span class="pill ok">BRIEF</span><span>Engine overnight: COLR entered quality-at-reasonable-price; universe breadth 68% (risk-on); 2 filings summarized</span></div>
+    <div class="mline"><span class="pill">TASK</span><span>Post-mortem due: BAR closed Tuesday — grade the thesis (2 min form)</span></div>
+    <div class="mline"><span class="pill">NEWS</span><span>Lotus Bakeries: H1 revenue statement published 07:00 — agent summary ready, 3 extracted facts → dossier</span></div>
+  </div>
+</div>
+
+<h3>Surface 2 · PIPELINE — the research factory</h3>
+<p>The professional core that v1 never had: every idea is a card moving through explicit stages. The machine does the heavy lifting at each stage; you do the judgment. Nothing gets bought that didn't travel the board.</p>
+<div class="mock" role="img" aria-label="Mockup of the Pipeline kanban board">
+  <div class="mock-top"><span class="t">⚖ De Waag</span><span class="tab">Today</span><span class="tab on">Pipeline</span><span class="tab">Library</span><span class="cmdk">Ctrl+K</span></div>
+  <div class="mock-body">
+    <div class="kanban">
+      <div class="kcol"><div class="kh">INBOX <span>4</span></div>
+        <div class="kcard"><span class="s">COLR</span><div class="d">from screener: QARP entry</div></div>
+        <div class="kcard"><span class="s">DIS</span><div class="d">from brief · 07-09</div></div>
+        <div class="kcard"><span class="s">TESB</span><div class="d">manual add</div></div>
+      </div>
+      <div class="kcol"><div class="kh">TRIAGE <span>2</span></div>
+        <div class="kcard"><span class="s">UCB</span><div class="d">auto-dossier ready: scores, peers, 3 flags · pass/advance?</div></div>
+      </div>
+      <div class="kcol"><div class="kh">DEEP DIVE <span>1</span></div>
+        <div class="kcard"><span class="s">LOTB</span><div class="d">thesis draft 80% · bull/bear debate attached · valuation range done</div></div>
+      </div>
+      <div class="kcol"><div class="kh">DECISION <span>1</span></div>
+        <div class="kcard"><span class="s">MELE</span><div class="d">memo complete · size pre-computed 7sh · awaiting your verdict</div></div>
+      </div>
+      <div class="kcol"><div class="kh">LIVE / REVIEW <span>3</span></div>
+        <div class="kcard"><span class="s">MELE · KIN · IWDA</span><div class="d">exits armed · next review dates set · post-mortems auto-open on close</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<p>What each stage does automatically:</p>
+<div class="tablebox"><table>
+  <tr><th>Stage</th><th>The machine prepares</th><th>You decide</th></tr>
+  <tr><td class="mono">INBOX</td><td>Cards arrive from screener signals, engine brief, agent findings, or your own hunches (Ctrl+K "add idea").</td><td>Worth an hour of triage?</td></tr>
+  <tr><td class="mono">TRIAGE</td><td>Auto-dossier: scores, 5-number table, peer comparison, red flags, news digest — one page, generated.</td><td>Pass (with one-line reason, logged) or advance.</td></tr>
+  <tr><td class="mono">DEEP DIVE</td><td>Thesis template pre-filled with evidence; bull-agent vs bear-agent debate transcript; valuation range machine.</td><td>Write the thesis: why, why now, "I'm wrong if…".</td></tr>
+  <tr><td class="mono">DECISION</td><td>IC memo assembled: thesis + risk impact (what-if) + size from budget + cost preview. One page, print-worthy.</td><td>Buy / pass. Pass reasons feed your bias statistics.</td></tr>
+  <tr><td class="mono">LIVE</td><td>Exit levels armed as alerts; review dates scheduled; earnings proximity watched; thesis pinned to position.</td><td>Act only when alerts or reviews fire.</td></tr>
+  <tr><td class="mono">POST-MORTEM</td><td>On close: outcome vs thesis auto-compared; 2-minute grading form; feeds your personal bias dashboard.</td><td>Grade honestly. The system learns your patterns.</td></tr>
+</table></div>
+
+<h3>Surface 3 · LIBRARY — the knowledge base</h3>
+<ul>
+  <li><b>Dossiers</b> — deep company pages v2: candlestick+volume charts with peer/benchmark overlay, sector-aware metrics (banks get bank rulers — fixes the KBC false flags), peer table, news timeline, filings with agent summaries and citations, your notes and past pipeline history for that name.</li>
+  <li><b>Research</b> — every thesis, memo, debate transcript, and post-mortem, searchable.</li>
+  <li><b>Lab</b> — the backtester and experiment ledger (kept as-is; it earned its place by refuting momentum).</li>
+  <li><b>Journal analytics</b> — your measured behavior: pass/buy ratios, thesis accuracy, hold times, the bias mirror.</li>
+  <li><b>System</b> — data health, job runs, inference log, constitution (signed here, in the UI, with a proper flow — never again in YAML).</li>
+</ul>
+
+<h3>The service layer beneath (headless, mostly existing)</h3>
+<div class="tablebox"><table>
+  <tr><th>Service</th><th>Status</th><th>v2 work</th></tr>
+  <tr><td class="mono">DataService</td><td>vault exists</td><td>ADD: sector/industry tags, earnings & ex-div calendar, per-ticker news feed (free RSS), universe expansion</td></tr>
+  <tr><td class="mono">SignalService</td><td>exists</td><td>ADD: sector-aware metrics, peer-relative scores</td></tr>
+  <tr><td class="mono">RiskService</td><td>exists (VaR, stress, what-if)</td><td>wire into IC memo & alerts</td></tr>
+  <tr><td class="mono">ExecutionService</td><td>paper_local exists</td><td>IBKR adapter on approval; execution only from DECISION stage</td></tr>
+  <tr><td class="mono">AgentService</td><td>design only</td><td>BUILD: dossier writer, bull/bear debate, filings/news summarizer, morning-brief composer, post-mortem assistant — session mode first</td></tr>
+  <tr><td class="mono">SchedulerService</td><td>missing</td><td>BUILD NOW: nightly chain (ingest → gate → signals → calendar → brief → alerts) via Windows Task Scheduler</td></tr>
+  <tr><td class="mono">PipelineStore</td><td>missing</td><td>BUILD: idea cards, stages, docs, tasks, reviews — the product's new backbone</td></tr>
+  <tr><td class="mono">Governance</td><td>exists</td><td>unchanged laws; new invisible-until-triggered presentation; inference log extended to all machine outputs</td></tr>
+</table></div>
+
+<h2>Part 3 — Build plan</h2>
+<div class="phase"><span class="tag">R1 · foundations of the new product (~2 wks)</span><h3>Scheduler + Calendar + Alerts + Onboarding</h3><p>Nightly job chain registered in Windows Task Scheduler; earnings/ex-div calendar ingestion; alert engine (exit-level, 52w, earnings proximity, gate breaches); first-run wizard that signs the constitution in the UI. The app starts working while you sleep — the single biggest professionalism jump available.</p></div>
+<div class="phase"><span class="tag">R2 · the spine (~3 wks)</span><h3>Pipeline + Today</h3><p>PipelineStore, kanban board, stage automation (auto-dossier on triage, memo assembly on decision), the Today cockpit composed from jobs+alerts+tasks. The three-surface shell replaces the module sidebar; mentor mode becomes a toggle, default off.</p></div>
+<div class="phase"><span class="tag">R3 · depth (~3 wks)</span><h3>Dossiers v2 + AgentService</h3><p>Sector-aware metrics, peer tables, candlestick/volume/compare charts, news timeline; agents (session mode): dossier writer, bull/bear debate, filings summarizer, morning brief. The multimodal layer, alpha-miner style.</p></div>
+<div class="phase"><span class="tag">R4 · the loop closes (~2 wks)</span><h3>Post-mortems + Journal analytics + IBKR</h3><p>Close-triggered grading, bias dashboard, and the IBKR paper adapter the moment the account clears. From then on: live the process, harden what squeaks.</p></div>
+
+<footer>
+  <p>Decision needed to start: <span class="cmd">build R1</span>. The v1 pages stay functional during the rebuild — surfaces replace them one at a time, no big-bang risk.</p>
+</footer>
+</div>
+
+</html>
