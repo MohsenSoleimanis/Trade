@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<title>De Waag — UX Audit & The One-Workspace Proposal</title>
+<style>
+  :root {
+    --bg: #020617; --surface: #0F172A; --surface2: #1E293B; --well: #111A2E;
+    --ink: #F8FAFC; --muted: #8B98AC; --line: #26334B;
+    --accent: #16A34A; --accent-soft: rgba(22,163,74,.12);
+    --warn: #F59E0B; --warn-soft: rgba(245,158,11,.12);
+    --red: #EF4444; --red-soft: rgba(239,68,68,.12); --blue: #3B82F6;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#F1F5F9; --surface:#fff; --surface2:#F8FAFC; --well:#EEF2F7;
+      --ink:#0F172A; --muted:#55657D; --line:#D6DEE9;
+      --accent:#15803D; --accent-soft:rgba(22,163,74,.1);
+      --warn:#B45309; --warn-soft:rgba(180,83,9,.1);
+      --red:#B91C1C; --red-soft:rgba(185,28,28,.08); --blue:#1D4ED8; }
+  }
+  :root[data-theme="dark"] { --bg:#020617; --surface:#0F172A; --surface2:#1E293B; --well:#111A2E;
+    --ink:#F8FAFC; --muted:#8B98AC; --line:#26334B; --accent:#16A34A; --accent-soft:rgba(22,163,74,.12);
+    --warn:#F59E0B; --warn-soft:rgba(245,158,11,.12); --red:#EF4444; --red-soft:rgba(239,68,68,.12); --blue:#3B82F6; }
+  :root[data-theme="light"] { --bg:#F1F5F9; --surface:#fff; --surface2:#F8FAFC; --well:#EEF2F7;
+    --ink:#0F172A; --muted:#55657D; --line:#D6DEE9; --accent:#15803D; --accent-soft:rgba(22,163,74,.1);
+    --warn:#B45309; --warn-soft:rgba(180,83,9,.1); --red:#B91C1C; --red-soft:rgba(185,28,28,.08); --blue:#1D4ED8; }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font: 15px/1.65 Inter, "Segoe UI", system-ui, sans-serif; margin: 0; padding: 0 20px 90px; }
+  .wrap { max-width: 940px; margin: 0 auto; }
+  h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; margin: 0; }
+  .mono { font-family: "JetBrains Mono", Consolas, monospace; }
+
+  header { padding: 52px 0 28px; border-bottom: 2px solid var(--ink); }
+  .eyebrow { font: 700 11px "JetBrains Mono", Consolas, monospace; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  h1 { font-size: clamp(28px, 4.6vw, 40px); }
+  .subtitle { font-size: 16px; color: var(--muted); margin-top: 12px; max-width: 62ch; }
+  h2 { font-size: 24px; margin: 50px 0 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+  h3 { font-size: 17px; margin: 26px 0 6px; }
+  p, li { font-size: 14.5px; }
+
+  .verdict { background: var(--red-soft); border-left: 3px solid var(--red); border-radius: 0 8px 8px 0; padding: 13px 18px; margin: 14px 0; font-size: 14px; }
+  .verdict b { font: 700 11px "JetBrains Mono", Consolas, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--red); display: block; margin-bottom: 4px; }
+  .rule { background: var(--accent-soft); border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; padding: 13px 18px; margin: 14px 0; font-size: 14px; }
+  .rule b { font: 700 11px "JetBrains Mono", Consolas, monospace; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); display: block; margin-bottom: 4px; }
+
+  .tablebox { overflow-x: auto; margin: 16px 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th { text-align: left; font: 600 10px "JetBrains Mono", Consolas, monospace; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 14px; border-bottom: 1px solid color-mix(in srgb, var(--line) 55%, transparent); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ------- the workspace mock ------- */
+  .mock { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg); margin: 20px 0; font-size: 10px; box-shadow: 0 20px 60px rgba(2,6,23,.5); }
+  .m-top { display: flex; gap: 10px; align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); padding: 7px 12px; }
+  .m-top .logo { font-weight: 700; font-size: 11px; color: var(--ink); }
+  .m-top .srch { background: var(--well); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; color: var(--muted); flex: 0 0 190px; }
+  .m-top .eq { margin-left: auto; font-family: "JetBrains Mono", Consolas, monospace; }
+  .m-top .eq b { color: var(--accent); }
+  .m-top .bell { background: var(--red-soft); color: var(--red); border-radius: 10px; padding: 2px 8px; font-weight: 700; }
+  .m-body { display: grid; grid-template-columns: 172px 1fr 190px; min-height: 430px; }
+  .m-rail { background: var(--surface); border-right: 1px solid var(--line); padding: 8px; }
+  .m-rail-r { background: var(--surface); border-left: 1px solid var(--line); padding: 8px; }
+  .m-sec { font: 700 8px "JetBrains Mono", Consolas, monospace; letter-spacing: .12em; color: var(--muted); margin: 8px 4px 4px; display: flex; justify-content: space-between; }
+  .m-row { display: flex; justify-content: space-between; gap: 4px; padding: 4px 6px; border-radius: 5px; color: var(--ink); }
+  .m-row.sel { background: var(--accent-soft); outline: 1px solid var(--accent); }
+  .m-row:hover { background: var(--surface2); }
+  .m-row .sym { font: 700 9.5px "JetBrains Mono", Consolas, monospace; }
+  .m-row .px { font-family: "JetBrains Mono", Consolas, monospace; color: var(--muted); }
+  .m-row .u { color: #22C55E; } .m-row .d { color: var(--red); }
+  .m-tag { font: 700 7px "JetBrains Mono", Consolas, monospace; padding: 1px 5px; border-radius: 6px; background: var(--well); color: var(--muted); }
+  .m-tag.dive { background: var(--warn-soft); color: var(--warn); }
+  .m-tag.dec { background: var(--accent-soft); color: var(--accent); }
+  .m-stage { padding: 10px 12px; }
+  .m-hero { display: flex; gap: 12px; align-items: baseline; margin-bottom: 6px; }
+  .m-hero .nm { font-weight: 700; font-size: 12px; }
+  .m-hero .big { font: 700 15px "JetBrains Mono", Consolas, monospace; }
+  .m-hero .chg { color: #22C55E; font-family: "JetBrains Mono", Consolas, monospace; }
+  .m-hero .gauges { margin-left: auto; display: flex; gap: 8px; }
+  .m-g { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 8.5px "JetBrains Mono", Consolas, monospace; }
+  .m-stagetabs { display: flex; gap: 4px; margin: 6px 0; }
+  .m-stagetabs span { padding: 3px 10px; border-radius: 5px; color: var(--muted); background: var(--well); }
+  .m-stagetabs .on { background: var(--accent); color: #fff; font-weight: 700; }
+  .m-chart { height: 200px; background:
+    linear-gradient(180deg, transparent 0 62%, var(--accent-soft) 62% 63%, transparent 63%),
+    repeating-linear-gradient(90deg, transparent 0 39px, var(--line) 39px 40px),
+    repeating-linear-gradient(0deg, transparent 0 39px, var(--line) 39px 40px), var(--well);
+    border: 1px solid var(--line); border-radius: 8px; position: relative; }
+  .m-chart::after { content: "▌candles + volume — selected symbol"; position: absolute; top: 8px; left: 10px; color: var(--muted); }
+  .m-instr { display: grid; grid-template-columns: 1.2fr 1fr; gap: 8px; margin-top: 8px; }
+  .m-instr > div { background: var(--well); border: 1px solid var(--line); border-radius: 8px; padding: 8px; color: var(--muted); min-height: 66px; }
+  .m-act { background: var(--well); border: 1px solid var(--accent); border-radius: 8px; padding: 8px; margin-bottom: 8px; }
+  .m-act .bb { display: flex; gap: 4px; margin: 6px 0; }
+  .m-act .bb span { flex: 1; text-align: center; padding: 4px 0; border-radius: 5px; font-weight: 700; }
+  .m-act .buy { background: var(--accent); color: #fff; }
+  .m-act .sell { background: var(--surface2); color: var(--muted); }
+  .m-feed { display: flex; flex-direction: column; gap: 5px; }
+  .m-fitem { background: var(--well); border: 1px solid var(--line); border-radius: 7px; padding: 6px 8px; color: var(--ink); }
+  .m-fitem b { font-size: 9px; }
+  .m-fitem .tag { font: 700 7px "JetBrains Mono", Consolas, monospace; padding: 1px 5px; border-radius: 6px; margin-right: 4px; }
+  .m-fitem .t-act { background: var(--red-soft); color: var(--red); }
+  .m-fitem .t-eng { background: var(--accent-soft); color: var(--accent); }
+  .m-fitem .t-cal { background: var(--warn-soft); color: var(--warn); }
+  .caption { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .flow { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin: 14px 0; font-size: 13.5px; }
+  .flow .mono { color: var(--accent); }
+  footer { margin-top: 60px; padding-top: 18px; border-top: 2px solid var(--ink); color: var(--muted); font-size: 14px; }
+  .cmd { font-family: "JetBrains Mono", Consolas, monospace; background: var(--well); border-radius: 4px; padding: 1px 7px; }
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">UX Audit · v3 — Information Architecture</div>
+  <h1>One workspace. Zero tab tours.</h1>
+  <p class="subtitle">Audit of how a person actually moves through De Waag today, and the redesign: the entire trading loop — see, judge, act, monitor — lives on <em>one screen</em>. Grounded in the ui-ux-pro-max navigation rules and how professional terminals are actually laid out.</p>
+</header>
+
+<h2>Part 1 — The UX audit: walk one real task</h2>
+<p>The only honest way to audit UX: follow a real user doing a real thing. <b>Task: "the engine suggested Colruyt — decide and act on it."</b> Today's journey:</p>
+
+<div class="tablebox"><table>
+  <tr><th>Step</th><th>Where the user must go</th><th>What's lost on the way</th></tr>
+  <tr><td>1</td><td><b>Today</b> tab — sees the brief mentioning COLR</td><td>—</td></tr>
+  <tr><td>2</td><td><b>Autopilot</b> tab — reads the narrated proposal</td><td>the brief's context is gone</td></tr>
+  <tr><td>3</td><td><b>Library → Dossiers → COLR</b> — checks chart & fundamentals</td><td>the proposal's numbers are gone; user must remember them</td></tr>
+  <tr><td>4</td><td><b>Pipeline</b> tab — the idea card lives here, thesis is written here</td><td>the dossier is gone again</td></tr>
+  <tr><td>5</td><td>Back to <b>dossier</b> or <b>Library → Desk</b> — place the order</td><td>the thesis text isn't visible while ordering</td></tr>
+  <tr><td>6</td><td><b>Today</b> or <b>Library → Risk</b> — see the position and its risk</td><td>everything again</td></tr>
+</table></div>
+
+<div class="verdict"><b>Finding 1 · the navigation mirrors the code, not the person</b>
+10 destinations (4 tabs + 6 sub-tabs) exist because the backend has modules. The user's single task crossed 6 of them, losing context at every hop. Every hop = re-orientation = cognitive tax. This is why it "doesn't feel like one product".</div>
+<div class="verdict"><b>Finding 2 · the same entity is scattered</b>
+"Colruyt" exists in five places (screener row, pipeline card, dossier, desk ticket, position line) — and none of them show the others. The skill's rule: <span class="mono">state-preservation</span> — context must never be lost between related views.</div>
+<div class="verdict"><b>Finding 3 · mixed navigation patterns</b>
+Top tabs + inner sub-tab chips + back-links = the skill's <span class="mono">avoid-mixed-patterns</span> anti-pattern. Primary and secondary navigation aren't separated (<span class="mono">nav-hierarchy</span>).</div>
+<div class="verdict"><b>Finding 4 · the acting surface is far from the deciding surface</b>
+You research in one place and act in another. Professional terminals never separate these — chart and order ticket share a screen because the decision and the action are one motion.</div>
+
+<h2>Part 2 — The redesign: one workspace, three zones</h2>
+
+<div class="rule"><b>The organizing principle</b>
+LEFT = everything you could look at (markets, your book, your ideas — one list, three lenses). CENTER = the one thing you're looking at now. RIGHT = acting and being alerted. The loop <i>browse → examine → act → monitor</i> becomes eye movement, not navigation. Skill rules applied: <span class="mono">adaptive-navigation</span> (persistent sidebar ≥1024px), <span class="mono">persistent-nav</span>, <span class="mono">navigation-consistency</span>, <span class="mono">content-priority</span>, one primary CTA per screen.</div>
+
+<div class="mock" role="img" aria-label="Mockup of the single-workspace design with left rail, center stage and right rail">
+  <div class="m-top">
+    <span class="logo">⚖ De Waag</span>
+    <span class="srch">Ctrl+K — symbol, action…</span>
+    <span class="mono" style="color:var(--muted)">● EBR · ○ NYSE</span>
+    <span class="eq">€10,412 <b>▲ +4.1%</b> <span style="color:var(--muted)">· dd €312/€1.5k</span></span>
+    <span class="bell">3</span>
+  </div>
+  <div class="m-body">
+    <!-- LEFT RAIL -->
+    <div class="m-rail">
+      <div class="m-sec">MY BOOK <span>3</span></div>
+      <div class="m-row"><span class="sym">MELE</span><span class="px u">€78.1 +1.4%</span></div>
+      <div class="m-row"><span class="sym">KIN</span><span class="px d">€39.6 −4.8%</span></div>
+      <div class="m-row"><span class="sym">IWDA</span><span class="px u">€125 +0.6%</span></div>
+      <div class="m-sec">IDEAS · pipeline <span>4</span></div>
+      <div class="m-row sel"><span class="sym">COLR</span><span><span class="m-tag dec">DECIDE</span></span></div>
+      <div class="m-row"><span class="sym">LOTB</span><span><span class="m-tag dive">THESIS</span></span></div>
+      <div class="m-row"><span class="sym">UCB</span><span><span class="m-tag">TRIAGE</span></span></div>
+      <div class="m-sec">MARKETS · screener ▾ <span>45</span></div>
+      <div class="m-row"><span class="sym">JNJ</span><span class="px">Σ70</span></div>
+      <div class="m-row"><span class="sym">XOM</span><span class="px">Σ69</span></div>
+      <div class="m-row"><span class="sym">GOOGL</span><span class="px">Σ67</span></div>
+      <div style="color:var(--muted); padding:4px 6px">sort: composite ▾ · filter: BE ▾</div>
+    </div>
+    <!-- CENTER STAGE -->
+    <div class="m-stage">
+      <div class="m-hero">
+        <span class="nm">Colruyt</span><span class="mono" style="color:var(--muted)">COLR · staples</span>
+        <span class="big">€36.80</span><span class="chg">▲ +0.05%</span>
+        <span class="gauges">
+          <span class="m-g" style="background:var(--accent-soft); color:#22C55E">66</span>
+          <span class="m-g" style="background:var(--accent-soft); color:#22C55E">83</span>
+          <span class="m-g" style="background:rgba(59,130,246,.15); color:var(--blue)">36</span>
+        </span>
+      </div>
+      <div class="m-stagetabs"><span class="on">Overview</span><span>Financials</span><span>Valuation</span><span>Thesis & journal</span><span>Engine</span></div>
+      <div class="m-chart"></div>
+      <div class="m-instr">
+        <div>fundamentals heat table (direction cells)</div>
+        <div>valuation band · price marker · verdict: <b style="color:var(--ink)">inside band</b></div>
+      </div>
+    </div>
+    <!-- RIGHT RAIL -->
+    <div class="m-rail-r">
+      <div class="m-act">
+        <div style="font:700 8px 'JetBrains Mono',monospace; letter-spacing:.1em; color:var(--muted)">ACT — COLR · gated</div>
+        <div class="bb"><span class="buy">BUY</span><span class="sell">SELL</span></div>
+        <div style="color:var(--muted)">exit €29.4 · 13 sh (sizer) · cost €6</div>
+        <div style="color:var(--muted)">thesis: <i style="color:var(--ink)">from pipeline card ✓</i></div>
+      </div>
+      <div class="m-sec">FEED — needs you first</div>
+      <div class="m-feed">
+        <div class="m-fitem"><span class="tag t-act">ACT</span><b>KIN 3% above your exit</b><br>decide stance now, calmly</div>
+        <div class="m-fitem"><span class="tag t-eng">ENGINE</span><b>BUY COLR proposed</b><br>13 sh · review → <i>opens here</i></div>
+        <div class="m-fitem"><span class="tag t-cal">CAL</span><b>MELE earnings in 4d</b><br>you hold it</div>
+      </div>
+    </div>
+  </div>
+</div>
+<p class="caption">The whole app on one screen. Click any name on the left — the center becomes it instantly, the ACT panel re-targets to it, and nothing else is lost. The pipeline is no longer a place you go — it's the <b>status tags</b> on your ideas and the <b>Thesis tab</b> in the stage. Autopilot is no longer a page — its proposals are <b>feed cards</b> that open in the stage with the trade pre-staged. The screener is the <b>Markets lens</b> of the left rail.</p>
+
+<h3>Where every old surface goes</h3>
+<div class="tablebox"><table>
+  <tr><th>Old destination</th><th>New home</th><th>Why it's better</th></tr>
+  <tr><td>Today</td><td><b>Feed</b> (right rail) + equity strip (top bar)</td><td>alerts/tasks/brief reach you while you work — no trip needed</td></tr>
+  <tr><td>Autopilot</td><td><b>Feed cards</b> → open in center stage, order pre-staged in ACT</td><td>proposal, evidence and action in one view; approve without navigation</td></tr>
+  <tr><td>Pipeline (kanban)</td><td><b>IDEAS list</b> (left, status tags) + <b>Thesis tab</b> (center)</td><td>the stage of an idea is metadata, not a place; thesis lives where you research</td></tr>
+  <tr><td>Screener</td><td><b>MARKETS lens</b> of the left rail (sort/filter inline)</td><td>ranked names are a browsing list, not a report page</td></tr>
+  <tr><td>Dossier</td><td><b>Center stage</b> (Overview/Financials/Valuation/Thesis/Engine tabs)</td><td>already the workspace — now everything else surrounds it</td></tr>
+  <tr><td>Desk / TradePanel</td><td><b>ACT panel</b> (right rail, always visible, always gated)</td><td>decision and action share a screen — one motion</td></tr>
+  <tr><td>Risk Console</td><td>dials in ACT + top-bar drawdown chip; deep view = drawer</td><td>risk at the moment of action, not in a museum</td></tr>
+  <tr><td>Backtest Lab / System / Journal</td><td><b>secondary pages</b> behind one ▤ menu (rare visits)</td><td>skill rule: primary vs secondary nav strictly separated</td></tr>
+</table></div>
+
+<h3>The same task, after</h3>
+<div class="flow">
+  Feed card <span class="mono">ENGINE: BUY COLR proposed</span> → click → center stage shows COLR with evidence, gauges, heat table, valuation verdict → ACT panel already staged (13 sh, exit €29.4, thesis attached) → press BUY → position appears under MY BOOK, exit alert armed in Feed. <b>Zero navigation. Zero context lost. Six steps became one motion.</b>
+</div>
+
+<h2>Part 3 — Build plan</h2>
+<div class="tablebox"><table>
+  <tr><th>Step</th><th>Scope</th><th>Size</th></tr>
+  <tr><td>W1</td><td>Workspace shell: three-zone layout, left rail (Book/Ideas/Markets lenses, live prices), center stage hosting the existing dossier workspace, ACT panel docked right; top bar gains equity strip + alerts bell</td><td>~2 sessions</td></tr>
+  <tr><td>W2</td><td>Feed (right rail): alerts + engine proposals + calendar + tasks as cards; proposal cards stage the ACT panel; bell drawer</td><td>~1 session</td></tr>
+  <tr><td>W3</td><td>Stage tabs: Financials / Valuation / Thesis&journal / Engine; pipeline statuses as tags & actions inline; old pages retired to the ▤ menu</td><td>~1–2 sessions</td></tr>
+  <tr><td>W4</td><td>Risk dials in ACT; keyboard flow (↑↓ through left rail, Enter to stage, B/S to act); polish pass against the skill checklist</td><td>~1 session</td></tr>
+</table></div>
+
+<footer>
+  Verdict requested on <b>Part 2's mockup</b> — this is the app's final shape. On approval: <span class="cmd">build W1</span>. The engines, gates, journal and data underneath don't change; only where things live and how they reach you.
+</footer>
+</div>
+
+</html>
