@@ -139,8 +139,54 @@ export function Stage({ symbol }: { symbol: string }) {
         </div>
       </div>
 
+      <AgentBrief symbol={symbol} />
+
       <div className="honesty">source: {d.meta.source} · {d.meta.note}</div>
     </>
+  );
+}
+
+interface Brief {
+  symbol: string; at?: string; author?: string; inputs?: string[]; missing?: boolean;
+  sections?: { summary: string; bull_case: string; bear_case: string; verify: string; verdict: string };
+}
+
+function AgentBrief({ symbol }: { symbol: string }) {
+  const [b, setB] = useState<Brief | null>(null);
+  useEffect(() => { setB(null); get<Brief>(`/api/agent/brief/${symbol}`).then(setB).catch(() => {}); }, [symbol]);
+
+  return (
+    <div className="card" style={{ marginTop: 10 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+        <span className="k">agent research brief</span>
+        {b && !b.missing && <span className="s mono">by {b.author} · {b.at?.slice(0, 10)} · reads: {b.inputs?.join(", ")}</span>}
+      </div>
+      {!b && <div className="loading" style={{ padding: "10px 0" }}>checking the floor…</div>}
+      {b?.missing && (
+        <div className="s" style={{ padding: "10px 0" }}>
+          no brief yet for {symbol} — ask Claude in a session ("write the agent brief for {symbol}") and it lands here,
+          with provenance, built from everything the system remembers (position, trades, theses, pipeline history, engine read, calendar).
+        </div>
+      )}
+      {b?.sections && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px 22px", marginTop: 8 }} className="brief-grid">
+          <BriefBlock title="summary" text={b.sections.summary} />
+          <BriefBlock title="verdict" text={b.sections.verdict} strong />
+          <BriefBlock title="bull case" text={b.sections.bull_case} tone="var(--green)" />
+          <BriefBlock title="bear case" text={b.sections.bear_case} tone="var(--red)" />
+          <div style={{ gridColumn: "1 / -1" }}><BriefBlock title="what to verify before acting" text={b.sections.verify} tone="var(--warn)" /></div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BriefBlock({ title, text, tone, strong }: { title: string; text: string; tone?: string; strong?: boolean }) {
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <span className="k" style={tone ? { color: tone } : undefined}>{title}</span>
+      <p style={{ margin: "4px 0 0", fontSize: 12.5, lineHeight: 1.6, fontWeight: strong ? 600 : 400 }}>{text}</p>
+    </div>
   );
 }
 

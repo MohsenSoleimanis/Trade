@@ -431,6 +431,52 @@ def portfolio() -> dict:
     return snapshot()
 
 
+# ------------------------------------------------------ agent floor
+
+class BriefIn(BaseModel):
+    symbol: str
+    summary: str
+    bull_case: str
+    bear_case: str
+    verify: str
+    verdict: str
+    author: str = "claude-session"
+    inputs: list[str] = []
+
+
+@app.get("/api/agent/brief/{symbol}")
+def agent_brief(symbol: str) -> dict:
+    from dewaag.agent import load_brief
+
+    b = load_brief(symbol)
+    return b or {"symbol": symbol, "missing": True}
+
+
+@app.post("/api/agent/brief")
+def agent_brief_save(b: BriefIn) -> dict:
+    from dewaag.agent import save_brief
+
+    try:
+        return save_brief(b.symbol, b.model_dump(), author=b.author, inputs=b.inputs)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+
+
+@app.get("/api/agent/context/{symbol}")
+def agent_context(symbol: str) -> dict:
+    """The agent's reading desk: everything the system remembers about a name."""
+    from dewaag.agent import context_pack
+
+    return context_pack(symbol)
+
+
+@app.get("/api/agent/memory")
+def agent_memory(n: int = 50) -> list[dict]:
+    from dewaag.agent import recall
+
+    return recall(n)
+
+
 @app.get("/api/position/{symbol}/proceeds")
 def position_proceeds(symbol: str) -> dict:
     """'If I sell now, what lands in my pocket?' — the Belgian answer:

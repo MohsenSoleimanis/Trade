@@ -7,6 +7,10 @@ import { get } from "../api";
 
 interface Quote { price: number; bid: number | null; ask: number | null; source: string }
 interface SizeResult { ok: boolean; shares?: number; risk_budget?: number }
+interface WhatIf {
+  before: { vol: number; var95_eur: number | null };
+  after: { vol: number; var95_eur: number | null; top_risk: string | null };
+}
 
 export function TradePanel({ symbol, currency, lastClose, initialWrong, initialThesis, onFilled }: {
   symbol: string; currency: string; lastClose: number;
@@ -40,6 +44,15 @@ export function TradePanel({ symbol, currency, lastClose, initialWrong, initialT
     get<SizeResult>(`/api/size?entry=${price}&wrong=${w}`)
       .then((r) => setSuggest(r.ok ? r.shares ?? null : null)).catch(() => setSuggest(null));
   }, [wrong, price, side]);
+
+  // pre-trade risk impact (Risk Navigator's what-if) — numbers at the button
+  const [whatif, setWhatif] = useState<WhatIf | null>(null);
+  useEffect(() => {
+    const n = parseInt(shares);
+    if (!isFinite(n) || n <= 0) { setWhatif(null); return; }
+    get<WhatIf>(`/api/risk/whatif?symbol=${symbol}&side=${side}&shares=${n}`)
+      .then(setWhatif).catch(() => setWhatif(null));
+  }, [symbol, side, shares]);
 
   async function submit() {
     setBusy(true); setResult(null);
@@ -95,6 +108,18 @@ export function TradePanel({ symbol, currency, lastClose, initialWrong, initialT
       {suggest != null && side === "BUY" && (
         <div className="s" style={{ margin: "2px 0 6px" }}>
           <a style={{ cursor: "pointer" }} onClick={() => setShares(String(suggest))}>use sizer: {suggest} shares (1% risk rule)</a>
+        </div>
+      )}
+
+      {whatif && (
+        <div style={{ margin: "6px 0 0" }}>
+          <div className="costline"><span>portfolio vol</span>
+            <span className="mono">{(whatif.before.vol * 100).toFixed(1)}% → <b>{(whatif.after.vol * 100).toFixed(1)}%</b></span></div>
+          <div className="costline"><span>VaR95 / month</span>
+            <span className="mono">€{whatif.before.var95_eur ?? 0} → <b>€{whatif.after.var95_eur ?? "—"}</b></span></div>
+          {whatif.after.top_risk && (
+            <div className="costline"><span>biggest risk after</span><span className="mono">{whatif.after.top_risk}</span></div>
+          )}
         </div>
       )}
 
