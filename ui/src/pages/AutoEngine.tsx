@@ -25,8 +25,15 @@ interface Plan {
 
 const RISK_COLOR: Record<string, string> = { risk_on: "var(--green)", neutral: "var(--warn)", risk_off: "var(--red)" };
 
+interface Book {
+  simulated: boolean; equity: number; cash: number; invested: number; starting: number;
+  pnl_eur: number; pnl_pct: number; open_risk_eur: number; drawdown_eur: number;
+  positions: { symbol: string; name: string; shares: number; currency: string; last: number; value_eur: number; pnl_eur: number; pnl_pct: number; }[];
+}
+
 export function AutoEngine() {
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [book, setBook] = useState<Book | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
@@ -34,6 +41,7 @@ export function AutoEngine() {
   const load = (rebuild = false) => {
     setErr(null);
     get<Plan>(`/api/auto/plan${rebuild ? "?rebuild=true" : ""}`).then(setPlan).catch((e) => setErr(String(e)));
+    get<Book>("/api/auto/book").then(setBook).catch(() => {});
   };
   useEffect(() => load(false), []);
 
@@ -43,7 +51,7 @@ export function AutoEngine() {
       const r = await post<{ ok: boolean; error?: string; execution?: { blocks?: string[] } }>(
         approve ? "/api/auto/approve" : "/api/auto/reject",
         approve ? { id: p.id } : { id: p.id, reason: "not now" });
-      setFlash(r.ok ? `${approve ? "Approved" : "Rejected"} ${p.symbol}.`
+      setFlash(r.ok ? `${approve ? "Approved" : "Rejected"} ${p.symbol} → engine book.`
         : `Blocked: ${r.error ?? r.execution?.blocks?.[0] ?? "gate refused"}`);
       load(false);
     } catch (e) { setFlash(String(e)); } finally { setBusy(false); }
@@ -67,6 +75,46 @@ export function AutoEngine() {
           <button className="btn ghost" disabled={busy} onClick={() => load(true)}>↻ re-run brain</button>
         </div>
       </div>
+
+      {/* the engine's OWN autonomous book — the correction: not your €100 account */}
+      {book && (
+        <div className="card" style={{ borderColor: "color-mix(in srgb, var(--blue) 40%, var(--line))" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
+            <span className="k" style={{ color: "var(--blue)" }}>the engine's own book · autonomous · simulated — not your money</span>
+            <span className="s">separate from your personal €100 account, on purpose</span>
+          </div>
+          <div style={{ display: "flex", gap: 22, flexWrap: "wrap", marginTop: 8, alignItems: "baseline" }}>
+            <div>
+              <span className="k">value</span>
+              <span className="v" style={{ fontSize: 22 }}>€{book.equity.toLocaleString()}</span>
+            </div>
+            <div>
+              <span className="k">track record</span>
+              <span className="v" style={{ fontSize: 18, color: book.pnl_eur >= 0 ? "var(--green)" : "var(--red)" }}>
+                {book.pnl_eur >= 0 ? "+" : ""}€{book.pnl_eur.toLocaleString()} ({(book.pnl_pct * 100).toFixed(2)}%)
+              </span>
+            </div>
+            <div><span className="k">cash</span><span className="v" style={{ fontSize: 15 }}>€{book.cash.toLocaleString()}</span></div>
+            <div><span className="k">invested</span><span className="v" style={{ fontSize: 15 }}>€{book.invested.toLocaleString()}</span></div>
+            <div><span className="k">holdings</span><span className="v" style={{ fontSize: 15 }}>{book.positions.length}</span></div>
+            <div><span className="k">start</span><span className="v" style={{ fontSize: 15 }}>€{book.starting.toLocaleString()}</span></div>
+          </div>
+          {book.positions.length > 0 && (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}>
+              {book.positions.map((p) => (
+                <span key={p.symbol} className="chip" title={p.name}>
+                  {p.shares}× {p.symbol} · <span style={{ color: p.pnl_eur >= 0 ? "var(--green)" : "var(--red)" }}>{p.pnl_eur >= 0 ? "+" : ""}€{p.pnl_eur.toFixed(0)}</span>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="honesty" style={{ marginTop: 10 }}>
+            This is the engine trading on its own — its own pre-signed charter, its own simulated capital, building a real
+            track record you can judge. When you trust the record, mirror its moves into your real book by hand. Simulated
+            performance is not a promise: the same signals can look good in the past and disappoint live.
+          </div>
+        </div>
+      )}
 
       {/* the full spine — all ten layers, so nothing looks skipped */}
       <div className="card">
@@ -197,8 +245,9 @@ export function AutoEngine() {
       </div>
 
       <div className="honesty">
-        The engine cannot place an order. Every proposal stops here and waits for one human approval — approve routes it
-        through the same constitution gates as a manual trade; nothing bypasses the veto. {r.note}
+        Every proposal stops here and waits for one human approval — approve fills it into the engine's own simulated book
+        through the engine's charter (the veto is real; it just isn't waiting on your signature). Nothing here touches your
+        personal account. {r.note}
       </div>
     </div>
   );

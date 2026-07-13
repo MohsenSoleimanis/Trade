@@ -588,6 +588,15 @@ def auto_decisions(n: int = 100) -> list[dict]:
     return decision_history(n)
 
 
+@app.get("/api/auto/book")
+def auto_book() -> dict:
+    """The engine's OWN autonomous, simulated book — its track record.
+    Separate from your personal account on purpose."""
+    from dewaag.engine.auto.book import snapshot
+
+    return snapshot()
+
+
 @app.get("/api/position/{symbol}/proceeds")
 def position_proceeds(symbol: str) -> dict:
     """'If I sell now, what lands in my pocket?' — the Belgian answer:

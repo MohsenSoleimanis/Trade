@@ -182,12 +182,15 @@ def build_plan(signals_df: pd.DataFrame | None = None, snap: dict | None = None,
     if signals_df is None:
         from dewaag.engine.signals import compute_signals
         signals_df = compute_signals()
+    # DEFAULT to the engine's OWN autonomous book + its pre-signed charter —
+    # not the personal €100 account. The engine is its own trader; it must be
+    # able to act and build a track record without waiting on your signature.
     if constitution is None:
-        from dewaag.constitution import load_constitution
-        constitution = load_constitution()
+        from dewaag.engine.auto.book import engine_constitution
+        constitution = engine_constitution()
     if snap is None:
-        from dewaag.portfolio import snapshot
-        snap = snapshot()
+        from dewaag.engine.auto.book import snapshot as engine_snapshot
+        snap = engine_snapshot()
 
     regime = classify(signals_df)                                   # L2
     alloc = allocate(signals_df, regime)                            # L3 + L4

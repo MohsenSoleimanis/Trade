@@ -140,3 +140,29 @@ def test_pipeline_signed_book_clears_some_proposals(monkeypatch):
     for p in buys:
         assert p["wrong_price"] < p["price"]                       # every buy has a stop below entry
         assert 8.0 <= p["stop_pct"] <= 30.0
+
+
+def test_engine_book_fills_approved_buy_and_blocks_bad_sell(tmp_path, monkeypatch):
+    from dewaag.engine.auto import book as bk
+
+    monkeypatch.setattr(bk, "ENGINE_BOOK_PATH", tmp_path / "engine_book.json")
+    monkeypatch.setattr(bk, "_last_close", lambda s: 100.0)
+    monkeypatch.setattr("dewaag.portfolio.to_eur", lambda amt, cur: amt)
+    fake = pd.DataFrame([{"symbol": "TST", "yahoo": "TST", "name": "Test", "exchange": "EBR",
+                          "currency": "EUR", "country": "BE", "tier": "mid", "sector": "tech"}]
+                        ).set_index("symbol", drop=False)
+    monkeypatch.setattr(bk.store, "load_universe", lambda: fake)
+
+    # a well-formed BUY: 50 sh @ ~100, stop at 90 -> risk 50*10 = 500 <= 1% of 100k
+    buy = {"symbol": "TST", "side": "BUY", "shares": 50, "price": 100.0, "tier": "mid",
+           "currency": "EUR", "wrong_price": 90.0, "rationale": "a valid systematic thesis for the test"}
+    r = bk.execute_proposal(buy)
+    assert r["ok"], r.get("blocks")
+    snap = bk.snapshot()
+    assert snap["cash"] < 100_000 and len(snap["positions"]) == 1
+
+    # selling more than held is refused, not silently clamped
+    bad_sell = {"symbol": "TST", "side": "SELL", "shares": 999, "price": 100.0,
+                "tier": "mid", "currency": "EUR", "rationale": "exit"}
+    r2 = bk.execute_proposal(bad_sell)
+    assert r2["ok"] is False

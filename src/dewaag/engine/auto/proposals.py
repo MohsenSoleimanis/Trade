@@ -61,9 +61,9 @@ def approve(proposal_id: str) -> dict:
     if p.get("status") == "approved":
         return {"ok": False, "error": "already approved"}
 
-    from dewaag.portfolio import execute
-    result = execute(p["symbol"], p["side"], p["shares"],
-                     thesis=p.get("rationale", ""), wrong_price=p.get("wrong_price"))
+    # route into the engine's OWN book (not the personal account)
+    from dewaag.engine.auto.book import execute_proposal
+    result = execute_proposal(p)
 
     p["status"] = "approved" if result.get("ok") else "rejected_by_gate"
     p["executed_at"] = _now()
