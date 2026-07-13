@@ -20,6 +20,7 @@ interface Plan {
   proposals: Proposal[];
   book: { equity: number; cash: number; signed: boolean; };
   executable_note: string;
+  layers: { code: string; name: string; role: string; status: string; detail: string; }[];
 }
 
 const RISK_COLOR: Record<string, string> = { risk_on: "var(--green)", neutral: "var(--warn)", risk_off: "var(--red)" };
@@ -67,8 +68,31 @@ export function AutoEngine() {
         </div>
       </div>
 
-      {/* L2 regime */}
+      {/* the full spine — all ten layers, so nothing looks skipped */}
       <div className="card">
+        <span className="k">the pipeline · all ten layers ran for this plan</span>
+        <div className="layer-spine">
+          {(plan.layers ?? []).map((L) => {
+            const panel = L.status === "panel";
+            const anchor = { L2: "l2", L3: "l34", L4: "l34", L5: "l5", L9: "l9" }[L.code];
+            const body = (
+              <>
+                <span className="ls-code">{L.code}</span>
+                <span className="ls-name">{L.name}<span className="ls-role"> · {L.role}</span></span>
+                <span className="ls-detail">{L.detail}</span>
+                <span className={`ls-dot ${panel ? "panel" : "live"}`}>{panel ? "▼ panel below" : "running"}</span>
+              </>
+            );
+            return anchor
+              ? <a key={L.code} href={`#/engine`} className="ls-row click"
+                   onClick={(e) => { e.preventDefault(); document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "center" }); }}>{body}</a>
+              : <div key={L.code} className="ls-row">{body}</div>;
+          })}
+        </div>
+      </div>
+
+      {/* L2 regime */}
+      <div id="l2" className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8 }}>
           <span className="k">L2 · market weather</span>
           <span className="mono s">as of {plan.as_of.slice(0, 16).replace("T", " ")}</span>
@@ -89,8 +113,8 @@ export function AutoEngine() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: 12 }} className="engine-cols">
         {/* L3+L4 allocator */}
-        <div className="card">
-          <span className="k">L3+L4 · whose vote counts today</span>
+        <div id="l34" className="card">
+          <span className="k">L3 committee + L4 meta-brain · whose vote counts today</span>
           <div className="s" style={{ margin: "4px 0 10px", color: "var(--muted)" }}>{plan.allocator.method}</div>
           {topW.map(([key, w]) => {
             const meta = plan.allocator.table[key];
@@ -110,7 +134,7 @@ export function AutoEngine() {
         </div>
 
         {/* L5 target portfolio */}
-        <div className="card">
+        <div id="l5" className="card">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <span className="k">L5 · the ideal target book</span>
             <span className="mono s">invested {(plan.targets.invested * 100).toFixed(0)}% · cash {(plan.targets.cash * 100).toFixed(0)}%</span>
@@ -134,7 +158,7 @@ export function AutoEngine() {
       </div>
 
       {/* L9 proposals */}
-      <div className="card">
+      <div id="l9" className="card">
         <span className="k">L9 · proposals waiting for you</span>
         <div className={`qbanner ${plan.book.signed ? "warn" : "crit"}`} style={{ margin: "8px 0", padding: "7px 11px" }}>
           {plan.executable_note}

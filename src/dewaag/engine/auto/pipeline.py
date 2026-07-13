@@ -127,6 +127,55 @@ def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
     return proposals
 
 
+def _layer_summary(signals_df, regime, alloc, targets, proposals, snap, constitution) -> list[dict]:
+    """One visible status line per layer L0-L9 — so the whole brain is on
+    screen and nothing looks skipped. Every layer runs on every plan; the
+    ones without their own rich panel still report here."""
+    from dewaag.engine.auto.strategies import STOCK_TIERS, STRATEGIES
+    from dewaag.vault import store
+
+    try:
+        total_universe = len(store.load_universe())
+        last_date = str(store.vault_status().get("last_date", "?"))
+    except Exception:  # noqa: BLE001
+        total_universe, last_date = len(signals_df), "?"
+    n_stocks = int(signals_df["tier"].isin(STOCK_TIERS).sum())
+
+    try:
+        from dewaag.engine.auto.proposals import decision_history
+        n_decisions = len(decision_history(1000))
+    except Exception:  # noqa: BLE001
+        n_decisions = 0
+
+    pending = [p for p in proposals if p["status"] == "pending"]
+    top_strat = max(alloc["weights"].items(), key=lambda kv: kv[1])[0] if alloc["weights"] else "—"
+    top_name = alloc["table"].get(top_strat, {}).get("name", top_strat)
+
+    return [
+        {"code": "L0", "name": "Data fabric", "role": "the senses",
+         "status": "live", "detail": f"{total_universe} instruments in the universe · vault current to {last_date}"},
+        {"code": "L1", "name": "Feature engine", "role": "understanding",
+         "status": "live", "detail": f"{n_stocks} stocks turned into factor portraits (value, quality, momentum, risk, macro)"},
+        {"code": "L2", "name": "Regime", "role": "the weather brain",
+         "status": "panel", "detail": f"{regime['label']} · deploy dial {int(regime['gross_target']*100)}%"},
+        {"code": "L3", "name": "Alpha committee", "role": f"{len(STRATEGIES)} strategies vote",
+         "status": "panel", "detail": f"{len(STRATEGIES)} independent strategies scored every stock 0-100"},
+        {"code": "L4", "name": "Meta-brain", "role": "whose vote counts",
+         "status": "panel", "detail": f"loudest voice this regime: {top_name}. ML meta-learner is the reserved v2 slot."},
+        {"code": "L5", "name": "Construction", "role": "the architect",
+         "status": "panel", "detail": f"{len(targets['picks'])} names, {int(targets['invested']*100)}% invested, sized by risk & capped"},
+        {"code": "L6", "name": "Risk & constitution veto", "role": "the un-overridable law",
+         "status": "live", "detail": (f"signed · risk/idea {constitution.max_risk_per_idea_pct}% · position cap {constitution.max_position_pct}% · leverage {constitution.leverage}"
+                                       if snap.get("constitution_signed") else "UNSIGNED — the veto holds every trade (this is why L9 is empty)")},
+        {"code": "L7", "name": "Execution", "role": "the hands",
+         "status": "live", "detail": "cheapest-fill + Belgian TOB/commission modeled on every proposal below (cost shown per card)"},
+        {"code": "L8", "name": "Autonomy loop + memory", "role": "the life of the system",
+         "status": "live", "detail": f"ran the full pipeline just now · {n_decisions} past decisions remembered (feed the L4 ML slot)"},
+        {"code": "L9", "name": "Approval gate", "role": "the one door you touch",
+         "status": "panel", "detail": f"{len(proposals)} proposal(s), {len(pending)} awaiting your approval"},
+    ]
+
+
 def build_plan(signals_df: pd.DataFrame | None = None, snap: dict | None = None,
                constitution=None, persist: bool = True) -> dict:
     """Run the whole brain. Deps are injectable for testing."""
@@ -161,6 +210,7 @@ def build_plan(signals_df: pd.DataFrame | None = None, snap: dict | None = None,
         "book": {"equity": snap.get("equity"), "cash": snap.get("cash"),
                  "signed": snap.get("constitution_signed", False)},
         "executable_note": _executable_note(snap, proposals),
+        "layers": _layer_summary(signals_df, regime, alloc, targets, proposals, snap, constitution),
     }
     if persist:
         prop_store.save_plan(plan)
