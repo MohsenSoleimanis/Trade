@@ -210,11 +210,20 @@ def build_plan(signals_df: pd.DataFrame | None = None, snap: dict | None = None,
                             constitution.max_position_pct)
 
     proposals = _propose_trades(targets, snap, signals_df, constitution)  # L6/L7/L9
+
+    # attach the full reasoning to every proposal: deterministic signals +
+    # news CONTEXT + this name's memory. Read the decision log ONCE.
+    from dewaag.engine.auto.memory import history as mem_history
+    from dewaag.engine.auto.reasoning import build_reasoning
     for p in proposals:
         if p["side"] == "BUY":
             pick = next((x for x in targets["picks"] if x["symbol"] == p["symbol"]), None)
             if pick:
                 p["rationale"] = _rationale(p["symbol"], pick, regime)
+        try:
+            p["reasoning"] = build_reasoning(p, regime, mem_history(p["symbol"]))
+        except Exception:  # noqa: BLE001 — reasoning must never break a plan
+            p["reasoning"] = None
 
     plan = {
         "as_of": _now(),

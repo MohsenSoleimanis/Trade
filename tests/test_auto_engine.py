@@ -166,6 +166,32 @@ def test_pipeline_signed_book_clears_some_proposals(monkeypatch):
         assert 8.0 <= p["stop_pct"] <= 30.0
 
 
+def test_memory_reads_the_decision_log_and_respects_rejections(monkeypatch):
+    from dewaag.engine.auto import memory as mem
+
+    log = [
+        {"at": "2026-07-13T09:00:00+00:00", "action": "approve",
+         "proposal": {"symbol": "AAA", "side": "BUY", "shares": 5, "fired": ["value", "trend"]},
+         "outcome": "filled"},
+        {"at": "2026-07-13T09:05:00+00:00", "action": "reject",
+         "proposal": {"symbol": "BBB", "side": "BUY", "shares": 3}, "reason": "not now"},
+        {"at": "2026-07-13T09:10:00+00:00", "action": "approve",
+         "proposal": {"symbol": "AAA", "side": "BUY", "shares": 2, "fired": ["value"]},
+         "outcome": "filled"},
+    ]
+    monkeypatch.setattr(mem, "decision_history", lambda limit=800: log)
+    monkeypatch.setattr(mem, "_mark_pnl", lambda: {"AAA": {"shares": 7, "pnl_eur": 12.0, "pnl_pct": 0.03}})
+
+    s = mem.summarize()
+    assert s["total"] == 3 and s["approved"] == 2 and s["rejected"] == 1
+    assert s["strategy_usage"]["value"] == 2 and s["strategy_usage"]["trend"] == 1
+    aaa = next(r for r in s["by_symbol"] if r["symbol"] == "AAA")
+    assert aaa["approved"] == 2 and aaa["holding_pnl_eur"] == 12.0     # live outcome attached
+    assert mem.did_reject("BBB") is True                              # respects your 'no'
+    assert mem.did_reject("AAA") is False                            # last AAA decision was an approve
+    assert len(mem.history("AAA")) == 2
+
+
 def test_engine_book_fills_approved_buy_and_blocks_bad_sell(tmp_path, monkeypatch):
     from dewaag.engine.auto import book as bk
 

@@ -144,8 +144,12 @@ def build_console(rebuild: bool = False) -> dict:
     pend = [p for p in proposals if p["status"] == "pending"]
     l9 = {"total": len(proposals), "pending": len(pend), "proposals": proposals}
 
+    # ---- memory (read the decision log back) ----
+    from dewaag.engine.auto.memory import summarize as mem_summarize
+    memory = mem_summarize()
+
     return {
-        "as_of": _now(), "regime": regime, "book": book,
+        "as_of": _now(), "regime": regime, "book": book, "memory": memory,
         "layers": {"l0": l0, "l1": l1, "l2": regime, "l3": l3, "l4": l4,
                    "l5": l5, "l6": l6, "l7": l7, "l8": l8, "l9": l9},
     }

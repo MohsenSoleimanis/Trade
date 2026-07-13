@@ -30,11 +30,26 @@ interface Console {
       starting: number; holdings: number; decisions: number; last_run: string };
     l9: { total: number; pending: number; proposals: Proposal[] };
   };
+  memory: Memory;
+}
+interface Reasoning {
+  deterministic: { regime: string; strategies: { name: string; why: string }[]; conviction?: number;
+    confidence?: number; evidence: string[]; macro?: string | null; sizing: string };
+  news: { headlines: { when: string | null; title: string; source: string; link?: string | null }[]; event?: string | null; note: string };
+  memory: { prior: { at?: string; action?: string; side?: string; shares?: number; outcome?: string; reason?: string }[]; note: string };
+  summary: string;
+}
+interface Memory {
+  total: number; approved: number; blocked: number; rejected: number;
+  strategy_usage: Record<string, number>;
+  by_symbol: { symbol: string; approved: number; rejected: number; holding_pnl_eur?: number; holding_pnl_pct?: number }[];
+  recent: { at?: string; action?: string; symbol?: string; side?: string; shares?: number; outcome?: string; reason?: string }[];
+  note: string;
 }
 interface Proposal {
   id: string; symbol: string; name: string; side: string; shares: number; price: number; currency: string;
   status: string; wrong_price?: number; stop_pct?: number; est_cost_eur?: number; notional_eur?: number;
-  confidence?: number; fired?: string[]; rationale?: string; blocks?: string[];
+  confidence?: number; fired?: string[]; rationale?: string; blocks?: string[]; reasoning?: Reasoning;
 }
 
 const RISKCOL: Record<string, string> = { risk_on: "var(--jv-green)", neutral: "var(--jv-amber)", risk_off: "var(--jv-red)" };
@@ -260,12 +275,45 @@ export function EngineConsole() {
                 {p.confidence != null && <span>conf {(p.confidence * 100).toFixed(0)}%</span>}
               </div>
               {p.blocks && p.blocks.length > 0 && <div className="why" style={{ color: "var(--jv-amber)" }}>gate: {p.blocks[0]}</div>}
+              {p.reasoning && <Reason r={p.reasoning} />}
               <div className="acts">
                 <button className="jv-approve" disabled={busy || p.status !== "pending"} onClick={() => act(p, true)}>✓ APPROVE</button>
                 <button className="jv-reject" disabled={busy} onClick={() => act(p, false)}>✕ reject</button>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* L8 memory — the decision log read back */}
+        <div ref={(el) => (refs.current["l8mem"] = el)} className={`jv-mod span2 ${hi === "l8mem" ? "flash-on" : ""}`}>
+          <Head code="L8" name="Memory" tag="live" desc="Every decision the engine has made — remembered with its reasoning, and how the held ones are doing." />
+          <div className="jv-leds">
+            <span className="jv-led"><span className="d ok" />total <b>{d.memory.total}</b></span>
+            <span className="jv-led"><span className="d ok" />approved <b>{d.memory.approved}</b></span>
+            <span className="jv-led"><span className="d warn" />rejected <b>{d.memory.rejected}</b></span>
+            <span className="jv-led"><span className="d bad" />gate-blocked <b>{d.memory.blocked}</b></span>
+          </div>
+          {Object.keys(d.memory.strategy_usage).length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              <div className="jv-desc" style={{ marginBottom: 4 }}>which strategies have actually led to approved trades:</div>
+              <Bars rows={Object.entries(d.memory.strategy_usage).slice(0, 6).map(([k, v]) => ({
+                label: k, val: v, max: Math.max(...Object.values(d.memory.strategy_usage)), txt: String(v) }))} />
+            </div>
+          )}
+          {d.memory.recent.length === 0 && <div className="jv-empty">No decisions yet — approve or reject a proposal and it is remembered here, with its full reasoning, forever.</div>}
+          {d.memory.recent.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              {d.memory.recent.map((h, i) => (
+                <div key={i} style={{ display: "flex", gap: 10, fontSize: 11, padding: "3px 0", borderBottom: "1px solid var(--jv-line)" }}>
+                  <span className="mono" style={{ color: "var(--jv-muted)", minWidth: 82 }}>{h.at?.slice(5, 16).replace("T", " ")}</span>
+                  <span style={{ color: h.action === "approve" ? "var(--jv-green)" : "var(--jv-amber)", minWidth: 56 }}>{h.action}</span>
+                  <span style={{ flex: 1 }}>{h.side} {h.shares} {h.symbol}</span>
+                  <span className="mono" style={{ color: "var(--jv-muted)" }}>{h.outcome ?? h.reason ?? ""}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="jv-desc" style={{ marginTop: 8 }}>{d.memory.note}</div>
         </div>
       </div>
 
@@ -291,6 +339,42 @@ function Head({ code, name, tag, desc }: { code: string; name: string; tag: stri
       </div>
       <div className="jv-desc">{desc}</div>
     </>
+  );
+}
+
+function Reason({ r }: { r: Reasoning }) {
+  const D = r.deterministic;
+  return (
+    <details className="jv-why">
+      <summary>▸ reasoning — deterministic signals · news · memory</summary>
+      <div className="jv-why-body">
+        <div className="rz">
+          <span className="rz-lab cyan">deterministic signals</span>
+          {D.strategies.length > 0 && <div className="rz-e"><b>strategies fired:</b> {D.strategies.map((s) => s.name).join(", ")} ({D.conviction}/100, {Math.round((D.confidence ?? 0) * 100)}% conf)</div>}
+          {D.evidence.map((e, i) => <div key={i} className="rz-e">• {e}</div>)}
+          {D.macro && <div className="rz-e">• macro: {D.macro}</div>}
+          <div className="rz-e">• {D.sizing}</div>
+        </div>
+        <div className="rz">
+          <span className="rz-lab amber">news — context, not a signal</span>
+          {r.news.event && <div className="rz-event">⚠ {r.news.event}</div>}
+          {r.news.headlines.length === 0 && <div className="rz-e" style={{ opacity: 0.7 }}>quiet — no recent coverage.</div>}
+          {r.news.headlines.map((h, i) => (
+            <a key={i} href={h.link ?? undefined} target="_blank" rel="noreferrer" className="rz-news">
+              <span className="mono">{h.when ?? "—"}</span> {h.title} <span style={{ opacity: 0.6 }}>· {h.source}</span>
+            </a>
+          ))}
+          <div className="rz-e" style={{ opacity: 0.6, marginTop: 2 }}>{r.news.note}</div>
+        </div>
+        <div className="rz">
+          <span className="rz-lab green">memory</span>
+          <div className="rz-e">{r.memory.note}</div>
+          {r.memory.prior.map((h, i) => (
+            <div key={i} className="rz-e" style={{ opacity: 0.8 }}>· {h.at?.slice(0, 10)} {h.action} {h.side} {h.shares} — {h.outcome ?? h.reason ?? ""}</div>
+          ))}
+        </div>
+      </div>
+    </details>
   );
 }
 
