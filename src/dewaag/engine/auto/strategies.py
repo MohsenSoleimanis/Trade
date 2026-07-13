@@ -21,6 +21,10 @@ from typing import Callable
 import pandas as pd
 
 STOCK_TIERS = ("mega", "large", "mid", "small")
+# ETFs are scored too, but only the PRICE strategies reach them — their
+# fundamental columns are empty, so value/quality/growth vote NaN (dropped)
+# while momentum/trend/low-vol/reversion still see a basket's price history.
+TRADEABLE_TIERS = STOCK_TIERS + ("etf",)
 
 
 def _pct(col: pd.Series) -> pd.Series:
@@ -105,9 +109,10 @@ STRATEGIES: list[Strategy] = [
 
 
 def committee_scores(signals_df: pd.DataFrame) -> pd.DataFrame:
-    """Every strategy's 0–100 vote for every stock. Index = symbol, one
-    column per strategy key. ETFs/fx/macro are not stock-picked here."""
-    stocks = signals_df[signals_df["tier"].isin(STOCK_TIERS)].copy()
+    """Every strategy's 0–100 vote for every tradable (stocks + ETFs).
+    Index = symbol, one column per strategy key. Fundamental strategies
+    vote NaN on ETFs (no statements) and are dropped for them."""
+    stocks = signals_df[signals_df["tier"].isin(TRADEABLE_TIERS)].copy()
     out = pd.DataFrame(index=stocks.index)
     for strat in STRATEGIES:
         try:

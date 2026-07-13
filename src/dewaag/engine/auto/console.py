@@ -100,9 +100,10 @@ def build_console(rebuild: bool = False) -> dict:
         },
     }
 
-    # ---- L5 construction: the target book ----
+    # ---- L5 construction: the target book (core-satellite) ----
     l5 = {"picks": targets["picks"], "invested": targets["invested"],
-          "cash": targets["cash"], "gross": targets["gross_target"]}
+          "cash": targets["cash"], "gross": targets["gross_target"],
+          "core_symbol": targets.get("core_symbol"), "core_weight": targets.get("core_weight")}
 
     # ---- L6 risk & veto: exposures of the target book + charter ----
     tw = {p["symbol"]: p["weight"] for p in targets["picks"]}

@@ -21,6 +21,15 @@ MIN_SCORE = 60.0        # only above-median-attractive names are eligible
 MIN_CONF = 0.35         # a call the committee barely agrees on is not a call
 MAX_NAMES = 15          # concentration is capped by count as well as weight
 
+# broad world baskets — the CORE. Held as the diversified foundation, not
+# picked by the committee (a whole-world index has no single-name alpha).
+# Preference order = lowest share price first (buyable in a small account).
+WORLD_CORE = ("WEBN", "VWCE", "IWDA")
+# how much of the deployed book is the safe core vs. the alpha satellites.
+# more core when the weather is bad; costs and small size make a big core
+# the honest default for a small account (own the market, tilt at the edges).
+CORE_FRACTION = {"risk_on": 0.60, "neutral": 0.72, "risk_off": 0.85}
+
 
 def _cap_and_normalize(raw: dict[str, float], cap: float, gross: float) -> dict[str, float]:
     """Scale weights to sum to `gross`, then iteratively clip any name over
@@ -48,48 +57,63 @@ def _cap_and_normalize(raw: dict[str, float], cap: float, gross: float) -> dict[
 
 def build_targets(signals_df: pd.DataFrame, blended: dict, regime: dict,
                   max_position_pct: float) -> dict:
-    """The ideal target portfolio — capital-independent. Returns target
-    WEIGHTS (fractions of the book), not euros: the brain's opinion of the
-    right shape, which then scales to any account size at L9."""
+    """The ideal target portfolio as a CORE-SATELLITE book (weights, not euros):
+
+      CORE      — a broad world basket, the diversified foundation. Sized by
+                  the regime; exempt from the single-name cap because it IS
+                  the diversification the cap protects.
+      SATELLITES— the committee's top convictions (stocks + tactical baskets),
+                  each capped, sized by conviction / risk.
+
+    This is how a small account actually grows real money: own the market
+    cheaply, then tilt at the edges — not bet the book on a few stocks."""
     cap = max_position_pct / 100.0
     gross = float(regime.get("gross_target", 0.8))
+    risk = regime.get("risk", "neutral")
 
+    # ---- the core: the cheapest-share world basket that we actually hold ----
+    core_sym = next((s for s in WORLD_CORE if s in signals_df.index), None)
+    core_frac = CORE_FRACTION.get(risk, 0.72) if core_sym else 0.0
+    core_weight = round(gross * core_frac, 4)
+    sat_gross = gross - core_weight
+
+    # ---- satellites: top convictions, excluding the world-core baskets ----
     vol = signals_df["vol_1y"]
     eligible = []
     for sym, b in blended.items():
+        if sym in WORLD_CORE:
+            continue                                  # never double the core
         if b["score"] < MIN_SCORE or b["confidence"] < MIN_CONF:
             continue
         v = vol.get(sym)
         if v is None or pd.isna(v) or v <= 0:
-            v = 0.30                                  # unknown risk = treat as fairly wild
-        # conviction above the bar, divided by risk (inverse-vol sizing),
-        # nudged by confidence so shaky calls get less
+            v = 0.30
         edge = (b["score"] - MIN_SCORE) * b["confidence"]
         eligible.append((sym, edge / float(v), b))
 
     eligible.sort(key=lambda t: -t[1])
     eligible = eligible[:MAX_NAMES]
-
     raw = {sym: raw_w for sym, raw_w, _ in eligible}
-    # you cannot deploy more than (names x cap) without breaking the single-name
-    # cap — so the deployable gross is bounded by capacity; the rest stays cash.
-    gross = min(gross, len(raw) * cap)
-    weights = _cap_and_normalize(raw, cap, gross)
+    sat_gross = min(sat_gross, len(raw) * cap)        # capacity-bounded
+    sat_weights = _cap_and_normalize(raw, cap, sat_gross) if raw else {}
 
-    invested = round(sum(weights.values()), 4)
     picks = []
-    for sym, raw_w, b in eligible:
-        if sym not in weights:
-            continue
-        picks.append({"symbol": sym, "weight": weights[sym],
-                      "score": b["score"], "confidence": b["confidence"],
-                      "fired": b["fired"]})
-    picks.sort(key=lambda p: -p["weight"])
+    if core_sym and core_weight > 0:
+        picks.append({"symbol": core_sym, "weight": core_weight, "score": 100.0,
+                      "confidence": 1.0, "fired": ["world core"], "is_core": True})
+    for sym, _, b in eligible:
+        if sym in sat_weights:
+            picks.append({"symbol": sym, "weight": sat_weights[sym], "score": b["score"],
+                          "confidence": b["confidence"], "fired": b["fired"], "is_core": False})
+    picks.sort(key=lambda p: (-p.get("is_core", False), -p["weight"]))
 
+    invested = round(sum(p["weight"] for p in picks), 4)
     return {"picks": picks,
             "invested": invested,
             "cash": round(1.0 - invested, 4),
             "gross_target": gross,
-            "note": ("Weights, not euros — the ideal SHAPE of the book, which scales to any capital. "
-                     f"{int(round(1.0-invested)*100) if False else round((1.0-invested)*100)}% is held in cash by the "
-                     "regime's storm-dial; a world core-ETF can hold that sleeve instead of idle cash.")}
+            "core_symbol": core_sym,
+            "core_weight": core_weight,
+            "note": (f"Core-satellite: ~{round(core_weight*100)}% in a broad world basket ({core_sym or 'n/a'}) as the "
+                     f"foundation, ~{round((invested-core_weight)*100)}% across capped satellite convictions, "
+                     f"{round((1.0-invested)*100)}% cash by the regime's storm-dial.")}

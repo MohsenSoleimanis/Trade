@@ -72,22 +72,29 @@ def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
         if price_eur <= 0:
             continue
 
-        stop = _stop_fraction(row.get("vol_1y"))
-        wrong = round(price * (1 - stop), 4)
         # price the fill EXACTLY as execution will (last close + half-spread),
         # and gate on that — so a proposal shown as "pending" can never be
         # rejected on approval by a few cents of spread.
         fill = price * (1 + HALF_SPREAD.get(tier, 0.004))
-
-        # size is bounded by BOTH the target weight (L5) AND the per-idea risk
-        # budget (L6). A 10% position with a 20% stop is 2% risk — the risk rule
-        # wins, so we compute shares under both and take the smaller.
         target_eur = pick["weight"] * equity
         delta_eur = target_eur - held_eur.get(sym, 0.0)
         weight_shares = int(delta_eur // to_eur(fill, currency))
-        loss_per_share_eur = to_eur(fill - wrong, currency)
-        risk_shares = int(risk_budget // loss_per_share_eur) if loss_per_share_eur > 0 else 0
-        shares = min(weight_shares, risk_shares)
+
+        if tier == "etf":
+            # a broad basket core has no single-name stop and no per-idea risk
+            # budget — it IS the diversification; you accumulate it, not exit it.
+            wrong = None
+            stop = 0.0
+            shares = weight_shares
+        else:
+            # a stock is bounded by BOTH the target weight (L5) AND the per-idea
+            # risk budget (L6): a 10% position with a 20% stop is 2% risk, and
+            # the risk rule wins — take the smaller of the two share counts.
+            stop = _stop_fraction(row.get("vol_1y"))
+            wrong = round(price * (1 - stop), 4)
+            loss_per_share_eur = to_eur(fill - wrong, currency)
+            risk_shares = int(risk_budget // loss_per_share_eur) if loss_per_share_eur > 0 else 0
+            shares = min(weight_shares, risk_shares)
         if shares < 1:
             continue
 

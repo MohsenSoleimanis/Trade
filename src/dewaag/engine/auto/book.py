@@ -24,7 +24,7 @@ from datetime import date, datetime, timezone
 from dewaag.vault import store
 
 ENGINE_BOOK_PATH = store.DATA_DIR / "auto" / "engine_book.json"
-STARTING_CAPITAL = 100_000.0
+STARTING_CAPITAL = 1_000.0     # a real small-account size, not a placeholder
 
 HALF_SPREAD = {"mega": 0.0002, "large": 0.0005, "mid": 0.002,
                "small": 0.006, "etf": 0.0003}

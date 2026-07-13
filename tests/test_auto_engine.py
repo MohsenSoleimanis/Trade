@@ -107,6 +107,30 @@ def test_construction_respects_caps_and_no_leverage():
     assert len(targets["picks"]) <= 15
 
 
+def test_core_satellite_holds_a_basket_core_exempt_from_the_cap():
+    df = _signals()
+    # inject a world-core basket the engine should hold as the foundation
+    core = {"symbol": "WEBN", "name": "World basket", "country": "IE", "tier": "etf",
+            "currency": "EUR", "sector": "etf", "price": 12.8, "ret_1m": 0.01,
+            "mom_12_1": 0.12, "vol_1y": 0.14, "max_dd_1y": -0.1, "dist_200d": 0.05,
+            "above_200d": True, "beta_1y": 1.0, "earnings_yield": np.nan, "rev_growth": np.nan,
+            "growth_trend": np.nan, "q_score": np.nan, "v_score": np.nan, "m_score": 60.0}
+    df = pd.concat([df, pd.DataFrame([core]).set_index("symbol", drop=False)])
+
+    regime = {"tags": ["risk_on", "bull"], "gross_target": 0.95, "risk": "risk_on"}
+    alloc = allocate(df, regime)
+    targets = build_targets(df, alloc["blended"], regime, max_position_pct=10.0)
+
+    core_picks = [p for p in targets["picks"] if p.get("is_core")]
+    sats = [p for p in targets["picks"] if not p.get("is_core")]
+    assert len(core_picks) == 1 and core_picks[0]["symbol"] == "WEBN"
+    assert core_picks[0]["weight"] > 0.10               # core is exempt from the single-name cap
+    assert all(p["weight"] <= 0.10 + 1e-6 for p in sats)  # satellites still capped
+    total = sum(p["weight"] for p in targets["picks"])
+    assert total <= 1.0                                   # never leveraged (the hard law)
+    assert total <= 0.95 + 0.01                           # ~= the gross dial, within rounding
+
+
 def test_pipeline_proposals_blocked_when_unsigned(monkeypatch):
     from dewaag.engine.auto import pipeline
 
@@ -146,6 +170,7 @@ def test_engine_book_fills_approved_buy_and_blocks_bad_sell(tmp_path, monkeypatc
     from dewaag.engine.auto import book as bk
 
     monkeypatch.setattr(bk, "ENGINE_BOOK_PATH", tmp_path / "engine_book.json")
+    monkeypatch.setattr(bk, "STARTING_CAPITAL", 100_000.0)   # scale-independent for this test
     monkeypatch.setattr(bk, "_last_close", lambda s: 100.0)
     monkeypatch.setattr("dewaag.portfolio.to_eur", lambda amt, cur: amt)
     fake = pd.DataFrame([{"symbol": "TST", "yahoo": "TST", "name": "Test", "exchange": "EBR",

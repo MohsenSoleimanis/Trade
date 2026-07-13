@@ -63,6 +63,10 @@ SEED = [
     # --- The benchmark (Lesson 1: the score to beat) ---
     ("IWDA",  "IWDA.AS", "iShares MSCI World (acc)", "AMS", "EUR", "IE", "etf", "etf"),
     ("WEBN",  "WEBN.DE", "Amundi Prime All-Country World (acc)", "XETRA", "EUR", "IE", "etf", "etf"),
+    # --- Baskets a small Belgian account can actually build a core with
+    #     (low share price = buyable at €1,000; accumulating = no dividend tax leak) ---
+    ("IMEU",  "IMEU.AS", "iShares Core MSCI Europe (acc)", "AMS", "EUR", "IE", "etf", "etf"),
+    ("EMIM",  "EMIM.AS", "iShares Core MSCI EM IMI (acc)", "AMS", "EUR", "IE", "etf", "etf"),
     # --- FX: the double bet must be priced, not ignored (Lesson 2 §6) ---
     ("EURUSD", "EURUSD=X", "EUR/USD", "FX", "USD", "FX", "fx", "fx"),
     # --- Macro channels: war/climate/rates reach a company THROUGH these

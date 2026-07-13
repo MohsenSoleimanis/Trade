@@ -19,8 +19,8 @@ interface Console {
     l3: { strategies: { key: string; name: string; edge: string; conviction: number; top: string; weight: number }[] };
     l4: { weights: Record<string, number>; table: Record<string, { name: string; fit: number }>;
       confidence: { high: number; medium: number; low: number }; method: string };
-    l5: { picks: { symbol: string; weight: number; score: number; confidence: number; fired: string[] }[];
-      invested: number; cash: number; gross: number };
+    l5: { picks: { symbol: string; weight: number; score: number; confidence: number; fired: string[]; is_core?: boolean }[];
+      invested: number; cash: number; gross: number; core_symbol?: string | null; core_weight?: number };
     l6: { charter: { risk_per_idea: number; position_cap: number; leverage: number; max_drawdown_eur: number };
       country_exposure: Record<string, number>; tier_exposure: Record<string, number>;
       largest_position: number; names: number; drawdown_eur: number; open_risk_eur: number };
@@ -199,11 +199,17 @@ export function EngineConsole() {
 
         {/* L5 construction */}
         <div {...mod("l5")}>
-          <Head code="L5" name="Construction" tag="panel" desc="Convictions → target weights, sized by risk, capped per name." />
+          <Head code="L5" name="Construction" tag="panel" desc="Core-satellite: ◆ a world basket as the base, then capped stock/basket tilts." />
           <div style={{ display: "flex", gap: 14, alignItems: "center", marginTop: 8 }}>
             <Donut invested={L.l5.invested} />
             <div style={{ flex: 1 }}>
-              <Bars rows={L.l5.picks.slice(0, 6).map((p) => ({ label: p.symbol, val: p.weight * 100, max: L.l6?.charter.position_cap ?? 10, txt: (p.weight * 100).toFixed(1) + "%" }))} />
+              <Bars rows={L.l5.picks.slice(0, 7).map((p) => ({
+                label: (p.is_core ? "◆ " : "") + p.symbol,
+                val: p.weight * 100,
+                max: Math.max(...L.l5.picks.map((x) => x.weight)) * 100 || 10,
+                txt: (p.weight * 100).toFixed(1) + "%",
+                tone: p.is_core ? ("green" as const) : undefined,
+              }))} />
             </div>
           </div>
         </div>
