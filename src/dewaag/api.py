@@ -597,6 +597,14 @@ def auto_book() -> dict:
     return snapshot()
 
 
+@app.get("/api/auto/console")
+def auto_console(rebuild: bool = False) -> dict:
+    """Rich, visualizable data for every layer — the Jarvis console feed."""
+    from dewaag.engine.auto.console import build_console
+
+    return build_console(rebuild=rebuild)
+
+
 @app.get("/api/position/{symbol}/proceeds")
 def position_proceeds(symbol: str) -> dict:
     """'If I sell now, what lands in my pocket?' — the Belgian answer:

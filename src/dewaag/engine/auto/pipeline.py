@@ -46,6 +46,7 @@ def _rationale(sym: str, pick: dict, regime: dict) -> str:
 
 def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
                     constitution) -> list[dict]:
+    from dewaag.engine.auto.book import HALF_SPREAD
     from dewaag.engine.costs import estimate
     from dewaag.engine.sizing import gate_order
     from dewaag.portfolio import to_eur
@@ -73,25 +74,29 @@ def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
 
         stop = _stop_fraction(row.get("vol_1y"))
         wrong = round(price * (1 - stop), 4)
+        # price the fill EXACTLY as execution will (last close + half-spread),
+        # and gate on that — so a proposal shown as "pending" can never be
+        # rejected on approval by a few cents of spread.
+        fill = price * (1 + HALF_SPREAD.get(tier, 0.004))
 
         # size is bounded by BOTH the target weight (L5) AND the per-idea risk
         # budget (L6). A 10% position with a 20% stop is 2% risk — the risk rule
         # wins, so we compute shares under both and take the smaller.
         target_eur = pick["weight"] * equity
         delta_eur = target_eur - held_eur.get(sym, 0.0)
-        weight_shares = int(delta_eur // price_eur)
-        loss_per_share_eur = to_eur(price - wrong, currency)
+        weight_shares = int(delta_eur // to_eur(fill, currency))
+        loss_per_share_eur = to_eur(fill - wrong, currency)
         risk_shares = int(risk_budget // loss_per_share_eur) if loss_per_share_eur > 0 else 0
         shares = min(weight_shares, risk_shares)
         if shares < 1:
             continue
 
-        pos_after = to_eur(price * (held_shares.get(sym, 0) + shares), currency)
+        pos_after = to_eur(fill * (held_shares.get(sym, 0) + shares), currency)
         blocks = gate_order(constitution, portfolio_value=equity,
                             position_value_after=pos_after, shares=shares,
-                            entry=price, wrong_price=wrong,
+                            entry=fill, wrong_price=wrong,
                             thesis=_rationale(sym, pick, {"label": ""}), side="BUY", tier=tier)
-        costs = estimate(tier, to_eur(price * shares, currency))
+        costs = estimate(tier, to_eur(fill * shares, currency))
         proposals.append({
             "id": f"{sym}-BUY-{_now()}",
             "symbol": sym, "name": str(row["name"]), "side": "BUY",
