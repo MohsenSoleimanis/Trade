@@ -12,7 +12,23 @@ interface Position { symbol: string; name: string; shares: number; currency: str
 interface Trade { at: string; symbol: string; side: string; shares: number; fill: number; }
 interface Book { equity: number; cash: number; pnl_eur: number; pnl_pct: number; unrealized_pnl: number; realized_pnl: number; positions: Position[]; trades: Trade[]; }
 interface Proposal { id: string; symbol: string; name: string; side: string; shares: number; price: number; currency: string; tier: string; status: string; wrong_price?: number; stop_pct?: number; est_cost_eur?: number; notional_eur?: number; confidence?: number; rationale?: string; blocks?: string[]; }
-interface Console { book: Book; regime: { label: string; risk: string }; layers: { l9: { proposals: Proposal[] } }; }
+interface Memory { total: number; approved: number; rejected: number; blocked: number; strategy_usage: Record<string, number>; recent: { at?: string; action?: string; symbol?: string; side?: string; shares?: number; outcome?: string; reason?: string }[]; }
+interface Console {
+  book: Book; memory: Memory;
+  regime: { label: string; risk: string; gross_target?: number; drivers?: string[] };
+  layers: {
+    l0: { total: number; last_date: string; fresh_days: number | null; quality: { warn: number; ok: boolean } };
+    l1: { stocks_scored: number };
+    l3: { strategies: { key: string; name: string; edge: string; conviction: number; top: string; weight: number }[] };
+    l4: { weights: Record<string, number>; table: Record<string, { name: string }>; confidence: { high: number; medium: number; low: number } };
+    l5: { picks: { symbol: string; weight: number; is_core?: boolean }[]; invested: number; core_symbol?: string | null };
+    l6: { charter: { risk_per_idea: number; position_cap: number; leverage: number }; country_exposure: Record<string, number>; tier_exposure: Record<string, number> };
+    l7: { build_cost_eur: number };
+    l8: { decisions: number };
+    l9: { proposals: Proposal[] };
+  };
+}
+type Dock = "layers" | "committee" | "portfolio" | "orders" | "memory";
 interface Company { symbol: string; name: string; price: number | null; day_change: number | null; country: string; tier: string; }
 interface Detail {
   symbol: string; profile: { name: string; currency: string; exchange: string; tier: string };
@@ -36,6 +52,7 @@ export function EngineConsole() {
   const [outlook, setOutlook] = useState<Outlook | null>(null);
   const [left, setLeft] = useState<Left>("holdings");
   const [tf, setTf] = useState(3);
+  const [dock, setDock] = useState<Dock>("committee");
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
 
@@ -172,6 +189,7 @@ export function EngineConsole() {
                 {detail.engine.bullets.slice(0, 4).map((bl, i) => (
                   <div className="tm-bul" key={i}><span className="d">›</span><span>{bl.replace(/^[✓⚠] /, "")}</span></div>
                 ))}
+                <ModelVerdict picks={c.layers.l5.picks} sym={sym} />
               </> : <div className="tm-hold">reading…</div>}
             </div>
 
@@ -219,6 +237,147 @@ export function EngineConsole() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* bottom dock — the engine's brain, cohesively under the chart */}
+      <div className="tm-dock">
+        <div className="tm-dtabs">
+          {([["committee", "Committee"], ["layers", "Layers"], ["portfolio", "Portfolio"], ["orders", "Orders"], ["memory", "Memory"]] as [Dock, string][]).map(([t, l]) => (
+            <button key={t} className={dock === t ? "on" : ""} onClick={() => setDock(t)}>{l}</button>
+          ))}
+        </div>
+        <div className="tm-dbody">
+          {dock === "committee" && <Committee c={c} />}
+          {dock === "layers" && <Layers c={c} />}
+          {dock === "portfolio" && <PortfolioTable b={b} onSel={setSym} />}
+          {dock === "orders" && <OrdersTable c={c} onSel={setSym} busy={busy} act={act} />}
+          {dock === "memory" && <MemoryView m={c.memory} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModelVerdict({ picks, sym }: { picks: { symbol: string; weight: number; is_core?: boolean }[]; sym: string }) {
+  const tp = picks.find((p) => p.symbol === sym);
+  return tp
+    ? <div className="tm-verdict in">◆ Model verdict: {tp.is_core ? "CORE holding" : "target tilt"} · {(tp.weight * 100).toFixed(1)}% of the book</div>
+    : <div className="tm-verdict out">Model verdict: not in the target book right now — it would not buy this here.</div>;
+}
+
+function Committee({ c }: { c: Console }) {
+  const w = c.layers.l4.weights; const wmax = Math.max(...Object.values(w), 0.01);
+  return (
+    <div className="tm-dcols">
+      <div>
+        <div className="tm-dh">L3 · nine strategies — conviction now, ★ top pick</div>
+        {c.layers.l3.strategies.map((s) => (
+          <div className="tm-brow" key={s.key} title={s.edge}>
+            <span className="nm">{s.name}</span>
+            <span className="track"><span className="fill" style={{ width: `${s.conviction}%` }} /></span>
+            <span className="v">{s.conviction.toFixed(0)} ★{s.top}</span>
+          </div>
+        ))}
+      </div>
+      <div>
+        <div className="tm-dh">L4 · who the meta-brain trusts this regime</div>
+        {Object.entries(w).sort((a, b) => b[1] - a[1]).slice(0, 7).map(([k, v]) => (
+          <div className="tm-brow" key={k}>
+            <span className="nm">{c.layers.l4.table[k]?.name ?? k}</span>
+            <span className="track"><span className="fill" style={{ width: `${(v / wmax) * 100}%` }} /></span>
+            <span className="v">{(v * 100).toFixed(1)}%</span>
+          </div>
+        ))}
+        <div className="tm-dnote">confidence across names: {c.layers.l4.confidence.high} high · {c.layers.l4.confidence.medium} medium · {c.layers.l4.confidence.low} low</div>
+      </div>
+    </div>
+  );
+}
+
+function Layers({ c }: { c: Console }) {
+  const L = c.layers;
+  const rows: [string, string, string][] = [
+    ["L0", "Data fabric", `${L.l0.total} instruments · fresh ${L.l0.fresh_days ?? "?"}d · gate ${L.l0.quality.ok ? "PASS" : "FAIL"} (${L.l0.quality.warn}⚠)`],
+    ["L1", "Feature engine", `${L.l1.stocks_scored} stocks scored into factor portraits (value, quality, momentum, risk)`],
+    ["L2", "Regime", `${c.regime.label} · deploy ${Math.round((c.regime.gross_target ?? 0) * 100)}%`],
+    ["L3", "Alpha committee", `${L.l3.strategies.length} independent strategies voting 0–100 on every name`],
+    ["L4", "Meta-brain", `weights the strategies for this regime · ${L.l4.confidence.high} high-confidence names`],
+    ["L5", "Construction", `${L.l5.picks.length} targets · ${Math.round(L.l5.invested * 100)}% invested · core ${L.l5.core_symbol ?? "—"}`],
+    ["L6", "Risk & veto", `risk/idea ${L.l6.charter.risk_per_idea}% · position cap ${L.l6.charter.position_cap}% · leverage ${L.l6.charter.leverage}`],
+    ["L7", "Execution", `cheapest fill + Belgian tax modeled · est. build cost €${L.l7.build_cost_eur}`],
+    ["L8", "Autonomy + memory", `ran the pipeline · ${L.l8.decisions} decisions remembered`],
+    ["L9", "Approval gate", `${L.l9.proposals.filter((p) => p.status === "pending").length} order(s) waiting for your approval`],
+  ];
+  return <div className="tm-layers">{rows.map(([code, name, d]) => (
+    <div className="tm-lrow" key={code}><span className="c">{code}</span><span className="n">{name}</span><span className="d">{d}</span></div>
+  ))}</div>;
+}
+
+function PortfolioTable({ b, onSel }: { b: Book; onSel: (s: string) => void }) {
+  if (!b.positions.length) return <div className="tm-hold">No positions yet — approve an order and it appears here with live P&amp;L.</div>;
+  return (
+    <table className="tm-tbl">
+      <thead><tr><th className="l">Symbol</th><th>Qty</th><th>Avg cost</th><th>Last</th><th>Value</th><th>Open P&amp;L</th><th>P&amp;L %</th></tr></thead>
+      <tbody>
+        {b.positions.map((p) => (
+          <tr key={p.symbol} onClick={() => onSel(p.symbol)}>
+            <td className="l"><b>{p.symbol}</b></td><td className="mono">{p.shares}</td>
+            <td className="mono">{eur(p.cost_eur / p.shares, 2)}</td><td className="mono">{p.last.toFixed(2)}</td>
+            <td className="mono">{eur(p.value_eur, 2)}</td>
+            <td className={`mono ${pc(p.pnl_eur)}`}>{(p.pnl_eur >= 0 ? "+" : "") + eur(p.pnl_eur, 2)}</td>
+            <td className={`mono ${pc(p.pnl_eur)}`}>{pct(p.pnl_pct)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function OrdersTable({ c, onSel, busy, act }: { c: Console; onSel: (s: string) => void; busy: boolean; act: (p: Proposal, a: boolean) => void }) {
+  const props = c.layers.l9.proposals;
+  if (!props.length) return <div className="tm-hold">No orders right now — the engine holds its target book. Re-run after the next market move.</div>;
+  return (
+    <table className="tm-tbl">
+      <thead><tr><th className="l">Side</th><th className="l">Symbol</th><th>Qty</th><th>Size</th><th>Cost</th><th className="l">Status</th><th></th></tr></thead>
+      <tbody>
+        {props.map((p) => (
+          <tr key={p.id} onClick={() => onSel(p.symbol)}>
+            <td className={`l mono ${p.side === "BUY" ? "up" : "down"}`}>{p.side}</td>
+            <td className="l"><b>{p.symbol}</b></td><td className="mono">{p.shares}</td>
+            <td className="mono">{eur(p.notional_eur ?? 0, 0)}</td><td className="mono">€{(p.est_cost_eur ?? 0).toFixed(2)}</td>
+            <td className="l flat">{p.status}</td>
+            <td>{p.status === "pending" && <button className="tm-mini-approve" disabled={busy} onClick={(e) => { e.stopPropagation(); act(p, true); }}>Approve</button>}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+function MemoryView({ m }: { m: Memory }) {
+  const su = Object.entries(m.strategy_usage);
+  return (
+    <div className="tm-dcols">
+      <div>
+        <div className="tm-dh">every decision, remembered</div>
+        <div className="tm-dnote">{m.total} total · {m.approved} approved · {m.rejected} rejected · {m.blocked} gate-blocked</div>
+        {m.recent.length === 0 && <div className="tm-hold">No decisions yet — approve or reject an order and it's remembered here.</div>}
+        {m.recent.slice(0, 7).map((h, i) => (
+          <div className="tm-brow" key={i} style={{ gridTemplateColumns: "78px 46px 1fr" }}>
+            <span className="v">{h.at?.slice(5, 16).replace("T", " ")}</span>
+            <span style={{ color: h.action === "approve" ? "var(--up)" : "var(--down)", fontSize: 11 }}>{h.action}</span>
+            <span className="nm">{h.side} {h.shares} {h.symbol} {h.outcome ? `· ${h.outcome}` : ""}</span>
+          </div>
+        ))}
+      </div>
+      <div>
+        <div className="tm-dh">strategies that led to approved trades</div>
+        {su.length === 0 && <div className="tm-hold">none yet — this is what the learning model will train on.</div>}
+        {su.map(([k, v]) => (
+          <div className="tm-brow" key={k}><span className="nm">{k}</span>
+            <span className="track"><span className="fill" style={{ width: `${(v / Math.max(...su.map((x) => x[1]))) * 100}%` }} /></span>
+            <span className="v">{v}</span></div>
+        ))}
       </div>
     </div>
   );
