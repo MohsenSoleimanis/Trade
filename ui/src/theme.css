@@ -352,6 +352,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
   .ws { grid-template-columns: 170px minmax(0,1fr); }
   .ws-rail-r { display: none; } /* small screens: stage first; act via legacy desk */
 }
+@media (max-width: 820px) {
+  .engine-cols { grid-template-columns: 1fr !important; }
+}
 @media (max-width: 860px) { .ws { grid-template-columns: 1fr; } .ws-rail { display: none; } }
 
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { TopBar } from "./components/TopBar";
+import { AutoEngine } from "./pages/AutoEngine";
 import { Autopilot } from "./pages/Autopilot";
 import { Library } from "./pages/Library";
 import { Pipeline } from "./pages/Pipeline";
@@ -34,6 +35,7 @@ export function App() {
 
   let page: JSX.Element;
   if (route.startsWith("/w/")) page = <Workspace initial={route.split("/")[2]} />;
+  else if (route.startsWith("/engine")) page = <div className="page-pad"><AutoEngine /></div>;
   else if (route.startsWith("/autopilot")) page = <Autopilot />;
   else if (route.startsWith("/pipeline")) page = <Pipeline />;
   else if (route.startsWith("/today")) page = <Today />;

@@ -535,6 +535,59 @@ def agent_memory(n: int = 50) -> list[dict]:
     return recall(n)
 
 
+# ------------------------------------------------------ the autonomous engine (L0–L9)
+
+class ProposalAction(BaseModel):
+    id: str
+    reason: str = ""
+
+
+@app.get("/api/auto/plan")
+def auto_plan(rebuild: bool = False) -> dict:
+    """Run the ten-layer brain (or return the last plan). Produces the ideal
+    target portfolio + the concrete, gated proposals awaiting your approval."""
+    from dewaag.engine.auto import proposals as store_
+    from dewaag.engine.auto.pipeline import build_plan
+
+    if not rebuild:
+        cached = store_.load_plan()
+        if cached:
+            return cached
+    return build_plan()
+
+
+@app.get("/api/auto/regime")
+def auto_regime() -> dict:
+    """L2 only — the market weather, fast (no full pipeline)."""
+    from dewaag.engine.auto.regime import classify
+    from dewaag.engine.signals import compute_signals
+
+    return classify(compute_signals())
+
+
+@app.post("/api/auto/approve")
+def auto_approve(a: ProposalAction) -> dict:
+    """L9 — the one human touch. Routes the trade through the real gates."""
+    from dewaag.engine.auto.proposals import approve
+
+    return approve(a.id)
+
+
+@app.post("/api/auto/reject")
+def auto_reject(a: ProposalAction) -> dict:
+    """L9 — reject a proposal; the reason becomes training data (L8 memory)."""
+    from dewaag.engine.auto.proposals import reject
+
+    return reject(a.id, a.reason)
+
+
+@app.get("/api/auto/decisions")
+def auto_decisions(n: int = 100) -> list[dict]:
+    from dewaag.engine.auto.proposals import decision_history
+
+    return decision_history(n)
+
+
 @app.get("/api/position/{symbol}/proceeds")
 def position_proceeds(symbol: str) -> dict:
     """'If I sell now, what lands in my pocket?' — the Belgian answer:

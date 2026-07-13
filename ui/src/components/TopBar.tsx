@@ -17,6 +17,7 @@ function marketOpen(tz: string, openMin: number, closeMin: number): boolean {
 }
 
 const MENU: [string, string][] = [
+  ["◆ Autonomous Engine", "/engine"],
   ["Autopilot (narrated plans)", "/autopilot"],
   ["Pipeline board", "/pipeline"],
   ["Today (classic)", "/today"],

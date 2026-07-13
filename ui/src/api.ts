@@ -62,6 +62,15 @@ export async function get<T>(path: string): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+export async function post<T>(path: string, body: unknown): Promise<T> {
+  const r = await fetch(path, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) throw new Error(`${path}: ${r.status}`);
+  return r.json() as Promise<T>;
+}
+
 // ---------- formatting helpers (one voice everywhere) ----------
 export const fmtPct = (x: number | null | undefined, digits = 1) =>
   x == null ? "—" : `${(x * 100).toFixed(digits)}%`;
