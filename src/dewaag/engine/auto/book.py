@@ -50,7 +50,7 @@ def _empty() -> dict:
     return {"currency": "EUR", "simulated": True,
             "starting_cash": STARTING_CAPITAL, "cash": STARTING_CAPITAL,
             "created": str(date.today()), "positions": {}, "trades": [],
-            "equity_history": []}
+            "realized_pnl": 0.0, "equity_history": []}
 
 
 def load() -> dict:
@@ -79,7 +79,7 @@ def snapshot() -> dict:
 
     state = load()
     uni = store.load_universe().set_index("symbol")
-    positions, invested, open_risk = [], 0.0, 0.0
+    positions, invested, open_risk, unrealized = [], 0.0, 0.0, 0.0
     for sym, p in state["positions"].items():
         currency = str(uni.loc[sym, "currency"]) if sym in uni.index else "EUR"
         last = _last_close(sym) or p["avg_cost_native"]
@@ -89,6 +89,7 @@ def snapshot() -> dict:
         if wrong:
             open_risk += to_eur(max(0.0, last - wrong) * p["shares"], currency)
         invested += value_eur
+        unrealized += value_eur - cost_eur
         positions.append({
             "symbol": sym, "name": str(uni.loc[sym, "name"]) if sym in uni.index else sym,
             "tier": str(uni.loc[sym, "tier"]) if sym in uni.index else "?",
@@ -115,9 +116,11 @@ def snapshot() -> dict:
         "pnl_pct": round(equity / state["starting_cash"] - 1, 4),
         "positions": sorted(positions, key=lambda p: -p["value_eur"]),
         "open_risk_eur": round(open_risk, 2),
+        "unrealized_pnl": round(unrealized, 2),
+        "realized_pnl": round(state.get("realized_pnl", 0.0), 2),
         "drawdown_eur": round(max(0.0, peak - equity), 2),
         "equity_history": hist[-260:],
-        "trades": state["trades"][-30:],
+        "trades": state["trades"][-60:],
         "constitution_signed": True,      # the engine's charter is always signed
     }
 
@@ -159,6 +162,7 @@ def execute_proposal(p: dict) -> dict:
         return {"ok": False, "blocks": blocks}
 
     fill_eur = to_eur(fill, currency)
+    realized = 0.0
     if side == "BUY":
         state["cash"] -= total_eur
         old = state["positions"].get(sym)
@@ -175,6 +179,9 @@ def execute_proposal(p: dict) -> dict:
     else:
         state["cash"] += total_eur
         held = state["positions"][sym]
+        # realized P&L = net proceeds − cost basis of the shares sold
+        realized = round(total_eur - held["avg_cost_eur"] * shares, 2)
+        state["realized_pnl"] = round(state.get("realized_pnl", 0.0) + realized, 2)
         held["shares"] -= shares
         if held["shares"] <= 0:
             del state["positions"][sym]
@@ -182,6 +189,7 @@ def execute_proposal(p: dict) -> dict:
     trade = {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
              "symbol": sym, "side": side, "shares": shares, "fill": round(fill, 4),
              "currency": currency, "costs_eur": costs["total"], "total_eur": round(total_eur, 2),
+             "realized_eur": realized if side == "SELL" else None,
              "rationale": p.get("rationale", "")}
     state["trades"].append(trade)
     save(state)
