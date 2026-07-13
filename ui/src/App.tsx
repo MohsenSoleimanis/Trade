@@ -34,6 +34,9 @@ export function App() {
     if (m) { route = to(m); window.location.hash = `#${route}`; break; }
   }
 
+  // the engine terminal is a full-screen takeover — its own chrome, no app TopBar
+  if (route.startsWith("/engine") && !route.startsWith("/engine/classic")) return <EngineConsole />;
+
   let page: JSX.Element;
   if (route.startsWith("/w/")) page = <Workspace initial={route.split("/")[2]} />;
   else if (route.startsWith("/engine/classic")) page = <div className="page-pad"><AutoEngine /></div>;
