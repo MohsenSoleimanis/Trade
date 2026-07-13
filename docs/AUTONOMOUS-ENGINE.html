@@ -1,0 +1,431 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>De Waag - Autonomous Engine</title>
+</head>
+<body>
+<style>
+  :root{
+    --ground:#070B15; --surface:#0E1626; --raised:#172136; --raised2:#1E2A42;
+    --line:rgba(148,163,184,.14); --line2:rgba(148,163,184,.26);
+    --ink:#E6EDF6; --ink2:#93A4BE; --ink3:#5E7190;
+    --green:#1FB257; --green-soft:rgba(31,178,87,.12);
+    --cyan:#38BDF8; --indigo:#818CF8; --amber:#F59E0B; --red:#EF4444;
+    --mono:ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --maxw:920px;
+  }
+  *{box-sizing:border-box}
+  body,.doc{background:
+      radial-gradient(1200px 600px at 78% -10%, rgba(56,189,248,.08), transparent 60%),
+      radial-gradient(900px 500px at 10% 8%, rgba(129,140,248,.07), transparent 55%),
+      var(--ground);
+    color:var(--ink); font-family:var(--sans); line-height:1.6;
+    -webkit-font-smoothing:antialiased; margin:0;}
+  .doc{padding:0 22px 120px;}
+  .wrap{max-width:var(--maxw); margin:0 auto;}
+  .mono{font-family:var(--mono);}
+  .eyebrow{font-family:var(--mono); font-size:11.5px; letter-spacing:.22em;
+    text-transform:uppercase; color:var(--cyan); font-weight:600;}
+  h1,h2,h3{text-wrap:balance; line-height:1.14; margin:0;}
+  h1{font-size:clamp(30px,6vw,52px); font-weight:800; letter-spacing:-.02em;}
+  h2{font-size:clamp(22px,4vw,30px); font-weight:750; letter-spacing:-.015em;}
+  h3{font-size:17px; font-weight:700;}
+  p{margin:0;} .lead{color:var(--ink2); font-size:clamp(16px,2.4vw,19px);}
+  a{color:var(--cyan); text-decoration:none;}
+
+  /* hero */
+  header.hero{max-width:var(--maxw); margin:0 auto; padding:74px 0 30px;}
+  .hero .kick{display:flex; align-items:center; gap:12px; margin-bottom:22px; flex-wrap:wrap;}
+  .badge{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink2); border:1px solid var(--line2); border-radius:999px; padding:5px 11px;}
+  .hero h1{margin:14px 0 20px;}
+  .hero .lead{max-width:660px;}
+  .rule{height:1px; background:linear-gradient(90deg,var(--line2),transparent); margin:54px 0;}
+
+  section{max-width:var(--maxw); margin:0 auto;}
+  .sec-head{display:flex; align-items:baseline; gap:14px; margin-bottom:8px; flex-wrap:wrap;}
+  .sec-head .n{font-family:var(--mono); color:var(--ink3); font-size:13px;}
+  .sec-sub{color:var(--ink2); max-width:640px; margin-top:10px; font-size:15.5px;}
+
+  /* edge grid */
+  .edges{display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:26px;}
+  .edge{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:16px 17px;}
+  .edge .h{display:flex; align-items:center; gap:10px; margin-bottom:7px;}
+  .edge .dot{width:8px; height:8px; border-radius:50%; background:var(--green); flex:none;
+    box-shadow:0 0 0 4px var(--green-soft);}
+  .edge h3{font-size:15px;}
+  .edge p{color:var(--ink2); font-size:13.5px; margin-top:2px;}
+  .edge .tag{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--green); margin-top:9px; display:inline-block;}
+  .fantasy{grid-column:1/-1; background:linear-gradient(180deg,rgba(239,68,68,.07),transparent);
+    border:1px solid rgba(239,68,68,.25); border-radius:14px; padding:15px 17px;}
+  .fantasy .tag{color:var(--red);} .fantasy p{color:#F3C9C9;}
+
+  /* the stack */
+  .stack{margin-top:30px; position:relative;}
+  .layer{position:relative; display:grid; grid-template-columns:78px 1fr; gap:0;
+    border-left:2px solid var(--line2); margin-left:24px;}
+  .layer::before{content:""; position:absolute; left:-7px; top:26px; width:12px; height:12px;
+    border-radius:50%; background:var(--raised2); border:2px solid var(--cyan);}
+  .layer:last-child{border-left-color:transparent;}
+  .layer .code{padding:20px 0 20px 22px;}
+  .layer .code b{font-family:var(--mono); font-size:15px; color:var(--cyan); font-weight:700;}
+  .layer .body{background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    padding:16px 18px; margin:8px 0 18px 6px;}
+  .layer .body h3{margin-bottom:5px;}
+  .layer .role{font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--ink3); margin-bottom:10px;}
+  .layer .body p{color:var(--ink2); font-size:14px;}
+  .layer .why{margin-top:11px; padding-top:11px; border-top:1px dashed var(--line2);
+    display:flex; gap:9px; align-items:flex-start;}
+  .layer .why .lab{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--indigo); flex:none; padding-top:2px;}
+  .layer .why p{color:var(--ink); font-size:13.5px;}
+  .chips{display:flex; flex-wrap:wrap; gap:6px; margin-top:11px;}
+  .chip{font-family:var(--mono); font-size:11px; color:var(--ink2);
+    background:var(--raised); border:1px solid var(--line); border-radius:7px; padding:3px 8px;}
+
+  /* the gate */
+  .gate{margin:6px 0 0 6px; background:linear-gradient(180deg,var(--green-soft),transparent);
+    border:1.5px solid rgba(31,178,87,.5); border-radius:16px; padding:22px;}
+  .gate .role{color:var(--green);}
+  .gate h3{font-size:19px;}
+  .gate .you{display:inline-flex; align-items:center; gap:8px; margin-top:14px;
+    font-family:var(--mono); font-size:12px; color:var(--green); letter-spacing:.08em;}
+  .gate .btns{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .btn{font-family:var(--mono); font-size:13px; padding:9px 18px; border-radius:10px; font-weight:600;}
+  .btn.ok{background:var(--green); color:#04160B; border:1px solid var(--green);}
+  .btn.no{background:transparent; color:var(--ink2); border:1px solid var(--line2);}
+
+  /* trace */
+  .trace{margin-top:26px; overflow-x:auto; padding-bottom:8px;}
+  .trace-track{display:flex; gap:0; min-width:760px;}
+  .tstep{flex:1; min-width:150px; padding:15px 15px 15px 0; position:relative;}
+  .tstep:not(:last-child)::after{content:"â†’"; position:absolute; right:6px; top:16px; color:var(--ink3);}
+  .tstep .l{font-family:var(--mono); font-size:11px; color:var(--cyan); letter-spacing:.1em;}
+  .tstep .t{font-size:13px; color:var(--ink); margin-top:6px; font-weight:600;}
+  .tstep .d{font-size:12px; color:var(--ink2); margin-top:4px; line-height:1.45;}
+
+  /* law */
+  .law{margin-top:30px; background:linear-gradient(180deg,rgba(245,158,11,.08),transparent);
+    border:1px solid rgba(245,158,11,.3); border-radius:16px; padding:24px;}
+  .law .eyebrow{color:var(--amber);}
+  .law h2{margin:10px 0 12px;}
+  .law p{color:#F1DDBA; font-size:15.5px; max-width:680px;}
+  .law .edges-real{margin-top:16px; color:var(--ink2); font-size:14px;}
+
+  /* scale note */
+  .note{margin-top:28px; display:flex; gap:14px; align-items:flex-start;
+    background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:17px 18px;}
+  .note .i{font-size:22px; flex:none;}
+  .note p{color:var(--ink2); font-size:14px;}
+  .note b{color:var(--ink);}
+
+  footer{max-width:var(--maxw); margin:60px auto 0; color:var(--ink3);
+    font-family:var(--mono); font-size:12px; border-top:1px solid var(--line); padding-top:18px;}
+
+  @media(max-width:640px){
+    .edges{grid-template-columns:1fr;}
+    .layer{grid-template-columns:56px 1fr; margin-left:14px;}
+    .layer .code{padding-left:12px;}
+    header.hero{padding-top:52px;}
+  }
+</style>
+
+<div class="doc">
+  <header class="hero">
+    <div class="kick">
+      <span class="badge">De Waag</span>
+      <span class="badge">Design proposal Â· v1</span>
+      <span class="badge" style="color:var(--green);border-color:rgba(31,178,87,.4)">awaiting your approval</span>
+    </div>
+    <span class="eyebrow">The Autonomous Engine</span>
+    <h1>A trading brain that thinks in ten layers â€” and asks you one question.</h1>
+    <p class="lead">Not a screen with buttons you press. A machine that watches everything, decides on its own,
+      protects itself from itself, and hands you a single finished proposal to approve or reject.
+      This is how I would build it if I were the system.</p>
+  </header>
+
+  <div class="wrap rule"></div>
+
+  <!-- WHERE THE EDGE REALLY COMES FROM -->
+  <section>
+    <div class="sec-head">
+      <span class="n">01</span>
+      <h2>First, where the edge actually comes from</h2>
+    </div>
+    <p class="sec-sub">A revolution built on a lie collapses. So before the layers, the honest foundation:
+      a small private trader cannot out-predict Wall Street's models. But there are seven edges Wall Street
+      structurally <em>cannot</em> take from you. The whole engine is built to harvest these â€” relentlessly,
+      without emotion, at a scale no human can match.</p>
+
+    <div class="edges">
+      <div class="edge">
+        <div class="h"><span class="dot"></span><h3>Breadth of attention</h3></div>
+        <p>The machine watches thousands of instruments and hundreds of signals, every day, tirelessly.
+          You physically cannot. Edge from <em>coverage</em>.</p>
+        <span class="tag">harvestable</span>
+      </div>
+      <div class="edge">
+        <div class="h"><span class="dot"></span><h3>Iron discipline</h3></div>
+        <p>No fear at the bottom, no greed at the top, never breaking its own rules. The average investor
+          loses 1.5â€“4% a year to their own behaviour. The engine loses none. The biggest real edge there is.</p>
+        <span class="tag">harvestable</span>
+      </div>
+      <div class="edge">
+        <div class="h"><span class="dot"></span><h3>Cost &amp; tax precision</h3></div>
+        <p>Every basis point saved is a <em>guaranteed</em> return â€” no forecast required. It minimises spread,
+          commission, Belgian TOB, and picks the tax-smart vehicle every time.</p>
+        <span class="tag">harvestable</span>
+      </div>
+      <div class="edge">
+        <div class="h"><span class="dot"></span><h3>Regime awareness</h3></div>
+        <p>Knowing <em>when not to play</em>. The engine reads the market's weather and turns defensive before
+          storms, aggressive in clear skies. Edge from timing risk, not prices.</p>
+        <span class="tag">harvestable</span>
+      </div>
+      <div class="edge">
+        <div class="h"><span class="dot"></span><h3>True diversification</h3></div>
+        <p>Combining return streams that don't move together â€” the only real free lunch in finance. Not many
+          names; many <em>uncorrelated</em> bets. Edge from structure.</p>
+        <span class="tag">harvestable</span>
+      </div>
+      <div class="edge">
+        <div class="h"><span class="dot"></span><h3>Patience &amp; neglect</h3></div>
+        <p>Willing to hold through pain others can't, and to fish the small, ignored ponds â€” Belgian small caps
+          too tiny for big funds to touch. Edge from time and from being overlooked.</p>
+        <span class="tag">harvestable</span>
+      </div>
+
+      <div class="fantasy">
+        <span class="tag">not harvestable â€” and no honest system will sell it to you</span>
+        <p style="margin-top:6px">Predicting tomorrow's price better than the market. Turning small money into a monthly
+          salary. "Signals" that always win. Every layer below is designed to squeeze the seven real edges dry â€”
+          and to <em>never</em> pretend to have the eighth.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <!-- THE STACK -->
+  <section>
+    <div class="sec-head">
+      <span class="n">02</span>
+      <h2>The stack â€” ten layers, one direction of flow</h2>
+    </div>
+    <p class="sec-sub">Raw world enters at the top. Each layer does one job and hands its work down.
+      You never touch the inside. The signal falls all the way to the green gate at the bottom â€” and only there
+      does it wait for you.</p>
+
+    <div class="stack">
+
+      <div class="layer">
+        <div class="code"><b>L0</b></div>
+        <div class="body">
+          <div class="role">The senses Â· data fabric</div>
+          <h3>Perceive the entire investable world</h3>
+          <p>Every instrument that matters and everything that moves it â€” pulled in continuously, stamped with the
+            exact time it became knowable (so the system can never cheat with hindsight) and gated for quality.</p>
+          <div class="chips">
+            <span class="chip">global equities</span><span class="chip">ETFs Â· factor Â· bonds Â· commodities</span>
+            <span class="chip">FX</span><span class="chip">crypto (flagged)</span><span class="chip">fundamentals</span>
+            <span class="chip">news</span><span class="chip">macro channels</span><span class="chip">calendar</span>
+          </div>
+          <div class="why"><span class="lab">why smart</span><p>Coverage is edge #1. A machine that sees 3,000 things
+            can find what a human watching 40 never will.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L1</b></div>
+        <div class="body">
+          <div class="role">Understanding Â· feature engine</div>
+          <h3>Turn raw data into meaning</h3>
+          <p>Each instrument becomes a rich living portrait: how cheap, how profitable, how strong its trend, how
+            wild its swings, how the crowd is positioned, how sensitive it is to oil, rates and fear (the macro lens
+            we already built).</p>
+          <div class="why"><span class="lab">why smart</span><p>Prices alone are noise. The engine reasons over
+            <em>meaning</em>, comparing every name against every other on the same rulers.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L2</b></div>
+        <div class="body">
+          <div class="role">The weather brain Â· regime</div>
+          <h3>Read what kind of market this is</h3>
+          <p>Before deciding anything, classify the environment: calm or panicking, rates rising or falling,
+            money flowing to risk or fleeing it. Every strategy below is told which weather it's operating in.</p>
+          <div class="why"><span class="lab">why smart</span><p>The same move that's brilliant in a bull market is
+            suicidal in a crash. A system blind to weather eventually walks into the storm.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L3</b></div>
+        <div class="body">
+          <div class="role">The analyst committee Â· alpha ensemble</div>
+          <h3>Many independent strategies, not one bet</h3>
+          <p>A whole committee of specialists runs in parallel â€” value, trend, quality, low-volatility,
+            mean-reversion, carry, macro-tilt, small-cap neglect, seasonality. Each is a proven, academically
+            grounded edge. Each scores every instrument. Deliberately diverse, so their mistakes cancel out.</p>
+          <div class="chips">
+            <span class="chip">value</span><span class="chip">momentum</span><span class="chip">quality</span>
+            <span class="chip">low-vol</span><span class="chip">reversion</span><span class="chip">carry</span>
+            <span class="chip">macro-tilt</span><span class="chip">niche</span>
+          </div>
+          <div class="why"><span class="lab">why smart</span><p>One strategy is a single opinion that's sometimes
+            wrong for years. A committee of uncorrelated opinions is robust â€” diversification, edge #5.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L4</b></div>
+        <div class="body">
+          <div class="role">The meta-brain Â· machine learning</div>
+          <h3>Learn which analysts to trust right now</h3>
+          <p>This is the intelligent core. It does <em>not</em> predict prices. It predicts something honest and
+            learnable: given today's weather and each strategy's track record, <em>whose signal deserves weight
+            today</em> â€” and how confident to be. It grades its own history and adapts. Low-confidence ideas are
+            quietly dropped.</p>
+          <div class="why"><span class="lab">why smart</span><p>Predicting markets is a fool's errand. Predicting
+            which of your own tools is working â€” that's a solvable problem, and where ML genuinely belongs.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L5</b></div>
+        <div class="body">
+          <div class="role">The architect Â· portfolio construction</div>
+          <h3>Decide how much â€” by mathematics, not gut</h3>
+          <p>Blended convictions become target weights through real optimisation: each position sized so it
+            contributes balanced <em>risk</em> (not equal money), correlations accounted for, bet size scaling with
+            both edge and certainty, and always inside the constitution's caps.</p>
+          <div class="why"><span class="lab">why smart</span><p>Most people are right about direction and ruined by
+            size. Sizing is where portfolios live or die â€” so a machine does it, coldly.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L6</b></div>
+        <div class="body">
+          <div class="role">The veto Â· risk &amp; constitution</div>
+          <h3>The un-overridable final law</h3>
+          <p>Deterministic, dumb on purpose, and above every clever layer. Drawdown circuit-breakers, exposure
+            limits, stress-replays of your exact book through 2008 / COVID / 2022, hard kill-switches. If anything
+            above proposes something the law forbids, it <em>dies here</em>. No smart layer can talk its way past it.</p>
+          <div class="why"><span class="lab">why smart</span><p>Intelligence blows up; discipline survives. The one
+            layer that can't be out-argued is what keeps a brilliant system from destroying itself.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L7</b></div>
+        <div class="body">
+          <div class="role">The hands Â· execution</div>
+          <h3>Buy at the best possible price, tax-smart</h3>
+          <p>Turns a target into the cheapest real fills: patient limit logic, spread- and timing-aware, minimising
+            commission and Belgian TOB, choosing the accumulating vehicle over the dividend-leaking one, accumulating
+            in fractions where it can.</p>
+          <div class="why"><span class="lab">why smart</span><p>Costs are the one return that's guaranteed â€” edge #3.
+            A great decision executed sloppily is an average decision.</p></div>
+        </div>
+      </div>
+
+      <div class="layer">
+        <div class="code"><b>L8</b></div>
+        <div class="body">
+          <div class="role">The life of the system Â· autonomy loop</div>
+          <h3>Run itself, and learn from every outcome</h3>
+          <p>A scheduler drives the whole pipeline on its own rhythm. Every decision is logged with its full
+            reasoning, then <em>graded</em> against what actually happened â€” was the thesis right, or just lucky?
+            That grade flows back into L4. The engine gets wiser with every trade it has ever made.</p>
+          <div class="why"><span class="lab">why smart</span><p>A static system rots as markets change. A system that
+            scores its own past and feeds it forward is alive.</p></div>
+        </div>
+      </div>
+
+      <div class="gate" style="margin-left:30px">
+        <div class="role">The one door you touch Â· approval gate</div>
+        <h3>L9 â€” It hands you a finished decision. You approve each trade.</h3>
+        <p style="color:var(--ink2);font-size:14px;margin-top:8px">Everything above produces, per trade, one
+          complete proposal: <b style="color:var(--ink)">what, how much, why</b> (which analysts fired, what
+          weather, what the risk law allowed), what it costs, what you'd net after Belgian tax, and the exact price
+          that would prove it wrong. In plain language. Your <em>rejections are data too</em> â€” the engine learns
+          what you'll never hold.</p>
+        <div class="you">â–² this is the only place a human enters the loop</div>
+        <div class="btns">
+          <span class="btn ok">âœ“ Approve trade</span>
+          <span class="btn no">âœ• Reject</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <!-- FOLLOW ONE DECISION -->
+  <section>
+    <div class="sec-head">
+      <span class="n">03</span>
+      <h2>Follow one decision through the brain</h2>
+    </div>
+    <p class="sec-sub">A single idea, born at the top, falling to your approval â€” so the layers aren't abstract.</p>
+
+    <div class="trace">
+      <div class="trace-track">
+        <div class="tstep"><div class="l">L0â€“L1</div><div class="t">Sees &amp; understands</div>
+          <div class="d">Among 3,000 names, one screens cheap, profitable, and quietly trending â€” under-covered.</div></div>
+        <div class="tstep"><div class="l">L2</div><div class="t">Checks the weather</div>
+          <div class="d">Regime = calm, risk-on. Value and quality signals are favoured today.</div></div>
+        <div class="tstep"><div class="l">L3â€“L4</div><div class="t">Committee votes</div>
+          <div class="d">Four of nine strategies fire; the meta-brain trusts them highly in this regime. Conviction: strong.</div></div>
+        <div class="tstep"><div class="l">L5</div><div class="t">Sizes it</div>
+          <div class="d">Optimiser assigns a weight that adds balanced risk without breaking any cap.</div></div>
+        <div class="tstep"><div class="l">L6</div><div class="t">Risk law checks</div>
+          <div class="d">Passes drawdown, exposure and stress limits. Allowed.</div></div>
+        <div class="tstep"><div class="l">L7</div><div class="t">Prices execution</div>
+          <div class="d">Cheapest fill, tax-smart vehicle, exact costs computed.</div></div>
+        <div class="tstep"><div class="l">L9</div><div class="t">Waits for you</div>
+          <div class="d">One card: buy, size, why, cost, after-tax, the "wrong at" price. You tap approve.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap rule"></div>
+
+  <!-- THE LAW -->
+  <section>
+    <div class="law">
+      <span class="eyebrow">The one law that never bends</span>
+      <h2>Ambitious everywhere except the lie.</h2>
+      <p>I'll make every layer as aggressively intelligent as it can honestly be â€” real machine learning, real
+        optimisation, a real committee of strategies, real autonomy. But I will never let the engine promise what
+        physics forbids: reliably beating the market by a lot, or manufacturing income from a small stake. The
+        revolution is in <em>how completely and coldly it harvests the seven real edges</em> â€” not in a fantasy return.</p>
+      <p class="edges-real">Its honest target: the market's return, captured more fully and more calmly than you
+        ever could by hand â€” plus whatever the seven edges add, minus the mistakes you'll never make because the
+        machine won't let you.</p>
+    </div>
+
+    <div class="note">
+      <span class="i">âˆž</span>
+      <p><b>The same brain runs on any amount.</b> This design does not care whether it manages a small stake or a
+        large one â€” the layers are identical; only the sizes scale. So we build the real thing now, and it simply
+        grows into itself as the account grows. No throwaway "beginner version."</p>
+    </div>
+  </section>
+
+  <footer>
+    De Waag Â· Autonomous Engine â€” design proposal v1 Â· you approve each trade at L9 Â· nothing is built until you say go.
+  </footer>
+</div>
+
+</body>
+</html>
+
