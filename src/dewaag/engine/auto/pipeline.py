@@ -22,6 +22,11 @@ from dewaag.engine.auto.regime import classify
 from dewaag.engine.auto.strategies import by_key
 
 
+# one-way costs above this fraction of the trade mean it's not worth doing —
+# the fee eats the edge. Such tilts are skipped until the book grows.
+MAX_COST_RATIO = 0.015
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -46,7 +51,7 @@ def _rationale(sym: str, pick: dict, regime: dict) -> str:
 
 def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
                     constitution) -> list[dict]:
-    from dewaag.engine.auto.book import HALF_SPREAD
+    from dewaag.engine.auto.book import ENGINE_COMMISSION_EUR, HALF_SPREAD
     from dewaag.engine.costs import estimate
     from dewaag.engine.sizing import gate_order
     from dewaag.portfolio import to_eur
@@ -58,6 +63,7 @@ def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
     risk_budget = equity * constitution.max_risk_per_idea_pct / 100.0   # §1: euros at risk per idea
 
     proposals: list[dict] = []
+    skipped: list[dict] = []
 
     # BUYS / ADDS toward the target shape
     for pick in targets["picks"]:
@@ -103,7 +109,19 @@ def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
                             position_value_after=pos_after, shares=shares,
                             entry=fill, wrong_price=wrong,
                             thesis=_rationale(sym, pick, {"label": ""}), side="BUY", tier=tier)
-        costs = estimate(tier, to_eur(fill * shares, currency))
+        notional_eur = to_eur(fill * shares, currency)
+        costs = estimate(tier, notional_eur, commission=ENGINE_COMMISSION_EUR)
+
+        # COST-EFFICIENCY FILTER: don't propose a trade too small to be worth it.
+        # At a small book size a €20 stock nibble pays more in fees than it can
+        # earn — so it's skipped (and shown as skipped), not silently bought red.
+        cost_ratio = costs["total"] / notional_eur if notional_eur else 1.0
+        if cost_ratio > MAX_COST_RATIO:
+            skipped.append({"symbol": sym, "name": str(row["name"]), "notional_eur": round(notional_eur, 2),
+                            "cost_pct": round(cost_ratio * 100, 1),
+                            "reason": f"too small to trade cost-effectively — fees would be {cost_ratio*100:.1f}% of the buy"})
+            continue
+
         proposals.append({
             "id": f"{sym}-BUY-{_now()}",
             "symbol": sym, "name": str(row["name"]), "side": "BUY",
@@ -111,7 +129,7 @@ def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
             "target_weight": pick["weight"], "score": pick["score"],
             "confidence": pick["confidence"], "fired": pick["fired"],
             "wrong_price": wrong, "stop_pct": round(stop * 100, 1),
-            "est_cost_eur": costs["total"], "notional_eur": round(to_eur(price * shares, currency), 2),
+            "est_cost_eur": costs["total"], "notional_eur": round(notional_eur, 2),
             "status": "blocked" if blocks else "pending",
             "blocks": blocks,
         })
@@ -136,7 +154,7 @@ def _propose_trades(targets: dict, snap: dict, signals_df: pd.DataFrame,
         })
 
     # attach the real rationale (needs the regime label) to buys
-    return proposals
+    return proposals, skipped
 
 
 def _layer_summary(signals_df, regime, alloc, targets, proposals, snap, constitution) -> list[dict]:
@@ -209,7 +227,7 @@ def build_plan(signals_df: pd.DataFrame | None = None, snap: dict | None = None,
     targets = build_targets(signals_df, alloc["blended"], regime,   # L5
                             constitution.max_position_pct)
 
-    proposals = _propose_trades(targets, snap, signals_df, constitution)  # L6/L7/L9
+    proposals, skipped = _propose_trades(targets, snap, signals_df, constitution)  # L6/L7/L9
 
     # attach the full reasoning to every proposal: deterministic signals +
     # news CONTEXT + this name's memory. Read the decision log ONCE.
@@ -231,9 +249,10 @@ def build_plan(signals_df: pd.DataFrame | None = None, snap: dict | None = None,
         "allocator": {"weights": alloc["weights"], "table": alloc["table"], "method": alloc["method"]},
         "targets": targets,
         "proposals": proposals,
+        "skipped": skipped,
         "book": {"equity": snap.get("equity"), "cash": snap.get("cash"),
                  "signed": snap.get("constitution_signed", False)},
-        "executable_note": _executable_note(snap, proposals),
+        "executable_note": _executable_note(snap, proposals, skipped),
         "layers": _layer_summary(signals_df, regime, alloc, targets, proposals, snap, constitution),
     }
     if persist:
@@ -241,12 +260,17 @@ def build_plan(signals_df: pd.DataFrame | None = None, snap: dict | None = None,
     return plan
 
 
-def _executable_note(snap: dict, proposals: list[dict]) -> str:
+def _executable_note(snap: dict, proposals: list[dict], skipped: list[dict] | None = None) -> str:
+    skip_txt = ""
+    if skipped:
+        names = ", ".join(s["symbol"] for s in skipped[:4])
+        skip_txt = (f" {len(skipped)} smaller tilt(s) skipped ({names}) — too small to trade cost-effectively at "
+                    "this book size; they return as the account grows.")
     if not snap.get("constitution_signed", False):
         return ("The constitution is unsigned, so every proposal is held at the gate — this is the veto (L6) "
-                "working exactly as designed. Sign it to let the gate evaluate trades on their merits.")
+                "working exactly as designed. Sign it to let the gate evaluate trades on their merits." + skip_txt)
     ready = [p for p in proposals if p["status"] == "pending"]
     if not ready:
         return ("No proposal is executable on the current book (size and caps) — the engine's opinion is the "
-                "target portfolio above; the honest action at this size is accumulating a world core.")
-    return f"{len(ready)} proposal(s) cleared the gate and are waiting for your approval."
+                "target portfolio above; the honest action at this size is accumulating a world core." + skip_txt)
+    return f"{len(ready)} proposal(s) cleared the gate and are waiting for your approval.{skip_txt}"

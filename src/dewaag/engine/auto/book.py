@@ -25,6 +25,9 @@ from dewaag.vault import store
 
 ENGINE_BOOK_PATH = store.DATA_DIR / "auto" / "engine_book.json"
 STARTING_CAPITAL = 1_000.0     # a real small-account size, not a placeholder
+# a small Belgian retail account uses a low-cost broker (Trade Republic-style),
+# NOT IBKR's €3 — modeling €3 on €1,000 made every fresh position red from fees.
+ENGINE_COMMISSION_EUR = 1.0
 
 HALF_SPREAD = {"mega": 0.0002, "large": 0.0005, "mid": 0.002,
                "small": 0.006, "etf": 0.0003}
@@ -146,7 +149,7 @@ def execute_proposal(p: dict) -> dict:
     half = HALF_SPREAD.get(tier, 0.004)
     fill = last * (1 + half) if side == "BUY" else last * (1 - half)
     notional_eur = to_eur(fill * shares, currency)
-    costs = estimate(tier, notional_eur)
+    costs = estimate(tier, notional_eur, commission=ENGINE_COMMISSION_EUR)
     total_eur = notional_eur + costs["total"] if side == "BUY" else notional_eur - costs["total"]
 
     held = state["positions"].get(sym, {"shares": 0})
