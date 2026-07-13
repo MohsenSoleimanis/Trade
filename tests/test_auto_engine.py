@@ -166,6 +166,31 @@ def test_pipeline_signed_book_clears_some_proposals(monkeypatch):
         assert 8.0 <= p["stop_pct"] <= 30.0
 
 
+def test_forecast_range_scales_with_volatility(monkeypatch):
+    from dewaag.engine.auto import forecast as fc
+
+    rng = np.random.RandomState(3)
+    dates = pd.bdate_range("2022-01-01", periods=400)
+
+    def frame(vol):
+        rets = rng.normal(0, vol, len(dates))
+        px = 100 * np.cumprod(1 + rets)
+        return pd.DataFrame({"date": dates.strftime("%Y-%m-%d"), "adj_close": px, "close": px})
+
+    calm, wild = frame(0.005), frame(0.03)
+    monkeypatch.setattr(fc.store, "load_prices", lambda s: calm if s == "CALM" else wild)
+
+    c = fc.expected_range("CALM"); w = fc.expected_range("WILD")
+    assert c["available"] and w["available"]
+    # the wild name must forecast a wider range and higher annual vol
+    assert w["one_sigma"]["pct"] > c["one_sigma"]["pct"] * 3
+    assert w["vol_annual"] > c["vol_annual"]
+    # the range is centered on today's price (no direction bet) and 2σ ⊃ 1σ
+    assert c["one_sigma"]["low"] < c["last"] < c["one_sigma"]["high"]
+    assert w["two_sigma"]["low"] < w["one_sigma"]["low"]
+    assert w["two_sigma"]["high"] > w["one_sigma"]["high"]
+
+
 def test_memory_reads_the_decision_log_and_respects_rejections(monkeypatch):
     from dewaag.engine.auto import memory as mem
 

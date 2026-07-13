@@ -110,6 +110,15 @@
 .tm-hold { font-size: 12px; color: var(--muted); line-height: 1.55; }
 .tm-hold b { color: var(--ink); }
 
+/* forecast (expected range) */
+.tm-fc { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; }
+.tm-fc .lo, .tm-fc .hi { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.tm-fc .bar { flex: 1; height: 6px; border-radius: 4px; position: relative;
+  background: linear-gradient(90deg, rgba(240,97,109,.25), rgba(120,170,255,.25) 50%, rgba(22,199,132,.25)); }
+.tm-fc .now { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--ink); border-radius: 1px; transform: translateX(-1px); }
+.tm-fcnote { font-size: 11px; color: var(--muted); line-height: 1.5; padding: 2px 0; }
+.tm-fcnote b { color: var(--ink); }
+
 .tm-news a { display: block; text-decoration: none; color: var(--ink); padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 11.5px; line-height: 1.4; }
 .tm-news a:last-child { border-bottom: 0; }
 .tm-news a:hover { color: var(--accent); }

@@ -605,6 +605,22 @@ def auto_console(rebuild: bool = False) -> dict:
     return build_console(rebuild=rebuild)
 
 
+@app.get("/api/forecast/{symbol}")
+def forecast_symbol(symbol: str, horizon: int = 21) -> dict:
+    """Honest forecast: the likely RANGE (not direction) for one instrument."""
+    from dewaag.engine.auto.forecast import expected_range
+
+    return expected_range(symbol, horizon_days=horizon)
+
+
+@app.get("/api/auto/forecast")
+def forecast_book(horizon: int = 21) -> dict:
+    """The engine book's likely value range next month (risk, not direction)."""
+    from dewaag.engine.auto.forecast import book_forecast
+
+    return book_forecast(horizon_days=horizon)
+
+
 @app.get("/api/position/{symbol}/proceeds")
 def position_proceeds(symbol: str) -> dict:
     """'If I sell now, what lands in my pocket?' — the Belgian answer:

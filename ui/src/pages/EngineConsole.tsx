@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { get, post } from "../api";
-import { ChartMarker, SignalChart } from "../components/SignalChart";
+import { ChartMarker, ForecastBand, SignalChart } from "../components/SignalChart";
 import "../console.css";
 
 // THE ENGINE TERMINAL — one cohesive chart-first screen (Trade-with-Jarvis
@@ -37,6 +37,10 @@ interface Detail {
   engine: { scores: { q_score: number | null; v_score: number | null; m_score: number | null; composite: number | null }; bullets: string[] };
 }
 interface Outlook { news: { when: string | null; title: string; source: string; link?: string | null }[]; }
+interface Forecast { available: boolean; last?: number; vol_annual?: number; horizon_days?: number;
+  one_sigma?: { low: number; high: number; pct: number }; two_sigma?: { low: number; high: number; pct: number }; note?: string; }
+interface BookForecast { available: boolean; equity?: number; one_sigma_pct?: number;
+  one_sigma?: { low: number; high: number }; two_sigma?: { low: number; high: number }; note?: string; }
 
 const eur = (n: number, d = 0) => "€" + n.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
 const pc = (n: number | null | undefined) => (n == null ? "flat" : n > 0 ? "up" : n < 0 ? "down" : "flat");
@@ -50,29 +54,35 @@ export function EngineConsole() {
   const [sym, setSym] = useState<string>("");
   const [detail, setDetail] = useState<Detail | null>(null);
   const [outlook, setOutlook] = useState<Outlook | null>(null);
+  const [fc, setFc] = useState<Forecast | null>(null);
+  const [bookFc, setBookFc] = useState<BookForecast | null>(null);
   const [left, setLeft] = useState<Left>("holdings");
   const [tf, setTf] = useState(3);
   const [dock, setDock] = useState<Dock>("committee");
   const [busy, setBusy] = useState(false);
   const [flash, setFlash] = useState<string | null>(null);
 
-  const loadConsole = (rebuild = false) =>
+  const loadConsole = (rebuild = false) => {
     get<Console>(`/api/auto/console${rebuild ? "?rebuild=true" : ""}`).then((d) => {
       setC(d);
       if (!sym) setSym(d.book.positions[0]?.symbol ?? d.layers.l9.proposals[0]?.symbol ?? "WEBN");
     }).catch(() => {});
+    get<BookForecast>("/api/auto/forecast").then(setBookFc).catch(() => {});
+  };
 
   useEffect(() => {
     loadConsole(false);
     get<Company[]>("/api/companies").then(setCompanies).catch(() => {});
+    get<BookForecast>("/api/auto/forecast").then(setBookFc).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!sym) return;
-    setDetail(null); setOutlook(null);
+    setDetail(null); setOutlook(null); setFc(null);
     get<Detail>(`/api/company/${sym}`).then(setDetail).catch(() => {});
     get<Outlook>(`/api/company/${sym}/outlook`).then(setOutlook).catch(() => {});
+    get<Forecast>(`/api/forecast/${sym}`).then(setFc).catch(() => {});
   }, [sym]);
 
   const act = async (p: Proposal, approve: boolean) => {
@@ -103,6 +113,8 @@ export function EngineConsole() {
   const trendUp = shown.length >= 2 && shown[shown.length - 1].close >= (shown.reduce((s, x) => s + x.close, 0) / shown.length);
   const order = c.layers.l9.proposals.find((p) => p.symbol === sym);
   const pos = b.positions.find((p) => p.symbol === sym);
+  const fcBand: ForecastBand | null = fc?.available && fc.one_sigma && fc.two_sigma
+    ? { low1: fc.one_sigma.low, high1: fc.one_sigma.high, low2: fc.two_sigma.low, high2: fc.two_sigma.high } : null;
 
   return (
     <div className="tm">
@@ -115,6 +127,10 @@ export function EngineConsole() {
           <div className="a"><div className="k">Open</div><div className={`v ${pc(b.unrealized_pnl)}`}>{(b.unrealized_pnl >= 0 ? "+" : "") + eur(b.unrealized_pnl, 2)}</div></div>
           <div className="a"><div className="k">Realized</div><div className={`v ${pc(b.realized_pnl)}`}>{(b.realized_pnl >= 0 ? "+" : "") + eur(b.realized_pnl, 2)}</div></div>
           <div className="a"><div className="k">Cash</div><div className="v">{eur(b.cash, 0)}</div></div>
+          {bookFc?.available && bookFc.one_sigma && (
+            <div className="a" title={bookFc.note}><div className="k">1-mo range (forecast)</div>
+              <div className="v" style={{ fontSize: 12 }}>{eur(bookFc.one_sigma.low, 0)}–{eur(bookFc.one_sigma.high, 0)} <span style={{ color: "var(--muted)" }}>±{((bookFc.one_sigma_pct ?? 0) * 100).toFixed(1)}%</span></div></div>
+          )}
         </div>
         <div className="grow" />
         <span className="tm-ordbadge">regime: <b>{c.regime.label}</b></span>
@@ -162,7 +178,7 @@ export function EngineConsole() {
             </div>
           </div>
           <div className="tm-chart">
-            {detail ? <SignalChart data={shown} markers={markers} height={430} /> : <div className="tm-empty" style={{ padding: 40 }}>loading chart…</div>}
+            {detail ? <SignalChart data={shown} markers={markers} band={fcBand} height={430} /> : <div className="tm-empty" style={{ padding: 40 }}>loading chart…</div>}
             {flash && <div className="tm-flash">{flash}</div>}
           </div>
           <div className="tm-legend">
@@ -191,6 +207,25 @@ export function EngineConsole() {
                 ))}
                 <ModelVerdict picks={c.layers.l5.picks} sym={sym} />
               </> : <div className="tm-hold">reading…</div>}
+            </div>
+
+            {/* forecast — the honest kind: range, not direction */}
+            <div className="tm-sec">
+              <div className="h">Forecast · likely range · 1 month</div>
+              {!fc ? <div className="tm-hold">estimating…</div>
+                : !fc.available ? <div className="tm-hold">not enough history to forecast risk here.</div>
+                : <>
+                  <div className="tm-fc">
+                    <span className="lo">{eur(fc.one_sigma!.low, 2)}</span>
+                    <span className="bar"><span className="now" style={{ left: `${((fc.last! - fc.two_sigma!.low) / (fc.two_sigma!.high - fc.two_sigma!.low)) * 100}%` }} /></span>
+                    <span className="hi">{eur(fc.one_sigma!.high, 2)}</span>
+                  </div>
+                  <div className="tm-fcnote">
+                    ~2-in-3 chance <b>{sym}</b> stays between <b>{eur(fc.one_sigma!.low, 2)}</b> and <b>{eur(fc.one_sigma!.high, 2)}</b> (±{(fc.one_sigma!.pct * 100).toFixed(1)}%) next month ·
+                    yearly volatility <b>{((fc.vol_annual ?? 0) * 100).toFixed(0)}%</b>.
+                  </div>
+                  <div className="tm-fcnote" style={{ color: "var(--mut2)" }}>This forecasts the range (risk), not the direction — a rough month (±2σ) reaches {eur(fc.two_sigma!.low, 2)}–{eur(fc.two_sigma!.high, 2)}. Dashed lines on the chart.</div>
+                </>}
             </div>
 
             {/* action */}

@@ -9,6 +9,7 @@ import { useEffect, useRef } from "react";
 
 export interface Candle { time: string; open: number; high: number; low: number; close: number; volume: number; }
 export interface ChartMarker { time: string; side: "BUY" | "SELL"; text: string; }
+export interface ForecastBand { low1: number; high1: number; low2: number; high2: number; }
 
 function sma(data: Candle[], period: number): { time: string; value: number }[] {
   const out: { time: string; value: number }[] = [];
@@ -20,7 +21,7 @@ function sma(data: Candle[], period: number): { time: string; value: number }[] 
   return out;
 }
 
-export function SignalChart({ data, markers, height = 400 }: { data: Candle[]; markers?: ChartMarker[]; height?: number }) {
+export function SignalChart({ data, markers, band, height = 400 }: { data: Candle[]; markers?: ChartMarker[]; band?: ForecastBand | null; height?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
 
@@ -80,9 +81,21 @@ export function SignalChart({ data, markers, height = 400 }: { data: Candle[]; m
       candles.setMarkers(ms);
     }
 
+    // forecast: the likely range next month, drawn as horizon lines
+    if (band) {
+      const mk = (price: number, title: string, alpha: string) => candles.createPriceLine({
+        price, color: `rgba(120,170,255,${alpha})`, lineWidth: 1, lineStyle: LineStyle.Dashed,
+        axisLabelVisible: true, title,
+      });
+      mk(band.high1, "likely high", ".7");
+      mk(band.low1, "likely low", ".7");
+      mk(band.high2, "", ".3");
+      mk(band.low2, "", ".3");
+    }
+
     chart.timeScale().fitContent();
     return () => { chart.remove(); chartRef.current = null; };
-  }, [data, markers, height]);
+  }, [data, markers, band, height]);
 
   if (!data.length) return <div style={{ height, display: "grid", placeItems: "center", color: "#5f6b7c", fontSize: 12 }}>no chart data</div>;
   return <div ref={ref} style={{ width: "100%" }} />;
